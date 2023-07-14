@@ -34,13 +34,9 @@ boing
 
 skrt
 
-### Drivetrain
+### Powertrain
 
 vroom
-
-### Thermal
-
-mmmmm
 
 ### Aero
 
