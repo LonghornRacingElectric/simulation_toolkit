@@ -6,6 +6,6 @@ class LadyLuck(Car):
     def __init__(self):
         super().__init__()
         self.model_name = "Lady Luck"
-        self.max_acceleration = ConstantParameter(10)
-
-        # self._validate_parameters()
+        self.max_torque = ConstantParameter(100)
+        self.wheel_radius = ConstantParameter(0.2)
+        self.mass = ConstantParameter(250)

@@ -8,5 +8,9 @@ class Car(ModelParameters):
         self.model_type = "Car"
         self.model_name = "Unnamed Car"
         self._parameters = {
-            "max_acceleration": type(ConstantParameter())
+            "max_torque": type(ConstantParameter()),
+            "wheel_radius": type(ConstantParameter()),
+            "mass": type(ConstantParameter())
         }
+
+        # TODO these parameters are temporary for testing

@@ -11,3 +11,6 @@ class ModelParameters:
                 print(f"{self.model_type} \"{self.model_name}\" is missing parameter {pname} ({ptype.__name__}).")
             elif type(getattr(self, pname)) != ptype:
                 print(f"{self.model_type} \"{self.model_name}\" parameter {pname} should be a {ptype.__name__}.")
+
+    def __contains__(self, parameter_name: str):
+        return parameter_name in self._parameters.keys()
