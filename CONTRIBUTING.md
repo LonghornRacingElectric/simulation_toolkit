@@ -14,8 +14,33 @@
 
 ## Structure
 
-[This diagram](https://www.figma.com/file/z98vFbTBytWElKBb5sTkwk/Lapsim-v2024-Architecture?type=whiteboard&node-id=0%3A1&t=9tSSjFzoum59gmc6-1) can help you understand the inner workings of the project.
+[This diagram](https://www.figma.com/file/z98vFbTBytWElKBb5sTkwk/Lapsim-v2024-Architecture?type=whiteboard&node-id=0%3A1&t=9tSSjFzoum59gmc6-1)
+can help you get a starting point to understanding the project.
+
+Within the **sim/** package, there are three main packages.
+The **sim/model_parameters/** package has classes that just serve to store parameters.
+These are mostly numerical vehicle parameters like Car's `mass` but there
+are also some other ones like Telemetry's `accelerometer_rate`.
+Note that some parameters can even be functions using the CurveParameter class,
+like a battery's voltage as a function of charge.
+
+The **sim/simulations/** package contains a few different kinds of simulations
+that interact with the vehicle model in different ways. The ScenarioSimulation
+is a transient discrete-time simulation that involves a driver, telemetry, and a
+vehicle control unit in addition to the vehicle model, as seen below.
+
+### Scenario Simulation (Transient)
+![scenario_sim.png](docs/scenario_sim.png)
+
+There's also a SteadyStateSim that iteratively guesses states where the vehicle is
+stable, and uses them to construct a performance envelope and other metrics.
+
+### Steady-State Simulation (Solver)
+![steady_state_sim.png](docs/steady_state_sim.png)
+
+The performance envelope can then be used in the competition simulation
+to predict lap times and dynamic event scores.
 
 ## Style
 
-(formatting, structure...)
+For formatting, just use Ctrl+Alt+L to reformat in PyCharm.

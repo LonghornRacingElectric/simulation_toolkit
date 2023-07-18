@@ -1,14 +1,14 @@
 # Simulation for 2023-24 Competition Year
 
-To help predict the effects of certain design choices.
+To help predict the effects of certain design decisions.
 
 ## How to use
 
 ### Installation
 
-1. Install Python probably
-2. Install Pycharm too
-3. Install dependencies
+1. Install [PyCharm Community Edition](https://www.jetbrains.com/pycharm/download/). Scroll down for the free version!
+2. (other dependencies will go here once they're added)
+3. Open **workspace.py** in PyCharm.
 
 ### Simulate a scenario
 
@@ -40,4 +40,4 @@ vroom
 
 ### Aero
 
-crack
+woosh

@@ -1,6 +1,3 @@
-# TODO transient sim
-from time import sleep
-
 from sim.model_parameters.cars.car import Car
 from sim.model_parameters.drivers.driver import Driver
 from sim.model_parameters.telemetry.telemetry import Telemetry
