@@ -5,7 +5,8 @@ from sim.model_parameters.telemetry.telemetry import Telemetry
 class LadyLuckTelemetry(Telemetry):
     def __init__(self):
         super().__init__()
-        self.model_name = "Lady Luck Telemetry System"
+        self._model_name = "Lady Luck Telemetry System"
+
         self.data_delay = ConstantParameter(0)
         self.accelerometer_rate = ConstantParameter(100)
         self.accelerometer_variance = ConstantParameter(0.1)

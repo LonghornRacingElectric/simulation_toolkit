@@ -2,10 +2,14 @@ from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
 
 
-def integrate(state: StateVector, state_dot: StateDotVector, dt: float) -> StateVector:
-    next_state = StateVector()
+class TimeIntegrator:
+    def __init__(self, time_step: float):
+        self.time_step = time_step
 
-    # simple euler's method
-    next_state.velocity = state.velocity + (state_dot.acceleration * dt)
+    def eval(self, state: StateVector, state_dot: StateDotVector) -> StateVector:
+        next_state = StateVector()
 
-    return next_state
+        # simple euler's method
+        next_state.velocity = state.velocity + (state_dot.acceleration * self.time_step)
+
+        return next_state

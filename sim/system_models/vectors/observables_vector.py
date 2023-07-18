@@ -1,7 +1,7 @@
 from sim.system_models.vectors.vector import Vector
 
 
-class ObservablesOutVector(Vector):
+class ObservablesVector(Vector):
     def __init__(self):
         super().__init__()
 

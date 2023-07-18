@@ -1,4 +1,9 @@
+from sim.model_parameters.parameters.parameter import Parameter
 
-class ConstantParameter:
+
+class ConstantParameter(Parameter):
     def __init__(self, val: float = 0):
         self.val = val
+
+    def get(self):
+        return self.val

@@ -11,10 +11,12 @@ CSV file, from a list of points, or from a Python function.
 
 from typing import Callable
 
+from sim.model_parameters.parameters.parameter import Parameter
+
 
 # TODO implement
 
-class CurveParameter:
+class CurveParameter(Parameter):
     def __init__(self, from_csv: str = None, from_function: Callable[[float], float] = None,
                  from_points: list[tuple[float, float]] = None):
         if from_csv:
@@ -26,6 +28,10 @@ class CurveParameter:
         else:
             pass
 
-    def sample(self, x: float):
+    def _sample(self, x: float):
         y = x
         return y
+
+    # returns a function
+    def get(self):
+        return self._sample

@@ -1,16 +1,39 @@
+from collections import defaultdict
+
+from sim.model_parameters.parameters.parameter import Parameter
+
 
 class ModelParameters:
     def __init__(self):
-        self._parameters: dict[str, type] = {}
-        self.model_type: str = "Abstract Model"
-        self.model_name: str = ""
-
-    def _validate_parameters(self):
-        for pname, ptype in self._parameters.items():
-            if not hasattr(self, pname):  # TODO replace prints with logging system
-                print(f"{self.model_type} \"{self.model_name}\" is missing parameter {pname} ({ptype.__name__}).")
-            elif type(getattr(self, pname)) != ptype:
-                print(f"{self.model_type} \"{self.model_name}\" parameter {pname} should be a {ptype.__name__}.")
+        self._model_type: str = "Abstract Model"
+        self._model_name: str = ""
+        self._parameters_locked = False
+        self._parameters_set_count = defaultdict(int)
 
     def __contains__(self, parameter_name: str):
-        return parameter_name in self._parameters.keys()
+        return hasattr(self, parameter_name)
+
+    def __setattr__(self, key: str, value):
+        if key[0] == "_":
+            super().__setattr__(key, value)
+            return
+        if not isinstance(value, Parameter):
+            raise Exception(f"{self._model_type} \"{self._model_name}\" was passed {key} = {value}, "
+                            + "which isn't a valid parameter type.")
+        super().__setattr__(key, value)
+        self._parameters_set_count[key] += 1
+
+    def __getattribute__(self, key: str):
+        if key[0] == "_":
+            return super().__getattribute__(key)
+        if self._parameters_set_count[key] < 2:
+            if self._parameters_set_count[key] == 0:
+                raise Exception(f"{self._model_type} \"{self._model_name}\" was asked for parameter \"{key}\", "
+                                + "but it doesn't exist.")
+            else:
+                raise Exception(f"{self._model_type} \"{self._model_name}\" was asked for parameter \"{key}\", "
+                                + "but it hasn't been set.")
+        return super().__getattribute__(key).get()
+
+    def _lock(self):
+        self._parameters_locked = True
