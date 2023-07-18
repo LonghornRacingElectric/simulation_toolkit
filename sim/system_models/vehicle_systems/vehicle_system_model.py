@@ -1,4 +1,3 @@
-# TODO implement
 from abc import abstractmethod
 
 from sim.model_parameters.cars.car import Car

@@ -41,6 +41,12 @@ stable, and uses them to construct a performance envelope and other metrics.
 The performance envelope can then be used in the competition simulation
 to predict lap times and dynamic event scores.
 
+Finally, the **sim/system_models/** package is where the actual model components
+that update state are stored. These are the models that are used by the simulation
+classes, and they are given their respective parameters (from **workspace.py**
+for example) on initialization. The systems also have an **eval()** method, which
+usually accepts an input vector and returns an output vector.
+
 ## Style
 
 For formatting, just use Ctrl+Alt+L to reformat in PyCharm.
