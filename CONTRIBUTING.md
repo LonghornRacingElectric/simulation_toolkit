@@ -25,21 +25,23 @@ Note that some parameters can even be functions using the CurveParameter class,
 like a battery's voltage as a function of charge.
 
 The **sim/simulations/** package contains a few different kinds of simulations
-that interact with the vehicle model in different ways. The ScenarioSimulation
-is a transient discrete-time simulation that involves a driver, telemetry, and a
+that interact with the vehicle model in different ways. The TransientSimulation
+is a discrete-time simulation that involves a driver, telemetry, and a
 vehicle control unit in addition to the vehicle model, as seen below.
 
-### Scenario Simulation (Transient)
-![scenario_sim.png](docs/scenario_sim.png)
+### Transient Simulation (Integrator)
+![scenario_sim.png](docs/transient_sim.png)
 
-There's also a SteadyStateSim that iteratively guesses states where the vehicle is
-stable, and uses them to construct a performance envelope and other metrics.
+There's also a SteadyStateSimulation that iteratively guesses states where the
+vehicle is stable, and uses them to construct a performance envelope and other
+metrics.
 
 ### Steady-State Simulation (Solver)
 ![steady_state_sim.png](docs/steady_state_sim.png)
 
 The performance envelope can then be used in the competition simulation
-to predict lap times and dynamic event scores.
+to predict lap times and dynamic event scores. It can also be used as a guide
+for the driver model in the transient simulation.
 
 Finally, the **sim/system_models/** package is where the actual model components
 that update state are stored. These are the models that are used by the simulation

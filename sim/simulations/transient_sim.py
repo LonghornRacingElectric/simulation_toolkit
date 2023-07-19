@@ -11,7 +11,7 @@ from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vehicle_systems.vehicle_model import VehicleModel
 
 
-class ScenarioSimulation:
+class TransientSimulation:
     def __init__(self, duration: float, time_step: float, car: Car, driver: Driver,
                  telemetry: Telemetry, vcu: VehicleControlUnit):
         self.vehicle = VehicleModel(car)

@@ -10,7 +10,7 @@ from sim.model_parameters.drivers.ben_huff import BenHuff
 from sim.model_parameters.parameters.constant_parameter import ConstantParameter
 from sim.model_parameters.telemetry.lady_luck_telemetry import LadyLuckTelemetry
 from sim.model_parameters.vcu.lady_luck_vcu import LadyLuckVcu
-from sim.simulations.scenario_sim import ScenarioSimulation
+from sim.simulations.transient_sim import TransientSimulation
 
 # create parameter models
 car = LadyLuck()
@@ -19,7 +19,7 @@ telemetry = LadyLuckTelemetry()
 vcu = LadyLuckVcu()
 
 # simulate scenario
-sim = ScenarioSimulation(duration=2, time_step=0.01, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
+sim = TransientSimulation(duration=2, time_step=0.01, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
 sim.run()
 
 # simulate competition
