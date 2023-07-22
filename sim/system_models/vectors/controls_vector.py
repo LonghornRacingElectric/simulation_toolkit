@@ -8,3 +8,4 @@ class ControlsVector(Vector):
         self.torque_request = 0
         self.brake_pedal_pressure = 0
         self.steering_angle = 0
+        self.cooling_percent = 0

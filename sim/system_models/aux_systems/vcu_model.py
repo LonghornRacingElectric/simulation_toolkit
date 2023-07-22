@@ -21,7 +21,7 @@ class VehicleControlUnitModel:
         out = ControlsVector()
 
         # TODO replace temp shit example with call to C++ backend
-        out.torque_request = driver_controls.accel_pedal_pct * self.car.motor_max_torque
+        out.torque_request = driver_controls.accel_pedal_pct * 230
 
         if self.parameters.traction_control_enabled:
             out.brake_pedal_pressure = driver_controls.brake_pedal_pct * 200

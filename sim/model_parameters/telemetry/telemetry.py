@@ -11,6 +11,7 @@ class Telemetry(ModelParameters):
         self.data_delay = ConstantParameter()
         self.accelerometer_rate = ConstantParameter()
         self.accelerometer_variance = ConstantParameter()
+        self.accelerometer_precision = ConstantParameter()
         self.wheelspeed_rate = ConstantParameter()
         self.wheelspeed_variance = ConstantParameter()
         self.wheelspeed_precision = ConstantParameter()

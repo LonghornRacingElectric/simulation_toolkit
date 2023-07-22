@@ -20,6 +20,9 @@ class ModelParameters:
         if not isinstance(value, Parameter):
             raise Exception(f"{self._model_type} \"{self._model_name}\" was passed {key} = {value}, "
                             + "which isn't a valid parameter type.")
+        if self._parameters_locked and self._parameters_set_count[key] == 0:
+            raise Exception(f"{self._model_type} \"{self._model_name}\" tried to set parameter \"{key}\", "
+                            + "but it doesn't exist.")
         super().__setattr__(key, value)
         self._parameters_set_count[key] += 1
 
