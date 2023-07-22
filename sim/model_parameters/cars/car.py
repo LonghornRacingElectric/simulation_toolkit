@@ -19,11 +19,13 @@ class Car(ModelParameters):
         # TODO cooling from infrared radiation??
 
         # ----- Battery -----
-        self.hv_battery_capacity = ConstantParameter()  # [J]
-        self.hv_battery_open_circuit_voltage = CurveParameter()  # [V] = f(SoC [J])
-        self.hv_battery_internal_resistance = CurveParameter()  # [R] = f(SoC [J], temp [C])
+        self.hv_battery_capacity = ConstantParameter()  # [As]
+        self.hv_battery_nominal_voltage = ConstantParameter()  # [V]
+        self.hv_battery_open_circuit_voltage = CurveParameter()  # [V] = f(SoC [As])
+        self.hv_battery_internal_resistance = CurveParameter()  # [R] = f(SoC [As], temp [C])
         self.hv_battery_thermal_resistance = ConstantParameter()  # [C/W]
-        self.lv_battery_capacity = ConstantParameter()  # [J]
+        self.lv_battery_capacity = ConstantParameter()  # [As]
+        self.lv_system_constant_power_draw = ConstantParameter()  # [W]
         self.has_dcdc = ToggleParameter()  # [true/false]
         self.dcdc_efficiency = ConstantParameter()  # [%]
 
@@ -31,8 +33,7 @@ class Car(ModelParameters):
         self.coolant_amount = ConstantParameter()  # [kg]
         self.coolant_flow_rate = ConstantParameter()  # [kg/s]
         self.coolant_thermal_resistance = ConstantParameter()  # [C/W]
-        self.cooling_constant_power = ConstantParameter()  # [W]
-        self.cooling_variable_power = ConstantParameter()  # [W]
+        self.cooling_power_draw = CurveParameter()  # [W] = f(cooling [%])
 
         # ----- Drivetrain -----
         self.power_limit = ConstantParameter()  # [W]
