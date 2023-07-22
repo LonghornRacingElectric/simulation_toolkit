@@ -9,8 +9,6 @@ from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 
 
-# TODO this entire thing is temporary for testing, do not actually use
-
 class PowertrainModel(VehicleSystemModel):
     def __init__(self):
         super().__init__()
@@ -28,7 +26,7 @@ class PowertrainModel(VehicleSystemModel):
             "inverter_temperature",
             "motor_temperature",
             "coolant_temperature",
-            "v_long",
+            # "v_long",  # this will be for cooling from external airflow later
         ]
 
         self.state_out = [
@@ -39,6 +37,7 @@ class PowertrainModel(VehicleSystemModel):
             "inverter_net_heat",
             "motor_net_heat",
             "coolant_net_heat",
+
             "applied_torque_fl",
             "applied_torque_fr",
             "applied_torque_rl",
@@ -46,27 +45,49 @@ class PowertrainModel(VehicleSystemModel):
         ]
 
         self.observables_out = [
-            "available_torque"
+            "hv_battery_open_circuit_voltage",
+            "hv_battery_terminal_voltage",
+            "lv_battery_open_circuit_voltage",
+            "lv_battery_terminal_voltage",
         ]
+
+    # TODO multi-motor configurations
+    # TODO cooling from airflow (function of vehicle velocity)
+    # TODO diff?
+    # TODO cooling from infrared radiation??
 
     def eval(self, car: Car, controls_in: ControlsVector, state_in: StateVector,
              state_out: StateDotVector, observables_out: ObservablesVector):
 
         lv_system_power_out = car.lv_system_constant_power_draw + car.cooling_power_draw(controls_in.cooling_percent)
-        # TODO cooling calculations
-        hv_battery_cooling = 0
-        inverter_cooling = 0
-        motor_cooling = 0
+        hv_battery_cooling, hv_battery_cooling_from_coolant = self._calculate_cooling()
+        inverter_cooling, inverter_cooling_from_coolant = self._calculate_cooling()
+        motor_cooling, motor_cooling_from_coolant = self._calculate_cooling()
+        coolant_cooling = 0
+        coolant_heating = hv_battery_cooling_from_coolant + inverter_cooling_from_coolant + motor_cooling_from_coolant
 
-        available_torque = car.motor_peak_torque(state_in.motor_rpm)
-        possible_current = min(available_torque / car.motor_torque_current_factor, car.motor_peak_current)
-        possible_power = car.hv_battery_nominal_voltage * possible_current
-        max_power = min(possible_power, car.power_limit)
-        max_torque_from_power_limit = max_power / state_in.motor_rpm
+        hv_battery_open_circuit_voltage = car.hv_battery_open_circuit_voltage(state_in.hv_battery_charge)
+        hv_battery_internal_resistance = (
+            car.hv_battery_internal_resistance(state_in.hv_soc, state_in.hv_battery_temperature))
 
-        motor_torque = min(controls_in.torque_request, available_torque, max_torque_from_power_limit)
-        motor_current = max(motor_torque / car.motor_torque_current_factor, car.motor_peak_current)
-        # TODO investigate relationship between voltage and motor torque
+        motor_torque = 0
+        motor_current = 0
+        motor_back_emf = state_in.motor_rpm / car.motor_kv
+
+        if controls_in.torque_request > 0:
+            available_voltage = hv_battery_open_circuit_voltage - motor_back_emf
+            available_current = available_voltage / (car.motor_winding_resistance + hv_battery_internal_resistance)
+            rated_torque = car.motor_peak_torque(state_in.motor_rpm)
+
+            possible_current = min(rated_torque / car.motor_kt, car.motor_peak_current, available_current)
+            possible_power = car.hv_battery_nominal_voltage * possible_current
+            available_power = min(possible_power, car.power_limit)
+            available_torque = available_power / state_in.motor_rpm
+
+            motor_torque = min(controls_in.torque_request, rated_torque, available_torque)
+            motor_current = motor_torque / car.motor_kt
+        elif controls_in.torque_request < 0 and car.regen_enabled:
+            pass  # TODO regen!!
 
         motor_power_out = motor_torque * state_in.motor_rpm
         inverter_power_out = motor_power_out / car.motor_efficiency(motor_torque, state_in.motor_rpm)
@@ -75,27 +96,44 @@ class PowertrainModel(VehicleSystemModel):
         hv_battery_power_out += car.has_dcdc * (lv_system_power_out / car.dcdc_efficiency)
         lv_battery_power_out = (not car.has_dcdc) * lv_system_power_out
 
-        hv_battery_open_circuit_voltage = car.hv_battery_open_circuit_voltage(state_in.hv_battery_charge)
-        hv_battery_internal_resistance = \
-            car.hv_battery_internal_resistance(state_in.hv_soc, state_in.hv_battery_temperature)
-        hv_battery_current = self._mini_solve_hv_battery_current(hv_battery_power_out, hv_battery_open_circuit_voltage,
-                                                                 hv_battery_internal_resistance)
-        # TODO what if hv_battery_current is less than motor_current??
-
+        hv_battery_current = self._calculate_battery_current(hv_battery_power_out, hv_battery_open_circuit_voltage,
+                                                             hv_battery_internal_resistance)
         hv_battery_voltage_drop = hv_battery_internal_resistance * hv_battery_current
         hv_battery_terminal_voltage = hv_battery_open_circuit_voltage - hv_battery_voltage_drop
+        if hv_battery_current < motor_current:
+            raise Exception("matthew sucks at math and should never touch code again")
+
+        lv_battery_open_circuit_voltage = car.lv_battery_open_circuit_voltage(state_in.lv_battery_charge)
+        lv_battery_current = self._calculate_battery_current(lv_battery_power_out, lv_battery_open_circuit_voltage,
+                                                             car.lv_battery_internal_resistance)
+        lv_battery_voltage_drop = car.lv_battery_internal_resistance * lv_battery_current
+        lv_battery_terminal_voltage = lv_battery_open_circuit_voltage - lv_battery_voltage_drop
 
         hv_battery_heat_loss = hv_battery_voltage_drop * hv_battery_current
         inverter_heat_loss = hv_battery_power_out - inverter_power_out
         motor_heat_loss = inverter_power_out - motor_power_out
 
+        state_out.hv_battery_current = hv_battery_current
+        state_out.lv_battery_current = lv_battery_current
+        state_out.motor_torque = motor_torque
         state_out.hv_battery_net_heat = hv_battery_heat_loss - hv_battery_cooling
         state_out.inverter_net_heat = inverter_heat_loss - inverter_cooling
         state_out.motor_net_heat = motor_heat_loss - motor_cooling
+        state_out.coolant_net_heat = coolant_heating - coolant_cooling
+        state_out.applied_torque_fl = 0
+        state_out.applied_torque_fr = 0
+        state_out.applied_torque_bl = motor_torque / car.drivetrain_efficiency / 2  # no diff lmao
+        state_out.applied_torque_br = motor_torque / car.drivetrain_efficiency / 2
+
+        observables_out.hv_battery_open_circuit_voltage = hv_battery_open_circuit_voltage
+        observables_out.hv_battery_terminal_voltage = hv_battery_terminal_voltage
+        observables_out.lv_battery_open_circuit_voltage = lv_battery_open_circuit_voltage
+        observables_out.lv_battery_terminal_voltage = lv_battery_terminal_voltage
+        # TODO add more observables from the existing variables
 
 
-    def _mini_solve_hv_battery_current(self, hv_battery_power: float, hv_battery_open_circuit_voltage: float,
-                                       hv_battery_internal_resistance: float) -> float:
+    def _calculate_battery_current(self, battery_power: float, battery_open_circuit_voltage: float,
+                                   battery_internal_resistance: float) -> float:
         """
         solves for current given power output, open circuit voltage, and internal resistance
 
@@ -108,16 +146,18 @@ class PowertrainModel(VehicleSystemModel):
 
         i = (-v_oc +/- sqrt(v_oc**2 - 4*r*p)))/(-2r)
         i = (v_oc +/- sqrt(v_oc**2 - 4*r*p)))/(2r)
-        i = v_oc/(2r) +/- sqrt(v_oc**2 - 4*r*p)/(2r)
-        i = a +/- b (and we only want the smaller one, the larger one is extraneous)
+
+        we only want the smaller i, the larger one is extraneous
         """
         # TODO rethink this with regen, as power will be negative and some sign changes will be necessary
 
-        a = hv_battery_open_circuit_voltage / 2 / hv_battery_internal_resistance
-        discriminant = (hv_battery_open_circuit_voltage * hv_battery_open_circuit_voltage
-                        - 4 * hv_battery_internal_resistance * hv_battery_power)
+        discriminant = (battery_open_circuit_voltage * battery_open_circuit_voltage
+                        - 4 * battery_internal_resistance * battery_power)
         if discriminant < 0:
             raise Exception("too much current! not sure what to do now. maybe try not flooring it bruh")
-        b = math.sqrt(discriminant) / 2 / hv_battery_internal_resistance
-        i = a - b
+        i = (battery_open_circuit_voltage - math.sqrt(discriminant)) / 2 / battery_internal_resistance
         return i
+
+    def _calculate_cooling(self) -> (float, float):
+        # TODO cooling calculations!!
+        return 0, 0

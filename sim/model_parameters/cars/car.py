@@ -13,18 +13,16 @@ class Car(ModelParameters):
         # ======================
         # ===== Powertrain =====
         # ======================
-        # TODO multi-motor configurations
-        # TODO cooling from airflow (function of vehicle velocity)
-        # TODO diff?
-        # TODO cooling from infrared radiation??
 
         # ----- Battery -----
         self.hv_battery_capacity = ConstantParameter()  # [As]
         self.hv_battery_nominal_voltage = ConstantParameter()  # [V]
         self.hv_battery_open_circuit_voltage = CurveParameter()  # [V] = f(SoC [As])
-        self.hv_battery_internal_resistance = CurveParameter()  # [R] = f(SoC [As], temp [C])
+        self.hv_battery_internal_resistance = CurveParameter()  # [Ohms] = f(SoC [As], temp [C])
         self.hv_battery_thermal_resistance = ConstantParameter()  # [C/W]
         self.lv_battery_capacity = ConstantParameter()  # [As]
+        self.lv_battery_open_circuit_voltage = CurveParameter()  # [V] = f(SoC [As])
+        self.lv_battery_internal_resistance = ConstantParameter()  # [Ohms]
         self.lv_system_constant_power_draw = ConstantParameter()  # [W]
         self.has_dcdc = ToggleParameter()  # [true/false]
         self.dcdc_efficiency = ConstantParameter()  # [%]
@@ -36,10 +34,13 @@ class Car(ModelParameters):
         self.cooling_power_draw = CurveParameter()  # [W] = f(cooling [%])
 
         # ----- Drivetrain -----
+        self.regen_enabled = ToggleParameter()  # [true/false]
         self.power_limit = ConstantParameter()  # [W]
         self.motor_peak_torque = CurveParameter()  # [Nm] = f(RPM [RPM])
         self.motor_peak_current = ConstantParameter()  # [A]
-        self.motor_torque_current_factor = ConstantParameter()  # [Nm/A]
+        self.motor_winding_resistance = ConstantParameter()  # [Ohms]
+        self.motor_kt = ConstantParameter()  # [Nm/A]
+        self.motor_kv = ConstantParameter()  # [RPM/Vp]
         self.motor_efficiency = CurveParameter()  # [%] = f(torque [Nm], RPM [RPM])
         self.motor_thermal_resistance = ConstantParameter()  # [C/W]
         self.drivetrain_efficiency = ConstantParameter()  # [%]

@@ -9,20 +9,20 @@ from sim.system_models.vectors.state_dot_vector import StateDotVector
 
 class VehicleSystemModel:
 
-    """
-    These lists tell the simulation orchestrator which inputs/outputs to pass in and out of the systems.
-    Aka mux/demux handled automatically.
-    """
     def __init__(self):
+        """
+        These lists tell the simulation orchestrator which inputs/outputs to pass in and out of the systems.
+        Aka mux/demux handled automatically.
+        """
         self.controls_in: list[str] = []
         self.state_in: list[str] = []
         self.state_out: list[str] = []
         self.observables_out: list[str] = []
 
-    """
-    Note that input and output vectors are passed as parameters to the function. There is no return value.
-    """
     @abstractmethod
     def eval(self, car: Car, controls_in: ControlsVector, state_in: StateVector,
              state_out: StateDotVector, observables_out: ObservablesVector):
+        """
+        Note that input and output vectors are passed as parameters to the function. There is no return value.
+        """
         pass
