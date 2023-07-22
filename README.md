@@ -41,3 +41,7 @@ vroom
 ### Aero
 
 woosh
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md)
