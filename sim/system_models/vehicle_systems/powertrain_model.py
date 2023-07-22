@@ -14,24 +14,54 @@ class PowertrainModel(VehicleSystemModel):
         super().__init__()
 
         self.controls_in = [
-            "torque_request"
+            "torque_request",
+            "cooling_percent",
         ]
 
-        self.state_in = []
+        self.state_in = [
+            "hv_soc",
+            "lv_soc",
+            "v_long",
+            "motor_rpm",
+            "hv_battery_temperature",
+            "inverter_temperature",
+            "motor_temperature",
+            "coolant_temperature",
+        ]
 
         self.state_out = [
-            "acceleration"
+            "applied_torque_fl",
+            "applied_torque_fr",
+            "applied_torque_rl",
+            "applied_torque_rr",
         ]
 
         self.observables_out = [
-            "torque"
+            "available_torque"
         ]
 
-    def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_in_vector: StateVector,
-             state_out_vector: StateDotVector, observables_out_vector: ObservablesVector):
+    def eval(self, car: Car, controls_in: ControlsVector, state_in: StateVector,
+             state_out: StateDotVector, observables_out: ObservablesVector):
 
-        torque = controls_vector.torque_request  # monkey physics, pls disregard
-        acceleration = torque / vehicle_parameters.wheel_radius / vehicle_parameters.mass
+        hv_battery_open_circuit_voltage = car.hv_battery_open_circuit_voltage(state_in.hv_soc)
+        hv_battery_internal_resistance = \
+            car.hv_battery_internal_resistance(state_in.hv_soc, state_in.hv_battery_temperature)
 
-        state_out_vector.acceleration = acceleration
-        observables_out_vector.torque = torque
+        available_torque = car.motor_peak_torque(state_in.motor_rpm)
+        max_current = min(available_torque / car.motor_torque_current_factor, car.motor_peak_current)
+        hv_battery_terminal_voltage = hv_battery_open_circuit_voltage - hv_battery_internal_resistance *
+
+        motor_torque = min(available_torque, controls_in.torque_request, ____)
+
+        # TODO also consider max power requirement
+
+        # motor_current = torque_command / car.motor_torque_current_factor
+        # inverter_current = motor_current / car.motor_efficiency(torque_command, state_in.motor_rpm)
+        # battery_current = inverter_current / car.inverter_efficiency
+
+        motor_power_out = motor_torque * state_in.motor_rpm
+        inverter_power_out = motor_power_out / car.motor_efficiency(motor_torque, state_in.motor_rpm)
+        battery_power_out = inverter_power_out / car.inverter_efficiency
+
+        # TODO figure out voltage relationship
+

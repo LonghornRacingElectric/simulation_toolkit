@@ -23,6 +23,6 @@ class VehicleSystemModel:
     Note that input and output vectors are passed as parameters to the function. There is no return value.
     """
     @abstractmethod
-    def eval(self, vehicle_parameters: Car, controls_in_vector: ControlsVector, state_in_vector: StateVector,
-             state_out_vector: StateDotVector, observables_out_vector: ObservablesVector):
+    def eval(self, car: Car, controls_in: ControlsVector, state_in: StateVector,
+             state_out: StateDotVector, observables_out: ObservablesVector):
         pass

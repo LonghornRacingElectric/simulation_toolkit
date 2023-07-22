@@ -35,3 +35,6 @@ class CurveParameter(Parameter):
     # returns a function
     def get(self):
         return self._sample
+
+    def is_set(self) -> bool:
+        return False  # TODO fix

@@ -153,3 +153,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# user
+libs/vcu-core-2024
+# TODO this ^ is temp until i figure out submodules
