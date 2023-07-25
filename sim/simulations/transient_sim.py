@@ -18,7 +18,7 @@ class TransientSimulation:
         self.driver = DriverModel(driver)
         self.telemetry = TelemetryModel(telemetry)
         self.vcu = VehicleControlUnitModel(car, vcu)
-        self.time_integrator = TimeIntegrator(time_step)
+        self.time_integrator = TimeIntegrator(time_step, car)
 
         self.duration = duration
         self.time_step = time_step

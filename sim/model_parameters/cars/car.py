@@ -29,9 +29,12 @@ class Car(ModelParameters):
 
         # ----- Cooling -----
         self.coolant_amount = ConstantParameter()  # [kg]
-        self.coolant_flow_rate = ConstantParameter()  # [kg/s]
         self.coolant_thermal_resistance = ConstantParameter()  # [C/W]
         self.cooling_power_draw = CurveParameter()  # [W] = f(cooling [%])
+        self.coolant_area_cooling = ConstantParameter()  # [m^2]
+        self.coolant_area_hv_battery = ConstantParameter()  # [m^2]
+        self.coolant_area_inverter = ConstantParameter()  # [m^2]
+        self.coolant_area_motor = ConstantParameter()  # [m^2]
 
         # ----- Drivetrain -----
         self.regen_enabled = ToggleParameter()  # [true/false]
@@ -43,8 +46,9 @@ class Car(ModelParameters):
         self.motor_kv = ConstantParameter()  # [RPM/Vp]
         self.motor_efficiency = CurveParameter()  # [%] = f(torque [Nm], RPM [RPM])
         self.motor_thermal_resistance = ConstantParameter()  # [C/W]
-        self.drivetrain_efficiency = ConstantParameter()  # [%]
         self.inverter_efficiency = ConstantParameter()  # [%]
         self.inverter_thermal_resistance = ConstantParameter()  # [C/W]
+        self.drivetrain_efficiency = ConstantParameter()  # [%]
+        self.drivetrain_moment_of_inertia = ConstantParameter()  # [kgm^2]
 
         self._lock()

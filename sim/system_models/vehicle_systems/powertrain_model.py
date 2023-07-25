@@ -60,10 +60,10 @@ class PowertrainModel(VehicleSystemModel):
              state_out: StateDotVector, observables_out: ObservablesVector):
 
         lv_system_power_out = car.lv_system_constant_power_draw + car.cooling_power_draw(controls_in.cooling_percent)
-        hv_battery_cooling, hv_battery_cooling_from_coolant = self._calculate_cooling()
-        inverter_cooling, inverter_cooling_from_coolant = self._calculate_cooling()
-        motor_cooling, motor_cooling_from_coolant = self._calculate_cooling()
-        coolant_cooling = 0
+        hv_battery_cooling, hv_battery_cooling_from_coolant = self._calculate_cooling(0, 0, 0)  # TODO implement
+        inverter_cooling, inverter_cooling_from_coolant = self._calculate_cooling(0, 0, 0)  # TODO implement
+        motor_cooling, motor_cooling_from_coolant = self._calculate_cooling(0, 0, 0)  # TODO implement
+        coolant_cooling = 0  # TODO calculate coolant cooling as a function of fan output
         coolant_heating = hv_battery_cooling_from_coolant + inverter_cooling_from_coolant + motor_cooling_from_coolant
 
         hv_battery_open_circuit_voltage = car.hv_battery_open_circuit_voltage(state_in.hv_battery_charge)
@@ -158,6 +158,6 @@ class PowertrainModel(VehicleSystemModel):
         i = (battery_open_circuit_voltage - math.sqrt(discriminant)) / 2 / battery_internal_resistance
         return i
 
-    def _calculate_cooling(self) -> (float, float):
+    def _calculate_cooling(self, object_temp: float, coolant_temp: float, coolant_area: float) -> (float, float):
         # TODO cooling calculations!!
         return 0, 0
