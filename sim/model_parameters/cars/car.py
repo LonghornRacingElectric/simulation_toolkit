@@ -15,7 +15,7 @@ class Car(ModelParameters):
         # ======================
 
         self.sprung_inertia = ConstantParameter() # kgm^2 (inertia tensor)
-        self.gravity = ConstantParameter() # m/s^2
+        self.accel_gravity = ConstantParameter() # m/s^2
         self.cg_bias = ConstantParameter() # m (percent from front. 0 -> frontmost, 1 -> rearmost)
         self.cg_left = ConstantParameter() # m (percent from left. 0 -> leftmost, 1 -> rightmost)
         self.cg_height = ConstantParameter() # m
@@ -23,10 +23,12 @@ class Car(ModelParameters):
         self.front_track = ConstantParameter() # m
         self.rear_track = ConstantParameter() # m
 
-        self.front_unsprung_mass = ConstantParameter() # kg
-        self.rear_unsprung_mass = ConstantParameter() # kg
+        self.front_unsprung_mass = ConstantParameter() # kg of entire axle
+        self.rear_unsprung_mass = ConstantParameter() # kg of entire axle
         self.driver_mass = ConstantParameter() # kg
         self.mass_sprung = ConstantParameter() # kg
+        self.total_mass = ConstantParameter(self.front_unsprung_mass.get() + self.rear_unsprung_mass.get() + 
+                                            self.driver_mass.get() + self.mass_sprung.get()) # kg
 
         # ======================
         # ===== Suspension =====
@@ -35,15 +37,15 @@ class Car(ModelParameters):
         self.decoupled = ConstantParameter() # boolean
 
         # Decoupled rate inputs
-        self.front_heave_springrate = ConstantParameter() # N/mm^2
+        self.front_bump_springrate = ConstantParameter() # N/mm^2
         self.front_roll_springrate = ConstantParameter() # N/mm^2
-        self.rear_heave_springrate = ConstantParameter() # N/mm^2
+        self.rear_bump_springrate = ConstantParameter() # N/mm^2
         self.rear_roll_springrate = ConstantParameter() # N/mm^2
 
-        self.front_heave_MR = CurveParameter() # unitless
+        self.front_bump_MR = CurveParameter() # unitless
         self.front_roll_MR = CurveParameter() # unitless
 
-        self.rear_heave_MR = CurveParameter() # unitless
+        self.rear_bump_MR = CurveParameter() # unitless
         self.rear_roll_MR = CurveParameter() # unitless
 
         # Coupled rate inputs
@@ -68,18 +70,16 @@ class Car(ModelParameters):
 
         # Kinematics
 
-        self.static_IA = ConstantParameter() # rad, list[float] (FL, FR, RL, RR)
-        self.front_roll_camber_gain = CurveParameter() # deg/rad list[float] (FL, FR, RL, RR)
-        self.front_bump_camber_gain = CurveParameter() # deg/m list[float] (FL, FR, RL, RR)
-        self.rear_roll_camber_gain = CurveParameter() # deg/rad list[float] (FL, FR, RL, RR)
-        self.rear_bump_camber_gain = CurveParameter() # deg/m list[float] (FL, FR, RL, RR)
+        self.static_IAs = ConstantParameter() # rad, list[float] (FL, FR, RL, RR)
+        self.roll_IA_gain = CurveParameter() # deg/rad list[float] (FL, FR, RL, RR)
+        self.heave_IA_gain = CurveParameter() # deg/m list[float] (FL, FR, RL, RR)
 
         self.front_KPI = ConstantParameter() # rad
         self.rear_KPI = ConstantParameter() # rad
         self.front_caster = ConstantParameter() # rad
         self.rear_caster = ConstantParameter() # rad
 
-        self.toe = ConstantParameter() # rad, list[float] (FL, FR, RL, RR)
+        self.toe_angles = ConstantParameter() # rad, list[float] (FL, FR, RL, RR)
         self.front_bump_steer = CurveParameter() # rad/m
         self.front_roll_steer = CurveParameter() # rad/rad
         self.rear_bump_steer = CurveParameter() # rad/m

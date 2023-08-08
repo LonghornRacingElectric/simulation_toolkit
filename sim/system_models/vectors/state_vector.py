@@ -14,3 +14,14 @@ class StateVector(Vector):
         self.inverter_temperature = 0
         self.motor_temperature = 0
         self.coolant_temperature = 0
+        
+        self.heave = 0
+        self.pitch = 0
+        self.roll = 0
+        self.lateral_accel = 0
+        self.long_accel = 0
+        self.yaw_accel = 0
+        
+        self.body_slip = 0
+        self.steered_angle = 0
+        self.velocity = 0
