@@ -11,10 +11,6 @@ import numpy as np
 
 # tire_force * tire_radius = braking_torque + motor torque
 
-# using d'Alambert: braking_torque + motor_torque - tire_force(SR, FZ, IA) * tire_radius = 0
-
-# braking torque is always negative. motor torque is always positive (assuming no regen)
-
 
 class TireModel(VehicleSystemModel):
     def __init__(self):
