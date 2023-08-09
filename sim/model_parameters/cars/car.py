@@ -37,20 +37,20 @@ class Car(ModelParameters):
         self.decoupled = ConstantParameter() # boolean
 
         # Decoupled rate inputs
-        self.front_bump_springrate = ConstantParameter() # N/mm^2
-        self.front_roll_springrate = ConstantParameter() # N/mm^2
-        self.rear_bump_springrate = ConstantParameter() # N/mm^2
-        self.rear_roll_springrate = ConstantParameter() # N/mm^2
+        self.front_heave_springrate = ConstantParameter() # N/m
+        self.front_roll_springrate = ConstantParameter() # N/m
+        self.rear_heave_springrate = ConstantParameter() # N/m
+        self.rear_roll_springrate = ConstantParameter() # N/m
 
-        self.front_bump_MR = CurveParameter() # unitless
+        self.front_heave_MR = CurveParameter() # unitless
         self.front_roll_MR = CurveParameter() # unitless
 
-        self.rear_bump_MR = CurveParameter() # unitless
+        self.rear_heave_MR = CurveParameter() # unitless
         self.rear_roll_MR = CurveParameter() # unitless
 
         # Coupled rate inputs
-        self.front_springrate = ConstantParameter() # N/mm^2
-        self.rear_springrate = ConstantParameter() # N/mm^2
+        self.front_springrate = ConstantParameter() # N/m
+        self.rear_springrate = ConstantParameter() # N/m
 
         self.front_ARB_rate = ConstantParameter() # Nm/rad
         self.rear_ARB_rate = ConstantParameter() # Nm/rad
@@ -87,6 +87,13 @@ class Car(ModelParameters):
 
         self.front_roll_center_height = CurveParameter() # m
         self.rear_roll_center_height = CurveParameter() # m
+
+        self.rack_clevis_to_kingpin_y = ConstantParameter() # m
+        self.rack_clevis_to_kingpin_x = ConstantParameter() # m
+        self.tie_linkage_length = ConstantParameter() # m
+        self.steering_arm = ConstantParameter() # m
+        self.c_factor = ConstantParameter() # m
+
 
         # Tires
 

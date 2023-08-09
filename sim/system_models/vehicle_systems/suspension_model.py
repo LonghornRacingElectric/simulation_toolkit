@@ -7,8 +7,9 @@ from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vehicle_systems.tire_model import TireModel
 
-import math
 import numpy as np
+# RIP
+from scipy.optimize import fsolve
 
 # All coords with respect to SAE J670
 class SuspensionModel(VehicleSystemModel):
@@ -55,7 +56,8 @@ class SuspensionModel(VehicleSystemModel):
         vehicle_pitch = state_vector.pitch
         vehicle_roll = state_vector.roll
         # Slip angle params
-        adj_steering_angles = self._get_adj_steering([state_vector.steered_angle, state_vector.steered_angle, 0, 0], vehicle_parameters.toe_angles.get())
+        steered_angles = self._get_steered_angles(vehicle_parameters, state_vector.steered_angle)
+        adj_steering_angles = self._get_adj_steering([steered_angles[0], steered_angles[1], 0, 0], vehicle_parameters.toe_angles.get())
         toe_angles = vehicle_parameters.toe_angles.get()
         yaw_rate = self._get_yaw_vel(state_vector.lateral_accel, self._get_IMF_vel(state_vector.velocity, state_vector.body_slip))
         vehicle_velocity = self._get_IMF_vel(state_vector.velocity, state_vector.body_slip)
@@ -72,8 +74,9 @@ class SuspensionModel(VehicleSystemModel):
         slip_angles = self._get_SA(vehicle_velocity = vehicle_velocity, adj_steering_angles = adj_steering_angles, 
                                    toe_angles = toe_angles, tire_position = [0, 0, 0], yaw_rate = yaw_rate)
         
-        inclination_angles = self._get_IA(adj_steering_angles = adj_steering_angles, heave = vehicle_heave, pitch = vehicle_pitch, 
-                                          roll = vehicle_roll, static_IA = static_IAs, roll_IA_gain = roll_IA_gain, heave_IA_gain = heave_IA_gain)
+        inclination_angles = self._get_IA(vehicle_parameters = vehicle_parameters, adj_steering_angles = adj_steering_angles, 
+                                          heave = vehicle_heave, pitch = vehicle_pitch, roll = vehicle_roll, static_IA = static_IAs, 
+                                          roll_IA_gain = roll_IA_gain, heave_IA_gain = heave_IA_gain)
         
         tire_output = []
         for i in range(self.tires):
@@ -86,16 +89,16 @@ class SuspensionModel(VehicleSystemModel):
     def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
 
         # Heave contribution
-        F_heave_rate_spring = vehicle_parameters.front_bump_springrate.get() / vehicle_parameters.front_bump_MR.get()**2
+        F_heave_rate_spring = vehicle_parameters.front_heave_springrate.get() / vehicle_parameters.front_heave_MR.get()**2
         F_heave_rate_tire = vehicle_parameters.front_tire_vertical_rate.get() * 2
         F_heave_rate = F_heave_rate_spring * F_heave_rate_tire / (F_heave_rate_spring + F_heave_rate_tire)  
 
-        R_heave_rate_spring = vehicle_parameters.rear_bump_springrate.get() / vehicle_parameters.rear_bump_MR.get()**2
+        R_heave_rate_spring = vehicle_parameters.rear_heave_springrate.get() / vehicle_parameters.rear_heave_MR.get()**2
         R_heave_rate_tire = vehicle_parameters.rear_tire_vertical_rate.get() * 2
         R_heave_rate = R_heave_rate_spring * R_heave_rate_tire / (R_heave_rate_spring + R_heave_rate_tire)
 
-        F_force_heave = F_heave_rate * heave
-        R_force_heave = R_heave_rate * heave
+        front_heave = heave
+        rear_heave = heave
 
         # Pitch contribution
 
@@ -104,9 +107,25 @@ class SuspensionModel(VehicleSystemModel):
         Correlate to force using front and rear heave rates
         """
 
+        # I'm gonna do these about the CG right now.. I'll fix this later
+        # I'm also starting to doubt this method of superposition. It seemed reasonable at roll and heave, but
+        # pitch seems very suspect
+
+        front_track_to_CG = vehicle_parameters.wheelbase.get() * vehicle_parameters.cg_bias.get()
+        rear_track_to_CG = vehicle_parameters.wheelbase.get() * (1 - vehicle_parameters.cg_bias.get())
+
+        front_pitch_displacement = front_track_to_CG * np.tan(pitch) * (1 if pitch > 0 else -1)
+        rear_pitch_displacement = rear_track_to_CG * np.tan(pitch) * (1 if pitch < 0 else -1)
+
+        F_adjusted_heave = front_heave + front_pitch_displacement
+        R_adjusted_heave = rear_heave + rear_pitch_displacement
+
+        F_force_heave = F_heave_rate * F_adjusted_heave
+        R_force_heave = R_heave_rate * R_adjusted_heave
+
         # Roll contribution
         F_roll_rate_spring = 1/2 * vehicle_parameters.front_track.get()**2 * (vehicle_parameters.front_roll_springrate.get() / vehicle_parameters.front_roll_MR.get()**2)
-        F_roll_rate_tire = 1/2 * vehicle_parameters.front_track.get()**2 * vehicle_parameters..get() front_tire_vertical_rate
+        F_roll_rate_tire = 1/2 * vehicle_parameters.front_track.get()**2 * vehicle_parameters.front_tire_vertical_rate.get()
         F_roll_rate = F_roll_rate_spring * F_roll_rate_tire / (F_roll_rate_spring + F_roll_rate_tire)
 
         R_roll_rate_spring = 1/2 * vehicle_parameters.rear_track.get()**2 * (vehicle_parameters.rear_roll_springrate.get() / vehicle_parameters.rear_roll_MR.get()**2)
@@ -119,9 +138,6 @@ class SuspensionModel(VehicleSystemModel):
 
         F_roll_tire_force = F_roll_moment / vehicle_parameters.front_track.get()
         R_roll_tire_force = R_roll_moment / vehicle_parameters.rear_track.get()
-
-        # Check on this. Do load transfer calc and use method above to solve for tire force due to roll. I believe tire force / 2
-        # will match the load transfer. Plsss, this better be true :')
         
         # Load transfers
         FL_delta = -F_roll_tire_force / 2 + F_force_heave / 2
@@ -145,10 +161,23 @@ class SuspensionModel(VehicleSystemModel):
     def _get_FZ_coupled(self, heave: float, pitch: float, roll: float) -> list[float]:
         return
     
-    def _get_steered_angles(self, ackermann_percent: float, steered_angle: float):
-        # ackermann_percent = (inner - outer) / inner * 100
+    def _get_steered_angles(self, vehicle_parameters: Car, steered_angle: float):
+        # ackermann_percent = (inner - outer) / inner
+        r1 = vehicle_parameters.steering_arm.get()
+        r2 = vehicle_parameters.tie_linkage_length.get()
+        L3 = vehicle_parameters.rack_clevis_to_kingpin_y.get()
+        L4 = vehicle_parameters.rack_clevis_to_kingpin_x.get()
 
+        delta_rack = vehicle_parameters.c_factor.get() * steered_angle / (2 * np.pi)
+        rack_displacements = [delta_rack, -delta_rack]
+
+        wheel_angles = []
+        for delta_rack in rack_displacements:
+            theta1, theta2 = fsolve(lambda thetas: [r1 * np.cos(thetas[0]) + r2 * np.cos(thetas[1]) + L3 - delta_rack, r1 * np.sin(thetas[0]) + r2 * np.sin(thetas[1]) - L4], (0, 0))
+            wheel_angles.append(theta1 % (2 * np.pi) if steered_angle > 0 else -1 * theta1 % (2 * np.pi))
     
+        return wheel_angles
+
     def _get_SA(self, vehicle_velocity: list[float], adj_steering_angles: list[float], toe_angles: list[float], 
                 tire_position: list[float], yaw_rate: float):
 
@@ -164,14 +193,17 @@ class SuspensionModel(VehicleSystemModel):
 
         return slip_angles
     
-    def _get_IA(self, adj_steering: list[float], heave: float, pitch: float, roll: float, static_IA: list[float],
+    def _get_IA(self, vehicle_parameters: Car, adj_steering: list[float], heave: float, pitch: float, roll: float, static_IA: list[float],
                 roll_IA_gain: list[float], heave_IA_gain: list[float]) -> float:
         
-        # Convert pitch into adjusted heave
-        # Just heave and roll after that
+        front_track_to_CG = vehicle_parameters.wheelbase.get() * vehicle_parameters.cg_bias.get()
+        rear_track_to_CG = vehicle_parameters.wheelbase.get() * (1 - vehicle_parameters.cg_bias.get())
 
-        front_adjusted_heave = heave + 0
-        rear_adjusted_heave = heave + 0
+        front_pitch_displacement = front_track_to_CG * np.tan(pitch) * (1 if pitch > 0 else -1)
+        rear_pitch_displacement = rear_track_to_CG * np.tan(pitch) * (1 if pitch < 0 else -1)
+
+        front_adjusted_heave = heave + front_pitch_displacement
+        rear_adjusted_heave = heave + rear_pitch_displacement
 
         # TODO Implement these later
 
