@@ -25,7 +25,6 @@ class TireModel(VehicleSystemModel):
             "slip_ratio",
             "normal_force",
             "inclination_angle"
-            # Could add pressure and velocity. Probably not necessary tho
         ]
 
         self.state_out = [

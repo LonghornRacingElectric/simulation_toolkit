@@ -21,7 +21,6 @@ class StateVector(Vector):
         self.lateral_accel = 0
         self.long_accel = 0
         self.yaw_accel = 0
-        
+
         self.body_slip = 0
-        self.steered_angle = 0
         self.velocity = 0

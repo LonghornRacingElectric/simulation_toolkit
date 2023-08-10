@@ -9,3 +9,5 @@ class ObservablesVector(Vector):
         self.hv_battery_terminal_voltage = 0
         self.lv_battery_open_circuit_voltage = 0
         self.lv_battery_terminal_voltage = 0
+
+        self.tire_forces = [0, 0, 0, 0]
