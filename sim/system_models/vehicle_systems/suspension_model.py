@@ -48,6 +48,15 @@ class SuspensionModel(VehicleSystemModel):
 
     def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_vector: StateVector,
              state_dot_vector: StateDotVector, observables_vector: ObservablesVector):
+        
+        # Tires
+        front_FY_coeffs = vehicle_parameters.front_tire_coeff_Fy.get()
+        front_FX_coeffs = vehicle_parameters.front_tire_coeff_Fx.get()
+        rear_FY_coeffs = vehicle_parameters.rear_tire_coeff_Fy.get()
+        rear_FX_coeffs = vehicle_parameters.rear_tire_coeff_Fx.get()
+
+        coeff_array = [(front_FY_coeffs, front_FX_coeffs), (front_FY_coeffs, front_FX_coeffs), 
+                       (rear_FY_coeffs, rear_FX_coeffs), (rear_FY_coeffs, rear_FX_coeffs)]
 
         # Heave, pitch, and roll
         vehicle_heave = state_vector.heave
@@ -65,6 +74,8 @@ class SuspensionModel(VehicleSystemModel):
         roll_IA_gain = vehicle_parameters.roll_IA_gain.get()
         heave_IA_gain = vehicle_parameters.heave_IA_gain.get()
 
+        print(steered_angles)
+
         
         # Get FZ, SA, IA
         normal_loads = self._get_FZ_decoupled(vehicle_parameters = vehicle_parameters, heave = vehicle_heave, 
@@ -77,6 +88,16 @@ class SuspensionModel(VehicleSystemModel):
                                           heave = vehicle_heave, pitch = vehicle_pitch, roll = vehicle_roll, static_IA = static_IAs, 
                                           roll_IA_gain = roll_IA_gain, heave_IA_gain = heave_IA_gain)
         
+        print(f'Normal loads: {normal_loads}')
+        print(f'Slip angles: {slip_angles}')
+        print(f'Inclination angles: {inclination_angles}')
+
+        # Set fit coeffs
+        for i in range(len(coeff_array)):
+            self.tires[i].lat_coeffs = coeff_array[i][0]
+            self.tires[i].long_coeffs = coeff_array[i][1]
+        
+        # Get tire output
         for i in range(len(self.tires)):
             tire_forces = self.tires[i]._get_comstock_forces(SR = 0, SA = slip_angles[i], FZ = normal_loads[i], IA = inclination_angles[i])
             observables_vector.tire_forces[i] = tire_forces
@@ -160,21 +181,15 @@ class SuspensionModel(VehicleSystemModel):
         return
     
     def _get_steered_angles(self, vehicle_parameters: Car, steered_angle: float):
-        # ackermann_percent = (inner - outer) / inner
-        r1 = vehicle_parameters.steering_arm.get()
-        r2 = vehicle_parameters.tie_linkage_length.get()
-        L3 = vehicle_parameters.rack_clevis_to_kingpin_y.get()
-        L4 = vehicle_parameters.rack_clevis_to_kingpin_x.get()
+        outer_angle = 0.28166 * steered_angle - 0.00983
+        inner_angle = 0.24888 * steered_angle + 0.0010
 
-        delta_rack = vehicle_parameters.c_factor.get() * steered_angle / (2 * np.pi)
-        rack_displacements = [delta_rack, -delta_rack]
-
-        wheel_angles = []
-        for delta_rack in rack_displacements:
-            theta1, theta2 = fsolve(lambda thetas: [r1 * np.cos(thetas[0]) + r2 * np.cos(thetas[1]) + L3 - delta_rack, r1 * np.sin(thetas[0]) + r2 * np.sin(thetas[1]) - L4], (0, 0))
-            wheel_angles.append(theta1 % (2 * np.pi) if steered_angle > 0 else -1 * theta1 % (2 * np.pi))
-    
-        return wheel_angles
+        if steered_angle == 0:
+            return [0, 0]
+        elif steered_angle > 0:
+            return [inner_angle, outer_angle]
+        else:
+            return [outer_angle, inner_angle]
 
     def _get_SA(self, vehicle_velocity: list[float], adj_steering_angles: list[float], toe_angles: list[float], 
                 tire_position: list[float], yaw_rate: float):

@@ -75,7 +75,7 @@ class Car:
 
         # Kinematics
 
-        self.static_IAs = ConstantParameter([1, -1, 1, -1]) # rad, list[float] (FL, FR, RL, RR)
+        self.static_IAs = ConstantParameter([1 * 0.01745, -1 * 0.01745, 1 * 0.01745, -1 * 0.01745]) # rad, list[float] (FL, FR, RL, RR)
         self.roll_IA_gain = ConstantParameter([0, 0, 0, 0]) # deg/rad list[float] (FL, FR, RL, RR), but make these curve parameters once we add functionality
         self.heave_IA_gain = ConstantParameter([0, 0, 0, 0]) # deg/m list[float] (FL, FR, RL, RR), but make these curve parameters once we add functionality
 
@@ -101,11 +101,10 @@ class Car:
 
 
         # Tires
-
-        self.front_tire_coeff_Fy = ConstantParameter() # coeffs
-        self.front_tire_coeff_Fx = ConstantParameter() # coeffs
-        self.rear_tire_coeff_Fy = ConstantParameter() # coeffs
-        self.rear_tire_coeff_Fx = ConstantParameter() # coeffs
+        self.front_tire_coeff_Fy = ConstantParameter([0.349, -0.00115, 8.760, 730.300, 1745.322, 0.0139, -0.000277, 1.02025435, 0, 0, 0, 0, 0, 0, 0, 0.00362, -0.0143, -0.0116]) # coeffs
+        self.front_tire_coeff_Fx = ConstantParameter([0.46024966176377113, 4000.509873697152, 1097.1712081460967, 202.18848632159495, 100.8812198037175, -0.2557010431649166, 0.3066955241461764, 0.011822770671297778, -1.9521015799737094, 0, 0, 0, 0, 0]) # coeffs
+        self.rear_tire_coeff_Fy = ConstantParameter([0.349, -0.00115, 8.760, 730.300, 1745.322, 0.0139, -0.000277, 1.02025435, 0, 0, 0, 0, 0, 0, 0, 0.00362, -0.0143, -0.0116]) # coeffs
+        self.rear_tire_coeff_Fx = ConstantParameter([0.46024966176377113, 4000.509873697152, 1097.1712081460967, 202.18848632159495, 100.8812198037175, -0.2557010431649166, 0.3066955241461764, 0.011822770671297778, -1.9521015799737094, 0, 0, 0, 0, 0]) # coeffs
 
         self.front_tire_vertical_rate = ConstantParameter(725 * 175.127) # N/m, but make these curve parameters once we add functionality
         self.rear_tire_vertical_rate = ConstantParameter(725 * 175.127) # N/m, but make these curve parameters once we add functionality

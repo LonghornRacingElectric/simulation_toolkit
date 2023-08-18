@@ -16,36 +16,9 @@ class TireModel(VehicleSystemModel):
     def __init__(self):
         super().__init__()
 
-        self.controls_in = [
-
-        ]
-
-        self.state_in = [
-            "slip_angle",
-            "slip_ratio",
-            "normal_force",
-            "inclination_angle"
-        ]
-
-        self.state_out = [
-            "tire_FX",
-            "tire_FY",
-            "tire_FZ"
-
-            # Will implement all moment calculations at some point. I believe the MF 5.2 paper covers this
-
-            # "tire_MX",
-            # "tire_MY",
-            # "tire_MZ"
-        ]
-
-        self.observables_out = [
-
-        ]
-
-    def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_in_vector: StateVector,
-             state_out_vector: StateDotVector, observables_out_vector: ObservablesVector):
-        pass
+        self.lat_coeffs: list[float] = []
+        self.long_coeffs: list[float] = []
+        self.tire_scaling = 0.55
 
     # Redo cornering stiffness implementation
     def _get_comstock_forces(self, SR, SA, FZ, IA):
@@ -63,11 +36,10 @@ class TireModel(VehicleSystemModel):
         if SA > 0:
             FY_adj = FY_adj * -1
 
-        return np.array([FX_adj, FY_adj, FZ])
+        return [FX_adj, FY_adj, FZ]
     
     # Fits done in a messy way right now. Fix this later.
-    def _lat_pacejka(self, inclination_angle:float, normal_force:float, slip_angle:float, tire_scaling: float, 
-                         lateral_coeffs: list[float]):
+    def _lat_pacejka(self, inclination_angle:float, normal_force:float, slip_angle:float):
         
         if normal_force == 0:
             return 0
@@ -75,7 +47,7 @@ class TireModel(VehicleSystemModel):
         slip_degrees = slip_angle * 180 / math.pi # degrees
         inclination_degrees = inclination_angle * 180 / math.pi # degrees
         
-        [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17] = lateral_coeffs
+        [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17] = self.lat_coeffs
         C = a0
         D = normal_force * (a1 * normal_force + a2) * (1 - a15 * inclination_degrees ** 2)
 
@@ -87,7 +59,7 @@ class TireModel(VehicleSystemModel):
         V = a11 * normal_force + a12 + (a13 * normal_force + a14) * inclination_degrees * normal_force
         Bx1 = B * (slip_degrees + H)
         
-        return tire_scaling * (D * math.sin(C * math.atan(Bx1 - E * (Bx1 - math.atan(Bx1)))) + V)
+        return self.tire_scaling * (D * math.sin(C * math.atan(Bx1 - E * (Bx1 - math.atan(Bx1)))) + V)
     
     def _long_pacejka(self, normal_force:float, SR:float):
         if normal_force <= 0:
@@ -95,7 +67,7 @@ class TireModel(VehicleSystemModel):
         try:
             SR = SR * 100
             FZ = normal_force / 1000
-            [b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13] = self.longitudinal_coeffs
+            [b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13] = self.long_coeffs
             C = b0
             D = FZ * (b1 * FZ + b2)
 
