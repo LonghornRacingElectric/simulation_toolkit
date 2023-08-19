@@ -26,7 +26,7 @@ class DriverModel:
 
         # TODO replace this shit
         if time > 1:
-            out.accel_pedal_pct = 100
+            out.accel_pedal_pct = 1
         else:
             out.accel_pedal_pct = 0
 

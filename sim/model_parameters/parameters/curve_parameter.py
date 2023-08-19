@@ -48,9 +48,14 @@ class CurveParameter(Parameter):
         self.x_arr = np.array(x_list)
         self.y_arr = np.array(y_list)
 
+        if not np.all(np.diff(self.x_arr) >= 0):
+            raise Exception(f"The x values are out of order in CSV file {csv_path}.")
+
     def _import_from_function(self, function: Callable[[float], float], x_min: float, x_max: float, x_samples: int):
         if (x_min is None) or (x_max is None) or (x_samples is None):
             raise Exception("If creating a CurveParameter from a function, provide x_min, x_max, and x_samples")
+        if x_min > x_max:
+            raise Exception("Why is x_min greater than x_max??")
         x_list, y_list = [], []
         for i in range(x_samples):
             x = x_min + ((x_max - x_min) * (i / (x_samples - 1)))
@@ -63,6 +68,9 @@ class CurveParameter(Parameter):
     def _import_from_points(self, points: list[tuple[float, float]]):
         self.x_arr = np.array([row[0] for row in points])
         self.y_arr = np.array([row[1] for row in points])
+
+        if not np.all(np.diff(self.x_arr) >= 0):
+            raise Exception(f"The x values are out of order in the points provided to this CurveParameter.")
 
     def _sample(self, x: float):
         return np.interp(x, self.x_arr, self.y_arr)

@@ -1,4 +1,3 @@
-# eval(vehicle controls, state)
 from sim.model_parameters.cars.car import Car
 from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
