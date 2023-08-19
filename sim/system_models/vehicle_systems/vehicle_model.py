@@ -16,7 +16,7 @@ class VehicleModel:
             SuspensionModel()
         ]
 
-    def eval(self, controls: ControlsVector, state: StateVector) -> StateDotVector:
+    def eval(self, controls: ControlsVector, state: StateVector) -> (StateDotVector, ObservablesVector):
         state_dot: StateDotVector = StateDotVector()
         observables: ObservablesVector = ObservablesVector()
 
@@ -33,6 +33,4 @@ class VehicleModel:
             state_dot.confirm_expectations()
             observables.confirm_expectations()
 
-        # TODO log state and observables!
-
-        return state_dot
+        return state_dot, observables

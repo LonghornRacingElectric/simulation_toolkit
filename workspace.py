@@ -23,6 +23,7 @@ sim = TransientSimulation(duration=5, time_step=0.01, car=car, driver=driver, te
 sim.run()
 sim.plot_state("motor_rpm")
 sim.plot_state_dot("hv_battery_current")
+sim.plot_observable("hv_battery_terminal_voltage")
 
 # simulate competition
 # TODO

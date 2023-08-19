@@ -96,8 +96,10 @@ class LadyLuck(Car):
         self.rear_roll_steer = ConstantParameter(
             0)  # rad/rad, but make these curve parameters once we add functionality
 
-        self.front_roll_center_height = CurveParameter(0)  # m TODO temp 0
-        self.rear_roll_center_height = CurveParameter(0)  # m TODO temp 0
+        self.front_roll_center_height = CurveParameter(from_function=lambda x: 0,
+                                                       x_min=0, x_max=1, x_samples=20)  # m TODO temp 0
+        self.rear_roll_center_height = CurveParameter(from_function=lambda x: 0,
+                                                      x_min=0, x_max=1, x_samples=20)  # m TODO temp 0
 
         self.rack_clevis_to_kingpin_y = ConstantParameter(16.115 * 0.0254)  # m
         self.rack_clevis_to_kingpin_x = ConstantParameter(2.203 * 0.0254)  # m
@@ -144,7 +146,7 @@ class LadyLuck(Car):
         self.lv_battery_internal_resistance = ConstantParameter(0.15)  # [Ohms]
         self.lv_system_constant_power_draw = ConstantParameter(50)  # [W]
         self.has_dcdc = ToggleParameter(False)  # [true/false]
-        self.dcdc_efficiency = ConstantParameter(90)  # [%]
+        self.dcdc_efficiency = ConstantParameter(0.90)  # [%]
 
         # ----- Cooling -----
         self.coolant_amount = ConstantParameter(0)  # [kg]
@@ -165,10 +167,10 @@ class LadyLuck(Car):
         self.motor_winding_resistance = ConstantParameter(0.00706)  # [Ohms]
         self.motor_kt = ConstantParameter(0.61)  # [Nm/A]
         self.motor_induced_voltage = ConstantParameter(14.753)  # [RPM/Vp]
-        self.motor_efficiency = CurveParameter(from_function=lambda t: 95,
+        self.motor_efficiency = CurveParameter(from_function=lambda t: 0.95,
                                                x_min=0, x_max=230, x_samples=20)  # [%] = f(torque [Nm], RPM [RPM])
         self.motor_thermal_resistance = ConstantParameter(0)  # [C/W]
-        self.inverter_efficiency = ConstantParameter(90)  # [%]
+        self.inverter_efficiency = ConstantParameter(0.90)  # [%]
         self.inverter_thermal_resistance = ConstantParameter(0)  # [C/W]
-        self.drivetrain_efficiency = ConstantParameter(97)  # [%]
+        self.drivetrain_efficiency = ConstantParameter(0.97)  # [%]
         self.drivetrain_moment_of_inertia = ConstantParameter(1)  # [kgm^2] TODO lots of ptn are placeholders

@@ -73,6 +73,7 @@ class PowertrainModel(VehicleSystemModel):
 
         motor_torque = 0
         motor_back_emf = state_in.motor_rpm / car.motor_induced_voltage
+        motor_efficiency = car.motor_efficiency(motor_torque)
 
         if controls_in.torque_request > 0:
             available_voltage = hv_battery_open_circuit_voltage - motor_back_emf
@@ -81,7 +82,7 @@ class PowertrainModel(VehicleSystemModel):
 
             possible_current = min(rated_torque / car.motor_kt, car.motor_peak_current, available_current)
             possible_power = car.hv_battery_nominal_voltage * possible_current
-            available_power = min(possible_power, car.power_limit)
+            available_power = min(possible_power, car.power_limit * car.inverter_efficiency * motor_efficiency)
             available_torque = available_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
 
             motor_torque = min(controls_in.torque_request, rated_torque, available_torque)
@@ -89,7 +90,7 @@ class PowertrainModel(VehicleSystemModel):
             raise NotImplementedError("regen not implemented yet, sorry :(")  # TODO regen!!
 
         motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
-        inverter_power_out = motor_power_out / car.motor_efficiency(motor_torque)  # , state_in.motor_rpm)
+        inverter_power_out = motor_power_out / motor_efficiency  # , state_in.motor_rpm)
         hv_battery_power_out = inverter_power_out / car.inverter_efficiency
 
         hv_battery_power_out += car.has_dcdc * (lv_system_power_out / car.dcdc_efficiency)
@@ -127,6 +128,9 @@ class PowertrainModel(VehicleSystemModel):
         observables_out.lv_battery_open_circuit_voltage = lv_battery_open_circuit_voltage
         observables_out.lv_battery_terminal_voltage = lv_battery_terminal_voltage
         # TODO add more observables from the existing variables
+
+        if controls_in.torque_request > 0:
+            pass
 
     def _calculate_battery_current(self, battery_power: float, battery_open_circuit_voltage: float,
                                    battery_internal_resistance: float) -> float:

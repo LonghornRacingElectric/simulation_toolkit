@@ -44,26 +44,30 @@ class TransientSimulation:
             driver_controls = self.driver.eval(time, state, state_dot)
             sensor_data = self.telemetry.eval(state, state_dot)
             vehicle_controls = self.vcu.eval(driver_controls, sensor_data)
-            state_dot = self.vehicle.eval(vehicle_controls, state)
+            state_dot, observables = self.vehicle.eval(vehicle_controls, state)
             state = self.time_integrator.eval(state, state_dot)
 
             time += self.time_step
 
-            self.data.append((time, copy.copy(state), copy.copy(state_dot), driver_controls, sensor_data, vehicle_controls))
+            self.data.append((time, copy.copy(state), copy.copy(state_dot), driver_controls,
+                              sensor_data, vehicle_controls, observables))
 
             if driver_controls.e_stop:
                 break
 
-    def plot_state(self, state_name: str):
+    def _plot(self, i: int, name: str):
         x = np.array([t[0] for t in self.data])
-        y = np.array([getattr(t[1], state_name) for t in self.data])
+        y = np.array([getattr(t[i], name) for t in self.data])
         plt.scatter(x, y)
         plt.plot(x, y)
         plt.show()
+        pass
 
-    def plot_state_dot(self, state_name: str):
-        x = np.array([t[0] for t in self.data])
-        y = np.array([getattr(t[2], state_name) for t in self.data])
-        plt.scatter(x, y)
-        plt.plot(x, y)
-        plt.show()
+    def plot_state(self, name: str):
+        self._plot(1, name)
+
+    def plot_state_dot(self, name: str):
+        self._plot(2, name)
+
+    def plot_observable(self, name: str):
+        self._plot(6, name)
