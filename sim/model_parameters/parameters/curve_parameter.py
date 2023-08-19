@@ -16,8 +16,6 @@ import csv
 from sim.model_parameters.parameters.parameter import Parameter
 
 
-# TODO implement
-
 class CurveParameter(Parameter):
     def __init__(self, from_csv: str = None, from_function: Callable[[float], float] = None,
                  from_points: list[tuple[float, float]] = None,
@@ -54,8 +52,8 @@ class CurveParameter(Parameter):
         if (x_min is None) or (x_max is None) or (x_samples is None):
             raise Exception("If creating a CurveParameter from a function, provide x_min, x_max, and x_samples")
         x_list, y_list = [], []
-        for i in range(x_samples + 1):
-            x = x_min + ((x_max - x_min) * (i / x_samples))
+        for i in range(x_samples):
+            x = x_min + ((x_max - x_min) * (i / (x_samples - 1)))
             y = function(x)
             x_list.append(x)
             y_list.append(y)
