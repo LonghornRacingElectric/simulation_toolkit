@@ -114,11 +114,16 @@ class SuspensionModel(VehicleSystemModel):
 
         self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
 
-        print(observables_vector.aero_forces)
-        print(observables_vector.aero_moments)
+        aero_forces = np.array(observables_vector.aero_forces)
+        aero_moments = np.array(observables_vector.aero_moments)
 
-        total_forces = [x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)]
-        total_moments = [x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)]
+        sus_forces = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)])
+        sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
+
+        gravity_forces = np.array([0, 0, -vehicle_parameters.total_mass * vehicle_parameters.accel_gravity])
+
+        total_forces = aero_forces + sus_forces + gravity_forces
+        total_moments = aero_moments + sus_moments
 
         observables_vector.forces_NTB = np.matmul(np.linalg.inv(coords.rotation_z(state_vector.body_slip)), total_forces)
         observables_vector.moments_NTB = np.matmul(np.linalg.inv(coords.rotation_z(state_vector.body_slip)), total_moments)
