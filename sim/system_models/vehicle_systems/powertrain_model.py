@@ -7,6 +7,7 @@ from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
+from sim.util.math.conversions import rpm_to_rads
 
 
 class PowertrainModel(VehicleSystemModel):
@@ -68,11 +69,11 @@ class PowertrainModel(VehicleSystemModel):
 
         hv_battery_open_circuit_voltage = car.hv_battery_open_circuit_voltage(state_in.hv_battery_charge)
         hv_battery_internal_resistance = (
-            car.hv_battery_internal_resistance(state_in.hv_soc, state_in.hv_battery_temperature))
+            car.hv_battery_internal_resistance(state_in.hv_battery_charge))  # , state_in.hv_battery_temperature))
 
         motor_torque = 0
-        motor_current = 0
-        motor_back_emf = state_in.motor_rpm / car.motor_kv
+        motor_back_emf = state_in.motor_rpm / car.motor_induced_voltage
+        motor_efficiency = car.motor_efficiency(motor_torque)
 
         if controls_in.torque_request > 0:
             available_voltage = hv_battery_open_circuit_voltage - motor_back_emf
@@ -81,16 +82,15 @@ class PowertrainModel(VehicleSystemModel):
 
             possible_current = min(rated_torque / car.motor_kt, car.motor_peak_current, available_current)
             possible_power = car.hv_battery_nominal_voltage * possible_current
-            available_power = min(possible_power, car.power_limit)
-            available_torque = available_power / state_in.motor_rpm
+            available_power = min(possible_power, car.power_limit * car.inverter_efficiency * motor_efficiency)
+            available_torque = available_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
 
             motor_torque = min(controls_in.torque_request, rated_torque, available_torque)
-            motor_current = motor_torque / car.motor_kt
         elif controls_in.torque_request < 0 and car.regen_enabled:
-            pass  # TODO regen!!
+            raise NotImplementedError("regen not implemented yet, sorry :(")  # TODO regen!!
 
-        motor_power_out = motor_torque * state_in.motor_rpm
-        inverter_power_out = motor_power_out / car.motor_efficiency(motor_torque, state_in.motor_rpm)
+        motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
+        inverter_power_out = motor_power_out / motor_efficiency  # , state_in.motor_rpm)
         hv_battery_power_out = inverter_power_out / car.inverter_efficiency
 
         hv_battery_power_out += car.has_dcdc * (lv_system_power_out / car.dcdc_efficiency)
@@ -100,8 +100,6 @@ class PowertrainModel(VehicleSystemModel):
                                                              hv_battery_internal_resistance)
         hv_battery_voltage_drop = hv_battery_internal_resistance * hv_battery_current
         hv_battery_terminal_voltage = hv_battery_open_circuit_voltage - hv_battery_voltage_drop
-        if hv_battery_current < motor_current:
-            raise Exception("matthew sucks at math and should never touch code again")
 
         lv_battery_open_circuit_voltage = car.lv_battery_open_circuit_voltage(state_in.lv_battery_charge)
         lv_battery_current = self._calculate_battery_current(lv_battery_power_out, lv_battery_open_circuit_voltage,
@@ -122,8 +120,8 @@ class PowertrainModel(VehicleSystemModel):
         state_out.coolant_net_heat = coolant_heating - coolant_cooling
         state_out.applied_torque_fl = 0
         state_out.applied_torque_fr = 0
-        state_out.applied_torque_bl = motor_torque / car.drivetrain_efficiency / 2  # no diff lmao
-        state_out.applied_torque_br = motor_torque / car.drivetrain_efficiency / 2
+        state_out.applied_torque_bl = motor_torque * car.drivetrain_efficiency / 2  # TODO add diff lmao
+        state_out.applied_torque_br = motor_torque * car.drivetrain_efficiency / 2
 
         observables_out.hv_battery_open_circuit_voltage = hv_battery_open_circuit_voltage
         observables_out.hv_battery_terminal_voltage = hv_battery_terminal_voltage
@@ -131,6 +129,8 @@ class PowertrainModel(VehicleSystemModel):
         observables_out.lv_battery_terminal_voltage = lv_battery_terminal_voltage
         # TODO add more observables from the existing variables
 
+        if controls_in.torque_request > 0:
+            pass
 
     def _calculate_battery_current(self, battery_power: float, battery_open_circuit_voltage: float,
                                    battery_internal_resistance: float) -> float:

@@ -1,4 +1,3 @@
-# eval(vehicle controls, state)
 from sim.model_parameters.cars.car import Car
 from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
@@ -17,7 +16,7 @@ class VehicleModel:
             SuspensionModel()
         ]
 
-    def eval(self, controls: ControlsVector, state: StateVector) -> StateDotVector:
+    def eval(self, controls: ControlsVector, state: StateVector) -> (StateDotVector, ObservablesVector):
         state_dot: StateDotVector = StateDotVector()
         observables: ObservablesVector = ObservablesVector()
 
@@ -34,6 +33,4 @@ class VehicleModel:
             state_dot.confirm_expectations()
             observables.confirm_expectations()
 
-        # TODO log state and observables!
-
-        return state_dot
+        return state_dot, observables

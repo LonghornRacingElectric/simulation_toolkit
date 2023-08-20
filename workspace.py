@@ -19,14 +19,17 @@ telemetry = LadyLuckTelemetry()
 vcu = LadyLuckVcu()
 
 # simulate scenario
-sim = TransientSimulation(duration=2, time_step=0.01, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
+sim = TransientSimulation(duration=5, time_step=0.01, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
 sim.run()
+sim.plot_state("motor_rpm")
+sim.plot_state_dot("hv_battery_current")
+sim.plot_observable("hv_battery_terminal_voltage")
 
 # simulate competition
 # TODO
 
 # modify car parameters
-car.max_torque = ConstantParameter(5)
+car.hv_battery_capacity = ConstantParameter(250000)  # Coulombs
 
 # simulate scenario again
 # TODO

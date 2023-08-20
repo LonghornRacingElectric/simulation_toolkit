@@ -12,10 +12,8 @@ import numpy as np
 # tire_force * tire_radius = braking_torque + motor torque
 
 
-class TireModel(VehicleSystemModel):
+class TireModel:
     def __init__(self):
-        super().__init__()
-
         self.lat_coeffs: list[float] = []
         self.long_coeffs: list[float] = []
         self.tire_scaling = 0.55
