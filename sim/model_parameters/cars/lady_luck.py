@@ -173,3 +173,37 @@ class LadyLuck(Car):
         self.inverter_thermal_resistance = ConstantParameter(0)  # [C/W]
         self.drivetrain_efficiency = ConstantParameter(0.97)  # [%]
         self.drivetrain_moment_of_inertia = ConstantParameter(1)  # [kgm^2] TODO lots of ptn are placeholders
+
+        # ======================
+        # ==== Aerodynamics ====
+        # ======================
+
+        self.air_temperature = ConstantParameter(33.8889) # degrees C
+        self.air_density = ConstantParameter(1.225 - 0.003975 * (self.air_temperature - 15)) # kg/m^3
+        self.ClA_tot = ConstantParameter(4.384)
+        self.CdA_tot = ConstantParameter(1.028)
+        self.CsA_tot = ConstantParameter(5.673)
+        self.CdA0 = ConstantParameter(0.7155) # Drag coeff from non-aero
+        self.static_ride_height = ConstantParameter(0.0762) # m
+        self.CsA0 = ConstantParameter(8.43) # Sideforce coeff from non-aero
+
+        # Distribution of downforce across components
+        self.ClA_dist = ConstantParameter([0.474, 0.289, 0.236]) # [front, undertray, rear]
+        self.CdA_dist = ConstantParameter([0.425, 0.178, 0.396]) # [front, undertray, rear]
+        self.CsA_dist = ConstantParameter([0.666, 0.000, 0.333]) # [front, undertray, rear]
+
+        # Pitch, body_slip, and roll sensitivities,
+        self.p_sens	= ConstantParameter([[[ -15.7,  -10.6], [ -7.5,  -12.5], [0,0]],
+                                         [[  7.39,  -7.19], [ 10.1, -15.15], [0,0]],
+                                         [[ -0.72,  -4.06], [ 2.02,  -5.94], [0,0]]])
+        self.bs_sens = ConstantParameter([[-2.4,   -0.7, 0], [  0.61, 0.89, 0], [-0.96,  0.33, 0]])
+        self.r_sens	= ConstantParameter([[-10.1, -13.1, 0], [-1.37,     0, 0], [-4.24, -2.02, 0]])
+
+        # CoP positions from vehicle origin (CAD)
+        # Front, Undertray and Rear [x , y , z] (Inches)
+        self.CoP = ConstantParameter([[x[0] * 0.0254, x[1] * 0.0254, x[2] * 0.0254] for x in [[23.65,  0, 9.30],
+                                                                                              [-43.5,  0, 7.13],
+                                                                                              [-67.6,  0, 42.91]]])
+
+        # Heave sensitivity regression fitted to undertray data
+        self.h_sens_coefficients = ConstantParameter([[-19.4, 1.89, 0.949],  [15.7, -6.22, 1.27]])

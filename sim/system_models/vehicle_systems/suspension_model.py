@@ -6,6 +6,7 @@ from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vehicle_systems.tire_model import TireModel
+from sim.system_models.vehicle_systems.aero_model import AeroModel
 from sim.util.math import coords
 
 import numpy as np
@@ -18,6 +19,7 @@ class SuspensionModel(VehicleSystemModel):
 
         # Possibly add aero here
         self.tires = [TireModel(), TireModel(), TireModel(), TireModel()]  # FL, FR, RL, RR
+        self.aero = AeroModel()
 
         # Haven't added 4 DOF for axles. Accel/brake pedal will come into play here
         self.controls_in = [
@@ -109,6 +111,11 @@ class SuspensionModel(VehicleSystemModel):
 
             observables_vector.tire_forces_IMF[i] = tire_forces
             observables_vector.tire_moments_IMF[i] = vehicle_centric_moments
+
+        self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
+
+        print(observables_vector.aero_forces)
+        print(observables_vector.aero_moments)
 
         total_forces = [x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)]
         total_moments = [x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)]

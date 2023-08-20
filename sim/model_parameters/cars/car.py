@@ -146,4 +146,34 @@ class Car(ModelParameters):
         self.drivetrain_efficiency = ConstantParameter()  # [%]
         self.drivetrain_moment_of_inertia = ConstantParameter()  # [kgm^2]
 
+        # ======================
+        # ==== Aerodynamics ====
+        # ======================
+
+        self.air_density = ConstantParameter() # kg/m^3
+        self.air_temperature = ConstantParameter() # degrees C
+        self.ClA_tot = ConstantParameter()
+        self.CdA_tot = ConstantParameter()
+        self.CsA_tot = ConstantParameter()
+        self.CdA0 = ConstantParameter() # Drag coeff from non-aero
+        self.static_ride_height = ConstantParameter() # m
+        self.CsA0 = ConstantParameter() # Sideforce coeff from non-aero
+
+        # Distribution of downforce across components
+        self.ClA_dist = ConstantParameter() # [front, undertray, rear]
+        self.CdA_dist = ConstantParameter() # [front, undertray, rear]
+        self.CsA_dist = ConstantParameter() # [front, undertray, rear]
+
+        # Pitch, body_slip, and roll sensitivities,
+        self.p_sens	= ConstantParameter()
+        self.bs_sens = ConstantParameter()
+        self.r_sens	= ConstantParameter()
+
+        # CoP positions from vehicle origin (CAD)
+        # Front, Undertray and Rear [x , y , z] (Inches)
+        self.CoP = ConstantParameter()
+
+        # Heave sensitivity regression fitted to undertray data
+        self.h_sens_coefficients = ConstantParameter()
+
         self._lock()
