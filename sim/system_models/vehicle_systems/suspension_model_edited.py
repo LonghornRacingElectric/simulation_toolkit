@@ -8,6 +8,7 @@ from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vehicle_systems.tire_model import TireModel
 from sim.util.math import coords
 
+from scipy.optimize import fsolve
 import numpy as np
 
 # All coords with respect to SAE J670
@@ -104,77 +105,60 @@ class SuspensionModel(VehicleSystemModel):
         pass
     
     # Top level functions
-    def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
+    # def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
 
-        # Heave contribution
-        F_heave_rate_spring = vehicle_parameters.front_heave_springrate.get() / vehicle_parameters.front_heave_MR.get()**2
-        F_heave_rate_tire = vehicle_parameters.front_tire_vertical_rate.get() * 2
-        F_heave_rate = F_heave_rate_spring * F_heave_rate_tire / (F_heave_rate_spring + F_heave_rate_tire)  
+    #     specific_residual_func = lambda x: self.__find_spring_displacements(x, heave, pitch, roll)
+    #     tire_compression, wheel_displacement = fsolve(specific_residual_func, [0.006, 0.001])
+    #     tire_compression = 0 if tire_compression < 0 else tire_compression
+    #     normal_force = vehicle_parameters.front_tire_vertical_rate.get() * tire_compression
+    #     normal_force = 0 if normal_force < 0 else normal_force
 
-        R_heave_rate_spring = vehicle_parameters.rear_heave_springrate.get() / vehicle_parameters.rear_heave_MR.get()**2
-        R_heave_rate_tire = vehicle_parameters.rear_tire_vertical_rate.get() * 2
-        R_heave_rate = R_heave_rate_spring * R_heave_rate_tire / (R_heave_rate_spring + R_heave_rate_tire)
+    #     return [FL, FR, RL, RR]
 
-        front_heave = heave
-        rear_heave = heave
+    # def __find_spring_displacements(self):
+    #     guess_tire_compression, guess_wheel_displacement = x
 
-        # Pitch contribution
+    #     wheelrate = tire.wheelrate_f(guess_wheel_displacement) 
+    #     tire_stiffness = tire.tire_stiffness_func(guess_tire_compression)
+    #     riderate = (wheelrate * tire_stiffness) / (wheelrate + tire_stiffness) 
 
-        """
-        Need to do this about pitch center. Calculate vertical displacements at the front and rear axle.
-        Correlate to force using front and rear heave rates
-        """
 
-        # I'm gonna do these about the CG right now.. I'll fix this later
-        # I'm also starting to doubt this method of superposition. It seemed reasonable at roll and heave, but
-        # pitch seems very suspect
+    #     ### ~~~ Roll Contribution ~~~ ###
+    #     # TODO: do about roll center
+    #     # TODO: for the tire & spring conversion to roll stiffness, assuming L & R have same stiffness here; seems like an issue
+    #     tire_contribution = tire_stiffness * tire.trackwidth ** 2 / 2 * (1 if tire.is_left_tire else -1)
+    #     spring_contribution = wheelrate * tire.trackwidth ** 2 / 2 * (1 if tire.is_left_tire else -1)
+    #     arb_contribution = tire.arb_stiffness
 
-        front_track_to_CG = vehicle_parameters.wheelbase.get() * vehicle_parameters.cg_bias.get()
-        rear_track_to_CG = vehicle_parameters.wheelbase.get() * (1 - vehicle_parameters.cg_bias.get())
 
-        front_pitch_displacement = front_track_to_CG * np.tan(pitch) * (1 if pitch > 0 else -1)
-        rear_pitch_displacement = rear_track_to_CG * np.tan(pitch) * (1 if pitch < 0 else -1)
-
-        F_adjusted_heave = front_heave + front_pitch_displacement
-        R_adjusted_heave = rear_heave + rear_pitch_displacement
-
-        F_force_heave = F_heave_rate * F_adjusted_heave
-        R_force_heave = R_heave_rate * R_adjusted_heave
-
-        # Roll contribution
-        F_roll_rate_spring = 1/2 * vehicle_parameters.front_track.get()**2 * (vehicle_parameters.front_roll_springrate.get() / vehicle_parameters.front_roll_MR.get()**2)
-        F_roll_rate_tire = 1/2 * vehicle_parameters.front_track.get()**2 * vehicle_parameters.front_tire_vertical_rate.get()
-        F_roll_rate = F_roll_rate_spring * F_roll_rate_tire / (F_roll_rate_spring + F_roll_rate_tire)
-
-        R_roll_rate_spring = 1/2 * vehicle_parameters.rear_track.get()**2 * (vehicle_parameters.rear_roll_springrate.get() / vehicle_parameters.rear_roll_MR.get()**2)
-        R_roll_rate_tire = 1/2 * vehicle_parameters.rear_track.get()**2 * vehicle_parameters.rear_tire_vertical_rate.get()
-        R_roll_rate = R_roll_rate_spring * R_roll_rate_tire / (R_roll_rate_spring + R_roll_rate_tire)
-
-        # roll_moment = tire_force * track_width -> tire_force = roll_moment / track_width
-        F_roll_moment = F_roll_rate * roll
-        R_roll_moment = R_roll_rate * roll
-
-        F_roll_tire_force = F_roll_moment / vehicle_parameters.front_track.get()
-        R_roll_tire_force = R_roll_moment / vehicle_parameters.rear_track.get()
+    #     # ARB in parallel with spring, tire in series with ARB and spring
+    #     roll_stiffness = - ((spring_contribution + arb_contribution) * tire_contribution /
+    #                         ((spring_contribution + arb_contribution) + tire_contribution))
+    #     f_roll = (roll_stiffness * roll) / tire.trackwidth
+    #     x_wheel_roll = (spring_contribution / roll_stiffness) * f_roll / spring_contribution
         
-        # Load transfers
-        FL_delta = -F_roll_tire_force / 2 + F_force_heave / 2
-        FR_delta = F_roll_tire_force / 2 + F_force_heave / 2
-        RL_delta = -R_roll_tire_force / 2 + R_force_heave / 2
-        RR_delta = R_roll_tire_force / 2 + R_force_heave / 2
 
-        # Static weights
-        FL_static = vehicle_parameters.total_mass.get() * vehicle_parameters.accel_gravity.get() * (1 - vehicle_parameters.cg_bias.get()) / 2
-        FR_static = vehicle_parameters.total_mass.get() * vehicle_parameters.accel_gravity.get() * (1 - vehicle_parameters.cg_bias.get()) / 2
-        RL_static = vehicle_parameters.total_mass.get() * vehicle_parameters.accel_gravity.get() * vehicle_parameters.cg_bias.get() / 2
-        RR_static = vehicle_parameters.total_mass.get() * vehicle_parameters.accel_gravity.get() * vehicle_parameters.cg_bias.get() / 2
+    #     ### ~~~ Heave Contribution ~~~ ###
+    #     f_heave = riderate * heave
+    #     x_wheel_heave = f_heave / wheelrate
 
-        FL = FL_static + FL_delta
-        FR = FR_static + FR_delta
-        RL = RL_static + RL_delta
-        RR = RR_static + RR_delta
 
-        return [FL, FR, RL, RR]
+    #     ### ~~~ Pitch Contribution ~~~ ###
+    #     # TODO: implement antisquat & antidive
+    #     # TODO: do about pitch center
+    #     pitch_heave = tire.position[0] * np.sin(pitch)
+    #     f_pitch = riderate * pitch_heave
+    #     x_wheel_pitch = f_pitch / wheelrate
+        
+
+    #     normal_force = f_roll + f_heave + f_pitch
+    #     wheel_displacement = x_wheel_roll + x_wheel_heave + x_wheel_pitch
+    #     tire_compression = normal_force / tire_stiffness
+
+    #     self.logger.log(tire_name + "_tire_f_roll", f_roll)
+    #     self.logger.log(tire_name + "_tire_f_heave", f_heave)
+    #     self.logger.log(tire_name + "_tire_f_pitch", f_pitch)
+    #     return guess_tire_compression - tire_compression, guess_wheel_displacement - wheel_displacement
     
     def _get_FZ_coupled(self, heave: float, pitch: float, roll: float) -> list[float]:
         return
