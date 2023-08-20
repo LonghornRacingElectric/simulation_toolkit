@@ -11,7 +11,7 @@ class LadyLuck(Car):
         # ======= General ======
         # ======================
 
-        self.sprung_inertia = ConstantParameter(0)  # kgm^2 (inertia tensor) TODO temp 0
+        self.sprung_inertia = ConstantParameter([[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]])  # kgm^2 (inertia tensor) TODO temp 0
         self.accel_gravity = ConstantParameter(9.81)  # m/s^2
         self.cg_bias = ConstantParameter(0.52)  # m (percent from front. 0 -> frontmost, 1 -> rearmost)
         self.cg_left = ConstantParameter(0.50)  # m (percent from left. 0 -> leftmost, 1 -> rightmost)
@@ -64,6 +64,9 @@ class LadyLuck(Car):
         self.front_ARB_MR = ConstantParameter(0)  # unitless  TODO temp 0
         self.rear_ARB_MR = ConstantParameter(0)  # unitless  TODO temp 0
 
+        self.front_MR = ConstantParameter(1)
+        self.rear_MR = ConstantParameter(1)
+
         self.front_MR = CurveParameter(from_function=lambda x: 0, x_min=0, x_max=0, x_samples=0)  # unitless  TODO temp 0
         self.rear_MR = CurveParameter(from_function=lambda x: 0, x_min=0, x_max=0, x_samples=0)  # unitless  TODO temp 0
 
@@ -90,11 +93,9 @@ class LadyLuck(Car):
 
         self.toe_angles = ConstantParameter([0, 0, 0, 0])  # rad, list[float] (FL, FR, RL, RR)
         self.front_bump_steer = ConstantParameter(0)  # rad/m, but make these curve parameters once we add functionality
-        self.front_roll_steer = ConstantParameter(
-            0)  # rad/rad, but make these curve parameters once we add functionality
+        self.front_roll_steer = ConstantParameter(0)  # rad/rad, but make these curve parameters once we add functionality
         self.rear_bump_steer = ConstantParameter(0)  # rad/m, but make these curve parameters once we add functionality
-        self.rear_roll_steer = ConstantParameter(
-            0)  # rad/rad, but make these curve parameters once we add functionality
+        self.rear_roll_steer = ConstantParameter(0)  # rad/rad, but make these curve parameters once we add functionality
 
         self.front_roll_center_height = CurveParameter(from_function=lambda x: 0,
                                                        x_min=0, x_max=1, x_samples=20)  # m TODO temp 0
@@ -123,10 +124,8 @@ class LadyLuck(Car):
              -0.2557010431649166, 0.3066955241461764, 0.011822770671297778, -1.9521015799737094, 0, 0, 0, 0,
              0])  # coeffs
 
-        self.front_tire_vertical_rate = ConstantParameter(
-            725 * 175.127)  # N/m, but make these curve parameters once we add functionality
-        self.rear_tire_vertical_rate = ConstantParameter(
-            725 * 175.127)  # N/m, but make these curve parameters once we add functionality
+        self.front_tire_vertical_rate = ConstantParameter(725 * 175.127)  # N/m, but make these curve parameters once we add functionality
+        self.rear_tire_vertical_rate = ConstantParameter(725 * 175.127)  # N/m, but make these curve parameters once we add functionality
 
         # ======================
         # ===== Powertrain =====
