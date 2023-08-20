@@ -16,19 +16,22 @@ class AeroModel(VehicleSystemModel):
         super().__init__()
 
         self.controls_in = [
-
         ]
 
         self.state_in = [
-
+            "velocity",
+            "heave",
+            "pitch",
+            "roll",
+            "body_slip"
         ]
 
         self.state_out = [
-
         ]
 
         self.observables_out = [
-
+            "aero_forces",
+            "aero_moments"
         ]
 
     def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_in_vector: StateVector,
