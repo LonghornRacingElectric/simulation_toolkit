@@ -13,7 +13,7 @@ class VehicleModel:
         self.vehicle_parameters = vehicle_parameters
         self.vehicle_system_models: list[VehicleSystemModel] = [
             PowertrainModel(),
-            SuspensionModel()
+            # SuspensionModel()
         ]
 
     def eval(self, controls: ControlsVector, state: StateVector) -> (StateDotVector, ObservablesVector):

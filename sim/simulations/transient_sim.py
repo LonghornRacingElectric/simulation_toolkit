@@ -69,5 +69,13 @@ class TransientSimulation:
     def plot_state_dot(self, name: str):
         self._plot(2, name)
 
+    def plot_driver_control(self, name: str):
+        self._plot(3, name)
+
+    def plot_sensor(self, name: str):
+        self._plot(4, name)
+
+    def plot_vehicle_control(self, name: str):
+        self._plot(5, name)
     def plot_observable(self, name: str):
         self._plot(6, name)
