@@ -13,7 +13,7 @@ from sim.util.math.conversions import *
 
 class MmmSolver:
 
-    def __init__(self):
+    def __init__(self, mesh=21):
         self.done = False
         self.new_model = SuspensionModel()
         self.test_car = LadyLuck()
@@ -21,8 +21,10 @@ class MmmSolver:
         self.test_state_vector = StateVector()
         self.test_state_dot_vector = StateDotVector()
         self.test_observables_vector = ObservablesVector()
-        self.lat_accels = []
-        self.yaw_accels = []
+
+        self.mesh = mesh
+        self.steered_angle_iso_lines = []
+        self.body_slip_iso_lines = []
 
     def _vehicle_model(self, x, y):
         # Prescribed values
@@ -46,31 +48,59 @@ class MmmSolver:
         return [*self.test_observables_vector.summation_forces, *self.test_observables_vector.summation_moments]
 
     def solve(self):
-        mesh = 21
+        body_slip_sweep = np.linspace(deg_to_rad(-10), deg_to_rad(10), self.mesh)
+        steered_angle_sweep = np.linspace(deg_to_rad(-90), deg_to_rad(90), self.mesh)
 
-        body_slip_sweep = np.linspace(deg_to_rad(-10), deg_to_rad(10), mesh)
-        steered_angle_sweep = np.linspace(deg_to_rad(-90), deg_to_rad(90), mesh)
+        self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
+        self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
 
-        for body_slip in body_slip_sweep:
-            for steered_angle in steered_angle_sweep:
+        for i, body_slip in enumerate(body_slip_sweep):
+            for j, steered_angle in enumerate(steered_angle_sweep):
                 for velocity in [25]:
                     def solve_attempt(x):
                         return self._vehicle_model(x, [body_slip, velocity, steered_angle])
 
                     try:
-                        fsolve_results = fsolve(solve_attempt, np.array([0, 0, 0, 0, 0, 0]), maxfev=1000)
+                        fsolve_results: list[int] = list(fsolve(solve_attempt, np.array([0, 0, 0, 0, 0, 0])))
                     except:
                         continue
 
-                    self.lat_accels.append(fsolve_results[1])
-                    self.yaw_accels.append(fsolve_results[2])
+                    lat_accel = fsolve_results[1]
+                    yaw_accel = fsolve_results[2]
+
+                    self.steered_angle_iso_lines[j][0] = self.test_observables_vector.average_steered_angle
+                    self.steered_angle_iso_lines[i][1][j] = -lat_accel  # TODO double check this is ok
+                    self.steered_angle_iso_lines[i][2][j] = -yaw_accel
+                    self.body_slip_iso_lines[i][0] = body_slip
+                    self.body_slip_iso_lines[j][1][i] = -lat_accel
+                    self.body_slip_iso_lines[j][2][i] = -yaw_accel
 
         self.done = True
 
     def plot(self):
         if not self.done:
             raise Exception("can't plot the MMM before you solve the MMM bruh")
-        plt.scatter(self.lat_accels, self.yaw_accels, s=0.5)
+
+        plt.title("MMM")
         plt.xlim(-25, 25)
-        plt.ylim(-30, 30)
+        plt.ylim(-45, 45)
+        plt.xlabel("Lateral Acceleration (m/s^2)")
+        plt.ylabel("Yaw Acceleration (rad/s^2)")
+        plt.axhline(c="gray", linewidth=0.5)
+        plt.axvline(c="gray", linewidth=0.5)
+
+        mp = self.mesh // 2
+
+        for steered_angle, lat_accels, yaw_accels in self.steered_angle_iso_lines:
+            plt.plot(lat_accels, yaw_accels, c="red", linewidth=0.8)
+            plt.scatter(lat_accels, yaw_accels, s=0.5, c="black")
+
+            text_pos = ((lat_accels[mp] + lat_accels[mp-1])/2 - 0.8, (yaw_accels[mp] + yaw_accels[mp-1])/2 + 1.5)
+            plt.text(text_pos[0], text_pos[1], f'δ = {round(rad_to_deg(steered_angle), 1)}°', fontsize=6, c="red")
+
+        for body_slip, lat_accels, yaw_accels in self.body_slip_iso_lines:
+            plt.plot(lat_accels, yaw_accels, c="blue", linewidth=0.8)
+            text_pos = ((lat_accels[mp] + lat_accels[mp+1])/2 - 1.9, (yaw_accels[mp] + yaw_accels[mp+1])/2)
+            plt.text(text_pos[0], text_pos[1], f'β = {round(rad_to_deg(body_slip))}°', fontsize=6, c="blue")
+
         plt.show()

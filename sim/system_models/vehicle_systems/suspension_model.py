@@ -66,6 +66,7 @@ class SuspensionModel(VehicleSystemModel):
 
         # Slip angle params
         steered_angles = np.array(self._get_steered_angles(vehicle_parameters, controls_vector.steering_angle))
+        observables_vector.average_steered_angle = (steered_angles[0] + steered_angles[1]) / 2
         toe_angles = np.array(vehicle_parameters.toe_angles)
         adjusted_steering_angles = steered_angles + toe_angles
         vehicle_velocity = self._get_IMF_vel(state_vector.velocity, state_vector.body_slip)
@@ -118,13 +119,10 @@ class SuspensionModel(VehicleSystemModel):
 
         observables_vector.raw_tire_forces = tire_outputs
 
-        # self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
+        self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
 
-        # aero_forces = np.array(observables_vector.aero_forces)
-        # aero_moments = np.array(observables_vector.aero_moments)
-
-        aero_forces = 0
-        aero_moments = 0
+        aero_forces = np.array(observables_vector.aero_forces)
+        aero_moments = np.array(observables_vector.aero_moments)
 
         sus_forces = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)])
         sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
@@ -250,8 +248,9 @@ class SuspensionModel(VehicleSystemModel):
         return
 
     def _get_steered_angles(self, vehicle_parameters: Car, steered_angle: float):
-        outer_angle = 0.28166 * abs(steered_angle) - 0.00983
-        inner_angle = 0.24888 * abs(steered_angle) + 0.0010
+        # TODO temporary linear regression, replace with CurveParameter
+        outer_angle = 0.28166 * abs(steered_angle)  # - 0.00983
+        inner_angle = 0.24888 * abs(steered_angle)  # + 0.0010
 
         if steered_angle == 0:
             return [0, 0, 0, 0]

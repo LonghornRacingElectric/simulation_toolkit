@@ -27,3 +27,4 @@ class ObservablesVector(Vector):
         self.inclination_angles = [0, 0, 0, 0]
         self.normal_loads = [0, 0, 0, 0]
         self.raw_tire_forces = [0, 0, 0, 0]
+        self.average_steered_angle = 0
