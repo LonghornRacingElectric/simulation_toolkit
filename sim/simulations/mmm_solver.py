@@ -69,11 +69,11 @@ class MmmSolver:
                     yaw_accel = fsolve_results[2]
 
                     self.steered_angle_iso_lines[j][0] = self.test_observables_vector.average_steered_angle
-                    self.steered_angle_iso_lines[i][1][j] = -lat_accel  # TODO double check this is ok
-                    self.steered_angle_iso_lines[i][2][j] = -yaw_accel
+                    self.steered_angle_iso_lines[i][1][j] = lat_accel
+                    self.steered_angle_iso_lines[i][2][j] = yaw_accel
                     self.body_slip_iso_lines[i][0] = body_slip
-                    self.body_slip_iso_lines[j][1][i] = -lat_accel
-                    self.body_slip_iso_lines[j][2][i] = -yaw_accel
+                    self.body_slip_iso_lines[j][1][i] = lat_accel
+                    self.body_slip_iso_lines[j][2][i] = yaw_accel
 
         self.done = True
 
