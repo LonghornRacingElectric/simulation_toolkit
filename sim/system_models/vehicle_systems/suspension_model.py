@@ -118,10 +118,10 @@ class SuspensionModel(VehicleSystemModel):
 
         observables_vector.raw_tire_forces = tire_outputs
 
-        self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
+        # self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
 
-        aero_forces = np.array(observables_vector.aero_forces)
-        aero_moments = np.array(observables_vector.aero_moments)
+        # aero_forces = np.array(observables_vector.aero_forces)
+        # aero_moments = np.array(observables_vector.aero_moments)
 
         aero_forces = 0
         aero_moments = 0
@@ -161,8 +161,6 @@ class SuspensionModel(VehicleSystemModel):
 
         observables_vector.summation_forces = summation_forces
         observables_vector.summation_moments = summation_moments
-
-        pass
 
     # Top level functions
     def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
@@ -252,11 +250,11 @@ class SuspensionModel(VehicleSystemModel):
         return
 
     def _get_steered_angles(self, vehicle_parameters: Car, steered_angle: float):
-        outer_angle = 0.28166 * steered_angle - 0.00983
-        inner_angle = 0.24888 * steered_angle + 0.0010
+        outer_angle = 0.28166 * abs(steered_angle) - 0.00983
+        inner_angle = 0.24888 * abs(steered_angle) + 0.0010
 
         if steered_angle == 0:
-            return [0, 0]
+            return [0, 0, 0, 0]
         elif steered_angle > 0:
             return [inner_angle, outer_angle, 0, 0]
         else:
