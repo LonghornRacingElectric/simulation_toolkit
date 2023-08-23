@@ -10,6 +10,7 @@ from sim.system_models.vehicle_systems.aero_model import AeroModel
 from sim.util.math import coords
 
 import numpy as np
+from scipy.optimize import fsolve
 
 
 # All coords with respect to SAE J670
@@ -38,6 +39,7 @@ class SuspensionModel(VehicleSystemModel):
         self.state_out = [
         ]
 
+        # Intermediate steps (or extra information)
         self.observables_out = [
             "vehicle_FX",
             "vehicle_FY",
@@ -65,9 +67,9 @@ class SuspensionModel(VehicleSystemModel):
         vehicle_roll = state_vector.roll
 
         # Slip angle params
-        steered_angles = np.array(self._get_steered_angles(vehicle_parameters, controls_vector.steering_angle))
-        toe_angles = np.array(vehicle_parameters.toe_angles)
-        adjusted_steering_angles = steered_angles + toe_angles
+        steered_angles = self._get_steered_angles(vehicle_parameters, controls_vector.steering_angle)
+        toe_angles = vehicle_parameters.toe_angles
+        adjusted_steering_angles = [x + y for x, y in zip(steered_angles, toe_angles)]
         vehicle_velocity = self._get_IMF_vel(state_vector.velocity, state_vector.body_slip)
         yaw_rate = self._get_yaw_vel(state_vector.lateral_accel, vehicle_velocity)
         tire_positions = vehicle_parameters.tire_positions
@@ -110,7 +112,7 @@ class SuspensionModel(VehicleSystemModel):
                                                              IA=inclination_angles[i])
             
             tire_outputs.append([round(x) for x in tire_forces])
-            vehicle_centric_forces = np.matmul(coords.rotation_z(adjusted_steering_angles[i]), tire_forces)
+            vehicle_centric_forces = np.dot(coords.rotation_z(adjusted_steering_angles[i]), tire_forces) 
             vehicle_centric_moments = np.cross(vehicle_centric_forces, tire_positions[i])
 
             observables_vector.tire_forces_IMF[i] = vehicle_centric_forces
@@ -123,8 +125,8 @@ class SuspensionModel(VehicleSystemModel):
         aero_forces = np.array(observables_vector.aero_forces)
         aero_moments = np.array(observables_vector.aero_moments)
 
-        aero_forces = 0
-        aero_moments = 0
+        # aero_forces = 0
+        # aero_moments = 0
 
         sus_forces = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)])
         sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
@@ -134,20 +136,16 @@ class SuspensionModel(VehicleSystemModel):
         total_forces = aero_forces + sus_forces + gravity_forces
         total_moments = aero_moments + sus_moments
 
-        observables_vector.forces_NTB = np.matmul(coords.rotation_z(state_vector.body_slip), total_forces)
-        observables_vector.moments_NTB = np.matmul(coords.rotation_z(state_vector.body_slip), total_moments)
-
-        # observables_vector.forces_NTB = np.matmul((coords.rotation_z(state_vector.body_slip)), total_forces)
-        # observables_vector.moments_NTB = np.matmul((coords.rotation_z(state_vector.body_slip)), total_moments)
+        observables_vector.forces_NTB = np.matmul(np.linalg.inv(coords.rotation_z(state_vector.body_slip)), total_forces)
+        observables_vector.moments_NTB = np.matmul(np.linalg.inv(coords.rotation_z(state_vector.body_slip)), total_moments)
 
         # Initial force balance calculations
+        yaw_acceleration = state_vector.yaw_accel
         translation_accelerations_imf = np.array([state_vector.long_accel, state_vector.lateral_accel, 0])
-        translation_accelerations_ntb = np.matmul(coords.rotation_z(state_vector.body_slip), translation_accelerations_imf)
-
-        # translation_accelerations_ntb = np.matmul((coords.rotation_z(state_vector.body_slip)), translation_accelerations_imf)
+        translation_accelerations_ntb = np.matmul(np.linalg.inv(coords.rotation_z(state_vector.body_slip)), translation_accelerations_imf)
 
         # Sum of moments
-        angular_accelerations = np.array([0, 0, state_vector.yaw_accel])
+        angular_accelerations = np.array([0, 0, yaw_acceleration])
 
         # Kinetic moments
         cg_relative_ntb = np.array([0, 0, vehicle_parameters.cg_height])
@@ -166,87 +164,69 @@ class SuspensionModel(VehicleSystemModel):
 
     # Top level functions
     def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
+        tire_FZ = []
+        for i in range(len(self.tires)):
+            specific_residual_func = lambda x: self._find_spring_displacements(x, vehicle_parameters, heave, pitch, roll, i)
+            tire_compression, wheel_displacement = fsolve(specific_residual_func, [0.006, 0.001])
+            tire_compression = 0 if tire_compression < 0 else tire_compression
+            normal_force = vehicle_parameters.front_tire_vertical_rate * tire_compression
+            normal_force = 0 if normal_force < 0 else normal_force
 
-        # Heave contribution
-        F_heave_rate_spring = vehicle_parameters.front_heave_springrate / vehicle_parameters.front_heave_MR ** 2
-        F_heave_rate_tire = vehicle_parameters.front_tire_vertical_rate
-        F_heave_rate = F_heave_rate_spring * (2 * F_heave_rate_tire) / (F_heave_rate_spring + (2 * F_heave_rate_tire))
+            tire_FZ.append(normal_force)
 
-        R_heave_rate_spring = vehicle_parameters.rear_heave_springrate / vehicle_parameters.rear_heave_MR ** 2
-        R_heave_rate_tire = vehicle_parameters.rear_tire_vertical_rate
-        R_heave_rate = R_heave_rate_spring * (2 * R_heave_rate_tire) / (R_heave_rate_spring + (2 * R_heave_rate_tire))
+        return tire_FZ
+    
+    def _find_spring_displacements(self, x, params: Car, heave: float, pitch: float, roll:float, tire_index: int):
+        heave_spring_rates = [params.front_heave_springrate, params.front_heave_springrate, params.rear_heave_springrate, params.rear_heave_springrate]
+        heave_MRs = [params.front_heave_MR, params.front_heave_MR, params.rear_heave_MR, params.rear_heave_MR]
+        
+        roll_spring_rates = [params.front_roll_springrate, params.front_roll_springrate, params.rear_roll_springrate, params.rear_roll_springrate]
+        roll_MRs = [params.front_roll_MR, params.front_roll_MR, params.rear_roll_MR, params.rear_roll_MR]
 
-        front_heave = heave
-        rear_heave = heave
+        tire_rates = [params.front_tire_vertical_rate, params.front_tire_vertical_rate, params.rear_tire_vertical_rate, params.rear_tire_vertical_rate]
 
-        # Pitch contribution
+        track_widths = [params.front_track, params.front_track, params.rear_track, params.rear_track]
 
-        """
-        Need to do this about pitch center. Calculate vertical displacements at the front and rear axle.
-        Correlate to force using front and rear heave rates
-        """
+        guess_tire_compression, guess_wheel_displacement = x
 
-        # I'm gonna do these about the CG right now.. I'll fix this later
-        # I'm also starting to doubt this method of superposition. It seemed reasonable at roll and heave, but
-        # pitch seems very suspect
+        # Rates
+        heave_wheelrate = heave_spring_rates[tire_index] / (heave_MRs[tire_index]**2)
+        roll_wheelrate = roll_spring_rates[tire_index] / (roll_MRs[tire_index]**2)
+        tire_stiffness = tire_rates[tire_index]
+        riderate = (heave_wheelrate * tire_stiffness) / (heave_wheelrate + tire_stiffness) 
 
-        front_track_to_CG = vehicle_parameters.wheelbase * vehicle_parameters.cg_bias
-        rear_track_to_CG = vehicle_parameters.wheelbase * (1 - vehicle_parameters.cg_bias)
 
-        front_pitch_displacement = front_track_to_CG * np.tan(abs(pitch)) * (1 if pitch > 0 else -1)
-        rear_pitch_displacement = rear_track_to_CG * np.tan(abs(pitch)) * (1 if pitch < 0 else -1)
+        ### ~~~ Roll Contribution ~~~ ###
+        # TODO: do about roll center
+        # TODO: for the tire & spring conversion to roll stiffness, assuming L & R have same stiffness here; seems like an issue
+        tire_contribution = tire_stiffness * track_widths[tire_index] ** 2 / 2
+        spring_contribution = roll_wheelrate * track_widths[tire_index] ** 2 / 2
 
-        F_adjusted_heave = front_heave + front_pitch_displacement
-        R_adjusted_heave = rear_heave + rear_pitch_displacement
 
-        F_force_heave = F_heave_rate * F_adjusted_heave
-        R_force_heave = R_heave_rate * R_adjusted_heave
+        # ARB in parallel with spring, tire in series with ARB and spring
+        roll_stiffness = ((spring_contribution) * tire_contribution / ((spring_contribution) + tire_contribution))
+        f_roll = (roll_stiffness * roll) / track_widths[tire_index]
+        x_wheel_roll = (spring_contribution / roll_stiffness) * f_roll / spring_contribution
+        
 
-        # Roll contribution
-        F_roll_rate_spring = 1 / 2 * vehicle_parameters.front_track ** 2 * (
-                    vehicle_parameters.front_roll_springrate / vehicle_parameters.front_roll_MR ** 2)
-        F_roll_rate_tire = 1 / 2 * vehicle_parameters.front_track ** 2 * vehicle_parameters.front_tire_vertical_rate
-        F_roll_rate = F_roll_rate_spring * F_roll_rate_tire / (F_roll_rate_spring + F_roll_rate_tire)
+        ### ~~~ Heave Contribution ~~~ ###
+        f_heave = riderate * heave
+        x_wheel_heave = f_heave / heave_wheelrate
 
-        R_roll_rate_spring = 1 / 2 * vehicle_parameters.rear_track ** 2 * (
-                    vehicle_parameters.rear_roll_springrate / vehicle_parameters.rear_roll_MR ** 2)
-        R_roll_rate_tire = 1 / 2 * vehicle_parameters.rear_track ** 2 * vehicle_parameters.rear_tire_vertical_rate
-        R_roll_rate = R_roll_rate_spring * R_roll_rate_tire / (R_roll_rate_spring + R_roll_rate_tire)
 
-        # roll_moment = tire_force * track_width -> tire_force = roll_moment / track_width
-        F_roll_moment = F_roll_rate * abs(roll)
-        R_roll_moment = R_roll_rate * abs(roll)
+        ### ~~~ Pitch Contribution ~~~ ###
+        # TODO: implement antisquat & antidive
+        # TODO: do about pitch center
+        pitch_heave = params.tire_positions[tire_index][0] * np.sin(pitch)
+        f_pitch = riderate * pitch_heave
+        x_wheel_pitch = f_pitch / heave_wheelrate
+        
 
-        F_roll_tire_force = F_roll_moment / vehicle_parameters.front_track
-        R_roll_tire_force = R_roll_moment / vehicle_parameters.rear_track
+        normal_force = f_roll + f_heave + f_pitch
+        wheel_displacement = x_wheel_roll + x_wheel_heave + x_wheel_pitch
+        tire_compression = normal_force / tire_stiffness
 
-        # Load transfers
-        FL_delta = F_roll_tire_force * (1 if roll < 0 else -1) + F_force_heave / 2
-        FR_delta = F_roll_tire_force * (1 if roll > 0 else -1) + F_force_heave / 2
-        RL_delta = R_roll_tire_force * (1 if roll < 0 else -1) + R_force_heave / 2
-        RR_delta = R_roll_tire_force * (1 if roll > 0 else -1) + R_force_heave / 2
-
-        # Static weights
-        FL_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * (
-                    1 - vehicle_parameters.cg_bias) / 2
-        FR_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * (
-                    1 - vehicle_parameters.cg_bias) / 2
-        RL_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * vehicle_parameters.cg_bias / 2
-        RR_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * vehicle_parameters.cg_bias / 2
-
-        # print(FL_static, FR_static, RL_static, RR_static)
-        # print(FL_delta, FR_delta, RL_delta, RR_delta)
-
-        FL = FL_static + FL_delta
-        FR = FR_static + FR_delta
-        RL = RL_static + RL_delta
-        RR = RR_static + RR_delta
-
-        adjusted_FZ = [0 if x < 0 else x for x in [FL, FR, RL, RR]]
-
-        # print(adjusted_FZ)
-
-        return adjusted_FZ
+        return guess_tire_compression - tire_compression, guess_wheel_displacement - wheel_displacement
 
     def _get_FZ_coupled(self, heave: float, pitch: float, roll: float) -> list[float]:
         return
@@ -272,7 +252,7 @@ class SuspensionModel(VehicleSystemModel):
 
         slip_angles = []
         for i in range(len(steering_angles)):
-            slip_angle = (steering_angles[i] + toe_angles[i]) - np.arctan2(tire_IMF_velocities[i][1], tire_IMF_velocities[i][0])
+            slip_angle = (steering_angles[i] + toe_angles[i]) + np.arctan2(tire_IMF_velocities[i][1], tire_IMF_velocities[i][0])
             slip_angles.append(slip_angle)
 
         return slip_angles

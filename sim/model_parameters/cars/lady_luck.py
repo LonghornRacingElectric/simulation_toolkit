@@ -27,10 +27,10 @@ class LadyLuck(Car):
         self.total_mass = ConstantParameter(self.front_unsprung_mass + self.rear_unsprung_mass +
                                             self.driver_mass + self.mass_sprung)  # kg
         self.tire_positions = ConstantParameter(
-            [[self.wheelbase * self.cg_bias, -self.front_track / 2, 0],
-             [self.wheelbase * self.cg_bias, self.front_track / 2, 0],
-             [-self.wheelbase * (1 - self.cg_bias), -self.rear_track / 2, 0],
-             [-self.wheelbase * (1 - self.cg_bias), self.rear_track / 2, 0]])  # [FL, FR, RL, RR]
+            [[self.wheelbase * self.cg_bias, self.front_track / 2, 0],
+             [self.wheelbase * self.cg_bias, -self.front_track / 2, 0],
+             [-self.wheelbase * (1 - self.cg_bias), self.rear_track / 2, 0],
+             [-self.wheelbase * (1 - self.cg_bias), -self.rear_track / 2, 0]])  # [FL, FR, RL, RR]
 
         # ======================
         # ===== Suspension =====
@@ -39,8 +39,8 @@ class LadyLuck(Car):
         self.decoupled = ToggleParameter(True)  # boolean
 
         # Decoupled rate inputs
-        self.front_heave_springrate = ConstantParameter(300 * 175.127)  # N/m
-        self.front_roll_springrate = ConstantParameter(450 * 175.127)  # N/m
+        self.front_heave_springrate = ConstantParameter(400 * 175.127)  # N/m
+        self.front_roll_springrate = ConstantParameter(400 * 175.127)  # N/m
         self.rear_heave_springrate = ConstantParameter(400 * 175.127)  # N/m
         self.rear_roll_springrate = ConstantParameter(400 * 175.127)  # N/m
 

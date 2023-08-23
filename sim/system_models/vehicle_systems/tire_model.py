@@ -30,9 +30,6 @@ class TireModel:
             Cs = (self._lat_pacejka(IA, FZ, 0.005) - self._lat_pacejka(IA, FZ, -0.005)) / (.01)
             FY_adj = self.com_lat(SA, SR, FX, FY, IA, FZ, Cs) 
             FX_adj = self.com_long(SA, SR, FX, FY, IA, FZ, Ca)
-            
-        if SA > 0:
-            FY_adj = FY_adj * -1
 
         return [FX_adj, FY_adj, FZ]
     
