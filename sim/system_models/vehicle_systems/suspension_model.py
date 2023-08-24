@@ -122,7 +122,7 @@ class SuspensionModel(VehicleSystemModel):
             tire_outputs.append([round(x) for x in tire_forces])
 
             vehicle_centric_forces = np.matmul(coords.rotation_z(adjusted_steering_angles[i]), tire_forces)
-            vehicle_centric_moments = np.cross(vehicle_centric_forces, tire_positions[i])
+            vehicle_centric_moments = np.cross(tire_positions[i], vehicle_centric_forces)
 
             observables_vector.tire_forces_IMF[i] = vehicle_centric_forces
             observables_vector.tire_moments_IMF[i] = vehicle_centric_moments
@@ -153,7 +153,7 @@ class SuspensionModel(VehicleSystemModel):
         angular_accelerations = np.array([0, 0, state_vector.yaw_accel])
 
         cg_relative_ntb = np.array([0, 0, vehicle_parameters.cg_height])
-        m_a_term = np.cross(vehicle_parameters.total_mass * translation_accelerations_ntb, cg_relative_ntb)
+        m_a_term = np.cross(cg_relative_ntb, vehicle_parameters.total_mass * translation_accelerations_ntb)
         I_alpha_term = np.dot(vehicle_parameters.sprung_inertia, angular_accelerations)
         kinetic_moments = m_a_term + I_alpha_term
         summation_moments = kinetic_moments - observables_vector.moments_NTB
