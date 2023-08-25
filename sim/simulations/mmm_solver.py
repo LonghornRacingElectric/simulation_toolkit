@@ -13,7 +13,7 @@ from sim.util.math.conversions import *
 
 class MmmSolver:
 
-    def __init__(self, mesh=21):
+    def __init__(self, mesh: int = 21, velocity: float = 25.0, aero: bool = True):
         self.done = False
         self.new_model = SuspensionModel()
         self.test_car = LadyLuck()
@@ -23,6 +23,8 @@ class MmmSolver:
         self.test_observables_vector = ObservablesVector()
 
         self.mesh = mesh
+        self.velocity = velocity
+        self.test_state_vector.aero = aero
         self.steered_angle_iso_lines = []
         self.body_slip_iso_lines = []
 
@@ -56,7 +58,7 @@ class MmmSolver:
 
         for i, body_slip in enumerate(body_slip_sweep):
             for j, steered_angle in enumerate(steered_angle_sweep):
-                for velocity in [25]:
+                for velocity in [self.velocity]:
                     def solve_attempt(x):
                         return self._vehicle_model(x, [body_slip, velocity, steered_angle])
 

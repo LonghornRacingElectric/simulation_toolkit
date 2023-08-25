@@ -27,7 +27,7 @@ vcu = LadyLuckVcu()
 # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 # generate MMM
-mmm_solver = MmmSolver()
+mmm_solver = MmmSolver(mesh=21, velocity=25, aero=True)
 mmm_solver.solve()
 mmm_solver.plot()
 

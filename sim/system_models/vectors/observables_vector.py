@@ -16,6 +16,7 @@ class ObservablesVector(Vector):
         self.tire_forces_IMF = [0, 0, 0, 0]
         self.tire_moments_IMF = [0, 0, 0, 0]
 
+        self.accelerations_NTB = [0, 0, 0]
         self.forces_NTB = [0, 0, 0]
         self.moments_NTB = [0, 0, 0]
 
@@ -26,5 +27,5 @@ class ObservablesVector(Vector):
         self.slip_angles = [0, 0, 0, 0]
         self.inclination_angles = [0, 0, 0, 0]
         self.normal_loads = [0, 0, 0, 0]
-        self.raw_tire_forces = [0, 0, 0, 0]
+        self.tire_model_force_outputs = [[], [], [], []]
         self.average_steered_angle = 0
