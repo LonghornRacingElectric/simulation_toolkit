@@ -24,3 +24,4 @@ class StateVector(Vector):
 
         self.body_slip = 0
         self.velocity = 0
+        self.aero = True
