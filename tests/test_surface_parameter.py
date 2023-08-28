@@ -24,4 +24,5 @@ class TestSurfaceParameter:
         surface = SurfaceParameter(from_csv='car/emrax/Eff208.csv')
         assert surface.get()(0, 100) == 0.82
         assert surface.get()(2000, 100) == 0.95
+        assert surface.get()(3000, 60) == 0.96
         assert surface.get()(5500, 100) == 0.94
