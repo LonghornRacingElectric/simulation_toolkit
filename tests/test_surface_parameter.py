@@ -1,7 +1,5 @@
 from sim.model_parameters.parameters import SurfaceParameter
 
-import os
-
 
 class TestSurfaceParameter:
     def test_from_function(self):
@@ -25,4 +23,10 @@ class TestSurfaceParameter:
         assert surface.get()(0, 100) == 0.82
         assert surface.get()(2000, 100) == 0.95
         assert surface.get()(3000, 60) == 0.96
-        assert surface.get()(5500, 100) == 0.94
+        assert surface.get()(5500, 100) == 0.92
+        assert surface.get()(6500, 100) == 0.82
+
+        surface = SurfaceParameter(from_csv='car/emrax/Eff228.csv')
+        assert surface.get()(3000, 100) == 0.96
+        assert surface.get()(5000, 150) == 0.92
+        assert surface.get()(6500, 100) == 0.82
