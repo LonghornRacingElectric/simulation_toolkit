@@ -50,7 +50,7 @@ class MmmSolver:
         return [*self.test_observables_vector.summation_forces, *self.test_observables_vector.summation_moments]
 
     def solve(self):
-        body_slip_sweep = np.linspace(deg_to_rad(-10), deg_to_rad(10), self.mesh)
+        body_slip_sweep = np.linspace(deg_to_rad(-8), deg_to_rad(8), self.mesh)
         steered_angle_sweep = np.linspace(deg_to_rad(-90), deg_to_rad(90), self.mesh)
 
         self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
@@ -83,7 +83,7 @@ class MmmSolver:
         if not self.done:
             raise Exception("can't plot the MMM before you solve the MMM bruh")
 
-        plt.title("MMM")
+        plt.title("Yaw Acceleration vs Lateral Acceleration")
         plt.xlim(-25, 25)
         plt.ylim(-45, 45)
         plt.xlabel("Lateral Acceleration (m/s^2)")
