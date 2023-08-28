@@ -12,8 +12,10 @@ CSV file, from a list of points, or from a Python function.
 from typing import Callable
 import numpy as np
 import csv
+import os
 
 from sim.model_parameters.parameters.parameter import Parameter
+from sim.util.math.conversions import get_csv_path
 
 
 class CurveParameter(Parameter):
@@ -34,7 +36,8 @@ class CurveParameter(Parameter):
 
     def _import_from_csv(self, csv_path: str):
         x_list, y_list = [], []
-        with open(csv_path, newline='') as csvfile:
+
+        with open(get_csv_path(csv_path), newline='') as csvfile:
             reader = csv.reader(csvfile)
             first = True
             for row in reader:
