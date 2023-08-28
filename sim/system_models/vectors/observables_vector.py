@@ -16,6 +16,23 @@ class ObservablesVector(Vector):
         self.tire_forces_IMF = [0, 0, 0, 0]
         self.tire_moments_IMF = [0, 0, 0, 0]
 
+        # NTB conversion
+        self.tangential_unit_vector = [0, 0, 0]
+        self.normal_unit_vector = [0, 0, 0]
+        self.binormal_unit_vector = [0, 0, 0]
+
+        self.tangential_accelerations = [0, 0, 0]
+        self.normal_accelerations = [0, 0, 0]
+        self.binormal_accelerations = [0, 0, 0]
+
+        self.tangential_forces = [0, 0, 0]
+        self.normal_forces = [0, 0, 0]
+        self.binormal_forces = [0, 0, 0]
+
+        self.tangential_moments = [0, 0, 0]
+        self.normal_moments = [0, 0, 0]
+        self.binormal_moments = [0, 0, 0]
+
         self.accelerations_NTB = [0, 0, 0]
         self.forces_NTB = [0, 0, 0]
         self.moments_NTB = [0, 0, 0]

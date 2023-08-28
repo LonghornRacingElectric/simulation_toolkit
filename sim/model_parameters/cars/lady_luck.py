@@ -27,10 +27,10 @@ class LadyLuck(Car):
         self.total_mass = ConstantParameter(self.front_unsprung_mass + self.rear_unsprung_mass +
                                             self.driver_mass + self.mass_sprung)  # kg
         self.tire_positions = ConstantParameter(
-            [[self.wheelbase * self.cg_bias, self.front_track / 2, 0],
-             [self.wheelbase * self.cg_bias, -self.front_track / 2, 0],
-             [-self.wheelbase * (1 - self.cg_bias), self.rear_track / 2, 0],
-             [-self.wheelbase * (1 - self.cg_bias), -self.rear_track / 2, 0]])  # [FL, FR, RL, RR]
+            [[self.wheelbase * self.cg_bias, self.front_track / 2, -self.cg_height],
+             [self.wheelbase * self.cg_bias, -self.front_track / 2, -self.cg_height],
+             [-self.wheelbase * (1 - self.cg_bias), self.rear_track / 2, -self.cg_height],
+             [-self.wheelbase * (1 - self.cg_bias), -self.rear_track / 2, -self.cg_height]])  # [FL, FR, RL, RR] relative to CG
 
         # ======================
         # ===== Suspension =====
