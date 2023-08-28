@@ -15,22 +15,26 @@ class VehicleModel:
             PowertrainModel(),
             # SuspensionModel()
         ]
+        self.first_time = True
 
     def eval(self, controls: ControlsVector, state: StateVector) -> (StateDotVector, ObservablesVector):
         state_dot: StateDotVector = StateDotVector()
         observables: ObservablesVector = ObservablesVector()
 
         for vehicle_system_model in self.vehicle_system_models:
-            controls.expect_get(vehicle_system_model.controls_in)
-            state.expect_get(vehicle_system_model.state_in)
-            state_dot.expect_set(vehicle_system_model.state_out)
-            observables.expect_set(vehicle_system_model.observables_out)
+            if self.first_time:
+                controls.expect_get(vehicle_system_model.controls_in)
+                state.expect_get(vehicle_system_model.state_in)
+                state_dot.expect_set(vehicle_system_model.state_out)
+                observables.expect_set(vehicle_system_model.observables_out)
 
             vehicle_system_model.eval(self.vehicle_parameters, controls, state, state_dot, observables)
 
-            controls.confirm_expectations()
-            state.confirm_expectations()
-            state_dot.confirm_expectations()
-            observables.confirm_expectations()
+            if self.first_time:
+                controls.confirm_expectations()
+                state.confirm_expectations()
+                state_dot.confirm_expectations()
+                observables.confirm_expectations()
+                self.first_time = False
 
         return state_dot, observables

@@ -1,4 +1,6 @@
 import math
+import os
+
 import numpy as np
 
 
@@ -16,3 +18,9 @@ def rad_to_deg(rad: float) -> float:
 
 def deg_to_rad(deg: float) -> float:
     return deg * np.pi / 180
+
+
+def get_csv_path(path: str) -> str:
+    this_path = __file__.split('\\sim\\')[0]
+    csv_path = os.path.join(this_path, 'data/parameter_curves', path)
+    return csv_path
