@@ -1,5 +1,5 @@
 from sim.model_parameters.cars.car import Car
-from sim.model_parameters.parameters import ConstantParameter, CurveParameter, ToggleParameter
+from sim.model_parameters.parameters import ConstantParameter, CurveParameter, ToggleParameter, SurfaceParameter
 
 
 class LadyLuck(Car):
@@ -11,7 +11,7 @@ class LadyLuck(Car):
         # ======= General ======
         # ======================
 
-        self.sprung_inertia = ConstantParameter([[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]])  # kgm^2 (inertia tensor) TODO temp 0
+        self.sprung_inertia = ConstantParameter([[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]])  # kgm^2 (inertia tensor)
         self.accel_gravity = ConstantParameter(9.81)  # m/s^2
         self.cg_bias = ConstantParameter(0.52)  # m (percent from front. 0 -> frontmost, 1 -> rearmost)
         self.cg_left = ConstantParameter(0.50)  # m (percent from left. 0 -> leftmost, 1 -> rightmost)
@@ -30,7 +30,7 @@ class LadyLuck(Car):
             [[self.wheelbase * self.cg_bias, self.front_track / 2, -self.cg_height],
              [self.wheelbase * self.cg_bias, -self.front_track / 2, -self.cg_height],
              [-self.wheelbase * (1 - self.cg_bias), self.rear_track / 2, -self.cg_height],
-             [-self.wheelbase * (1 - self.cg_bias), -self.rear_track / 2, -self.cg_height]])  # [FL, FR, RL, RR] relative to CG
+             [-self.wheelbase * (1 - self.cg_bias), -self.rear_track / 2, -self.cg_height]])  # relative to CG
 
         # ======================
         # ===== Suspension =====
@@ -75,38 +75,26 @@ class LadyLuck(Car):
         self.front_anti = ConstantParameter(0.20)  # percent
         self.rear_anti = ConstantParameter(0.00)  # percent
 
-        self.ackermann = ConstantParameter(0)  # percent TODO temp 0
-
         # Kinematics
 
-        self.static_IAs = ConstantParameter(
-            [1 * 0.01745, -1 * 0.01745, 1 * 0.01745, -1 * 0.01745])  # rad, list[float] (FL, FR, RL, RR)
-        self.roll_IA_gain = ConstantParameter([0, 0, 0, 0])
-        # deg/rad list[float] (FL, FR, RL, RR), but make these curve parameters once we add functionality
-        self.heave_IA_gain = ConstantParameter([0, 0, 0, 0])
-        # deg/m list[float] (FL, FR, RL, RR), but make these curve parameters once we add functionality
-
-        self.front_KPI = ConstantParameter(0)  # rad TODO temp 0
-        self.rear_KPI = ConstantParameter(0)  # rad TODO temp 0
-        self.front_caster = ConstantParameter(0)  # rad TODO temp 0
-        self.rear_caster = ConstantParameter(0)  # rad TODO temp 0
+        self.static_IAs = ConstantParameter([1 * 0.01745, -1 * 0.01745, 1 * 0.01745, -1 * 0.01745])  # rad, [FL, FR, RL, RR]
+        self.FL_IA_gain = SurfaceParameter(from_csv = ".\\car\\suspension_response_surfaces\\IA_grid_surface_response\\FL_IA_response_surface.csv")
+        self.FR_IA_gain = SurfaceParameter(from_csv = ".\\car\\suspension_response_surfaces\\IA_grid_surface_response\\FR_IA_response_surface.csv")
+        self.RL_IA_gain = SurfaceParameter(from_csv = ".\\car\\suspension_response_surfaces\\IA_grid_surface_response\\RL_IA_response_surface.csv")
+        self.RR_IA_gain = SurfaceParameter(from_csv = ".\\car\\suspension_response_surfaces\\IA_grid_surface_response\\RR_IA_response_surface.csv")
+        self.FI_steering_response = CurveParameter(from_csv = ".\\car\\suspension_response_surfaces\\steering_response\\FI_steering_response.csv")
+        self.FO_steering_response = CurveParameter(from_csv = ".\\car\\suspension_response_surfaces\\steering_response\\FO_steering_response.csv")
 
         self.toe_angles = ConstantParameter([0, 0, 0, 0])  # rad, list[float] (FL, FR, RL, RR)
-        self.front_bump_steer = ConstantParameter(0)  # rad/m, but make these curve parameters once we add functionality
-        self.front_roll_steer = ConstantParameter(0)  # rad/rad, but make these curve parameters once we add functionality
-        self.rear_bump_steer = ConstantParameter(0)  # rad/m, but make these curve parameters once we add functionality
-        self.rear_roll_steer = ConstantParameter(0)  # rad/rad, but make these curve parameters once we add functionality
+        # self.front_bump_steer = ConstantParameter(0)  # rad/m, but make these curve parameters once we add functionality
+        # self.front_roll_steer = ConstantParameter(0)  # rad/rad, but make these curve parameters once we add functionality
+        # self.rear_bump_steer = ConstantParameter(0)  # rad/m, but make these curve parameters once we add functionality
+        # self.rear_roll_steer = ConstantParameter(0)  # rad/rad, but make these curve parameters once we add functionality
 
         self.front_roll_center_height = CurveParameter(from_function=lambda x: 0,
                                                        x_min=0, x_max=1, x_samples=20)  # m TODO temp 0
         self.rear_roll_center_height = CurveParameter(from_function=lambda x: 0,
                                                       x_min=0, x_max=1, x_samples=20)  # m TODO temp 0
-
-        self.rack_clevis_to_kingpin_y = ConstantParameter(16.115 * 0.0254)  # m
-        self.rack_clevis_to_kingpin_x = ConstantParameter(2.203 * 0.0254)  # m
-        self.tie_linkage_length = ConstantParameter(15.555 * 0.0254)  # m
-        self.steering_arm = ConstantParameter(2.207 * 0.0254)  # m
-        self.c_factor = ConstantParameter(3.46 * 0.0254)  # m/rev
 
         # Tires
         self.front_tire_coeff_Fy = ConstantParameter(

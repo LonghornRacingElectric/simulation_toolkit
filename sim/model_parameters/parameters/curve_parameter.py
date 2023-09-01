@@ -47,7 +47,7 @@ class CurveParameter(Parameter):
                 if len(row) != 2:
                     raise Exception(f"Expected 2 items per row in CSV file {csv_path} but found {len(row)}.")
                 x_list.append(float(row[0]))
-                y_list.append(float(row[0]))
+                y_list.append(float(row[1]))
         self.x_arr = np.array(x_list)
         self.y_arr = np.array(y_list)
 

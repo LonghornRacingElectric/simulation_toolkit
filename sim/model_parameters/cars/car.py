@@ -1,4 +1,4 @@
-from sim.model_parameters.parameters import ConstantParameter, CurveParameter, ToggleParameter
+from sim.model_parameters.parameters import ConstantParameter, CurveParameter, ToggleParameter, SurfaceParameter
 from sim.model_parameters.model_parameters import ModelParameters
 
 
@@ -8,14 +8,16 @@ class Car(ModelParameters):
         self._model_type = "Car"
         self._model_name = "Unnamed Car"
 
+        # Everything related to tires uses one parameter, stored in the order: [FL, FR, RL, RR]
+
         # ======================
         # ======= General ======
         # ======================
 
         self.sprung_inertia = ConstantParameter()  # kgm^2 (inertia tensor)
         self.accel_gravity = ConstantParameter()  # m/s^2
-        self.cg_bias = ConstantParameter()  # m (percent from front. 0 -> frontmost, 1 -> rearmost)
-        self.cg_left = ConstantParameter()  # m (percent from left. 0 -> leftmost, 1 -> rightmost)
+        self.cg_bias = ConstantParameter()  # (percent from front. 0 -> frontmost, 1 -> rearmost)
+        self.cg_left = ConstantParameter()  # (percent from left. 0 -> leftmost, 1 -> rightmost)
         self.cg_height = ConstantParameter()  # m
         self.wheelbase = ConstantParameter()  # m
         self.front_track = ConstantParameter()  # m
@@ -26,13 +28,13 @@ class Car(ModelParameters):
         self.driver_mass = ConstantParameter()  # kg
         self.mass_sprung = ConstantParameter()  # kg
         self.total_mass = ConstantParameter()  # kg
-        self.tire_positions = ConstantParameter()  # [FL, FR, RL, RR]
+        self.tire_positions = ConstantParameter()  # m (relative to cg)
 
         # ======================
         # ===== Suspension =====
         # ======================
 
-        self.decoupled = ToggleParameter()  # boolean
+        self.decoupled = ToggleParameter()  # boolean (not currently used)
 
         # Decoupled rate inputs
         self.front_heave_springrate = ConstantParameter()  # N/m
@@ -64,35 +66,24 @@ class Car(ModelParameters):
         self.front_anti = ConstantParameter()  # percent
         self.rear_anti = ConstantParameter()  # percent
 
-        self.ackermann = ConstantParameter()  # percent
-
         # Kinematics
 
-        self.static_IAs = ConstantParameter()  # rad, list[float] (FL, FR, RL, RR)
-        self.roll_IA_gain = ConstantParameter()
-        # deg/rad list[float] (FL, FR, RL, RR), but make these curve parameters once we add functionality
-        self.heave_IA_gain = ConstantParameter()
-        # deg/m list[float] (FL, FR, RL, RR), but make these curve parameters once we add functionality
+        self.static_IAs = ConstantParameter()  # rad
+        self.FL_IA_gain = SurfaceParameter()  # rad
+        self.FR_IA_gain = SurfaceParameter()  # rad
+        self.RL_IA_gain = SurfaceParameter()  # rad
+        self.RR_IA_gain = SurfaceParameter()  # rad
+        self.FI_steering_response = CurveParameter()  # rad
+        self.FO_steering_response = CurveParameter()  # rad
 
-        self.front_KPI = ConstantParameter()  # rad
-        self.rear_KPI = ConstantParameter()  # rad
-        self.front_caster = ConstantParameter()  # rad
-        self.rear_caster = ConstantParameter()  # rad
-
-        self.toe_angles = ConstantParameter()  # rad, list[float] (FL, FR, RL, RR)
-        self.front_bump_steer = ConstantParameter()  # rad/m, but make these curve parameters once we add functionality
-        self.front_roll_steer = ConstantParameter()  # rad/rad, but make these curve parameters later
-        self.rear_bump_steer = ConstantParameter()  # rad/m, but make these curve parameters once we add functionality
-        self.rear_roll_steer = ConstantParameter()  # rad/rad, but make these curve parameters once we add functionality
+        self.toe_angles = ConstantParameter()  # rad
+        # self.front_bump_steer = ConstantParameter()  # rad/m, but make these curve parameters once we add functionality
+        # self.front_roll_steer = ConstantParameter()  # rad/rad, but make these curve parameters later
+        # self.rear_bump_steer = ConstantParameter()  # rad/m, but make these curve parameters once we add functionality
+        # self.rear_roll_steer = ConstantParameter()  # rad/rad, but make these curve parameters once we add functionality
 
         self.front_roll_center_height = CurveParameter()  # m
         self.rear_roll_center_height = CurveParameter()  # m
-
-        self.rack_clevis_to_kingpin_y = ConstantParameter()  # m
-        self.rack_clevis_to_kingpin_x = ConstantParameter()  # m
-        self.tie_linkage_length = ConstantParameter()  # m
-        self.steering_arm = ConstantParameter()  # m
-        self.c_factor = ConstantParameter()  # m/rev
 
         # Tires
         self.front_tire_coeff_Fy = ConstantParameter()  # coeffs
@@ -100,10 +91,8 @@ class Car(ModelParameters):
         self.rear_tire_coeff_Fy = ConstantParameter()  # coeffs
         self.rear_tire_coeff_Fx = ConstantParameter()  # coeffs
 
-        self.front_tire_vertical_rate = ConstantParameter(
-            )  # N/m, but make these curve parameters once we add functionality
-        self.rear_tire_vertical_rate = ConstantParameter(
-            )  # N/m, but make these curve parameters once we add functionality
+        self.front_tire_vertical_rate = ConstantParameter()  # N/m, but make these curve parameters once we add functionality
+        self.rear_tire_vertical_rate = ConstantParameter()  # N/m, but make these curve parameters once we add functionality
 
         # ======================
         # ===== Powertrain =====
