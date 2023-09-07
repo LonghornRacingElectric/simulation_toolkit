@@ -203,8 +203,8 @@ class SuspensionModel(VehicleSystemModel):
         F_adjusted_heave = front_heave + front_pitch_displacement
         R_adjusted_heave = rear_heave + rear_pitch_displacement
 
-        F_force_heave = F_heave_rate * F_adjusted_heave
-        R_force_heave = R_heave_rate * R_adjusted_heave
+        F_force_heave = (F_heave_rate * F_adjusted_heave) / (1 - vehicle_parameters.front_anti)
+        R_force_heave = (R_heave_rate * R_adjusted_heave) / (1 - vehicle_parameters.rear_anti)
 
         # Roll contribution
         F_roll_rate_spring = 1 / 2 * vehicle_parameters.front_track ** 2 * (
