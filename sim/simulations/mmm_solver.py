@@ -50,8 +50,8 @@ class MmmSolver:
         return [*self.test_observables_vector.summation_forces, *self.test_observables_vector.summation_moments]
 
     def solve(self):
-        body_slip_sweep = np.linspace(deg_to_rad(-8), deg_to_rad(8), self.mesh)
-        steered_angle_sweep = np.linspace(deg_to_rad(-90), deg_to_rad(90), self.mesh)
+        body_slip_sweep = np.linspace(deg_to_rad(-7), deg_to_rad(7), self.mesh)
+        steered_angle_sweep = np.linspace(deg_to_rad(-40), deg_to_rad(40), self.mesh)
 
         self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]

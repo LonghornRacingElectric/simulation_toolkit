@@ -31,13 +31,15 @@ class TireModel:
             FY_adj = self.com_lat(SA, SR, FX, FY, IA, FZ, Cs) 
             FX_adj = self.com_long(SA, SR, FX, FY, IA, FZ, Ca)
 
-        return [FX_adj, FY_adj, FZ]
+        return np.array([FX_adj, FY_adj, FZ])
     
     # Fits done in a messy way right now. Fix this later.
     def _lat_pacejka(self, inclination_angle:float, normal_force:float, slip_angle:float):
         
         if normal_force == 0:
             return 0
+        
+        normal_force *= -1
         
         slip_degrees = slip_angle * 180 / math.pi # degrees
         inclination_degrees = inclination_angle * 180 / math.pi # degrees
@@ -77,15 +79,17 @@ class TireModel:
             V = b11 * FZ + b12
             Bx1 = B * (SR + H)
             
-            return (D * np.sin(C * np.arctan(Bx1 - E * (Bx1 - np.arctan(Bx1)))) + V) * self.tire_scaling
+            return self.tire_scaling * (D * np.sin(C * np.arctan(Bx1 - E * (Bx1 - np.arctan(Bx1)))) + V)
         except:
             return 0
         
     # Zero protection
     def _zero_prot(self, SA, SR, IA, FZ, Cs, Ca, lat_long):
         epsi = 1 / 1e64
-        SA_adj = SA + epsi
-        SR_adj = SR + epsi
+        SA_adj = SA - epsi
+        SR_adj = SR - epsi
+        # SA_adj = SA + epsi
+        # SR_adj = SR + epsi
         FX_adj = self._long_pacejka(FZ, SR_adj)
         FY_adj = self._lat_pacejka(IA, FZ, SA_adj)
         if lat_long == "lat":
