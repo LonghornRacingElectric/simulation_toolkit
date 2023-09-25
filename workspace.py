@@ -4,6 +4,7 @@ This file is where you can mess with vehicle parameters and run simulations. You
 file in most cases.
 
 """
+import numpy as np
 
 from sim.model_parameters.cars.lady_luck import LadyLuck
 from sim.model_parameters.drivers.ben_huff import BenHuff
@@ -27,9 +28,18 @@ vcu = LadyLuckVcu()
 # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 # generate MMM
-mmm_solver = MmmSolver(mesh=21, velocity=25, aero=True)
-mmm_solver.solve()
-mmm_solver.plot()
+mmm_solver = MmmSolver(car=car, mesh=21, velocity=25, aero=True)
+# mmm_solver.solve()
+# mmm_solver.print()
+# mmm_solver.plot()
+
+# cg bias sweep
+for cg_bias in np.linspace(0.45, 0.60, 16):
+    car.cg_bias = ConstantParameter(cg_bias)
+    mmm_solver.solve()
+    print(f'\n[CG bias = {int(cg_bias*100)}%]')
+    mmm_solver.print()
+    # mmm_solver.plot()
 
 # simulate competition
 # TODO

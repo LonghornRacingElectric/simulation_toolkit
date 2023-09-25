@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
 
+from sim.model_parameters.cars.car import Car
 from sim.model_parameters.cars.lady_luck import LadyLuck
 from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
@@ -13,10 +14,10 @@ from sim.util.math.conversions import *
 
 class MmmSolver:
 
-    def __init__(self, mesh: int = 21, velocity: float = 25.0, aero: bool = True):
+    def __init__(self, car: Car, mesh: int = 21, velocity: float = 25.0, aero: bool = True):
         self.done = False
         self.new_model = SuspensionModel()
-        self.test_car = LadyLuck()
+        self.test_car = car
         self.test_controls_vector = ControlsVector()
         self.test_state_vector = StateVector()
         self.test_state_dot_vector = StateDotVector()
@@ -97,12 +98,49 @@ class MmmSolver:
             plt.plot(lat_accels, yaw_accels, c="red", linewidth=0.8)
             plt.scatter(lat_accels, yaw_accels, s=0.5, c="black")
 
-            text_pos = ((lat_accels[mp] + lat_accels[mp-1])/2 - 0.8, (yaw_accels[mp] + yaw_accels[mp-1])/2 + 1.5)
+            text_pos = ((lat_accels[mp] + lat_accels[mp - 1]) / 2 - 0.8, (yaw_accels[mp] + yaw_accels[mp - 1]) / 2 + 1.5)
             plt.text(text_pos[0], text_pos[1], f'δ = {round(rad_to_deg(steered_angle), 1)}°', fontsize=6, c="red")
 
         for body_slip, lat_accels, yaw_accels in self.body_slip_iso_lines:
             plt.plot(lat_accels, yaw_accels, c="blue", linewidth=0.8)
-            text_pos = ((lat_accels[mp] + lat_accels[mp+1])/2 - 1.9, (yaw_accels[mp] + yaw_accels[mp+1])/2)
+            text_pos = ((lat_accels[mp] + lat_accels[mp + 1]) / 2 - 1.9, (yaw_accels[mp] + yaw_accels[mp + 1]) / 2)
             plt.text(text_pos[0], text_pos[1], f'β = {round(rad_to_deg(body_slip))}°', fontsize=6, c="blue")
 
         plt.show()
+
+    def calc_linear_control(self):
+        mp = self.mesh // 2
+        # delta (yaw accel) / delta (average tire steered angle)
+        return self.body_slip_iso_lines[mp][2][mp + 1] / self.steered_angle_iso_lines[mp + 1][0]
+
+    def calc_linear_stability(self):
+        mp = self.mesh // 2
+        # delta (yaw accel) / delta (body slip angle)
+        return self.steered_angle_iso_lines[mp][2][mp + 1] / self.body_slip_iso_lines[mp - 1][0]
+
+    def calc_max_lat_accel(self):
+        return 0  # TODO implement
+
+    def calc_limit_yaw_stability(self):
+        return 0  # TODO implement
+
+    def calc_trim_lat_accel(self):
+        return 0  # TODO implement
+
+    def calc_max_yaw_accel(self):
+        return 0  # TODO implement
+
+    def print(self):
+        info = [
+            ("linear control at β=0", self.calc_linear_control()),
+            ("linear stability at δ=0", self.calc_linear_stability()),
+            ("max lat accel", self.calc_max_lat_accel()),
+            ("limit yaw stability", self.calc_limit_yaw_stability()),
+            ("trim lat accel", self.calc_trim_lat_accel()),
+            ("max yaw accel", self.calc_max_yaw_accel()),
+        ]
+
+        for label, value in info:
+            print(f'{label}:')
+            print(f'\t{value}')
+
