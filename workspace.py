@@ -13,6 +13,7 @@ from sim.model_parameters.telemetry.lady_luck_telemetry import LadyLuckTelemetry
 from sim.model_parameters.vcu.lady_luck_vcu import LadyLuckVcu
 from sim.simulations.mmm_solver import MmmSolver
 from sim.simulations.transient_sim import TransientSimulation
+from sim.util.analysis.mmm_sweeper import MmmSweeper
 
 # create parameter models
 car = LadyLuck()
@@ -28,18 +29,16 @@ vcu = LadyLuckVcu()
 # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 # generate MMM
-mmm_solver = MmmSolver(car=car, mesh=21, velocity=25, aero=True)
+# mmm_solver = MmmSolver(car=car, mesh=21, velocity=25, aero=True)
 # mmm_solver.solve()
-# mmm_solver.print()
+# mmm_solver.print_key_points()
 # mmm_solver.plot()
 
 # cg bias sweep
-for cg_bias in np.linspace(0.45, 0.60, 16):
-    car.cg_bias = ConstantParameter(cg_bias)
-    mmm_solver.solve()
-    print(f'\n[CG bias = {int(cg_bias*100)}%]')
-    mmm_solver.print()
-    # mmm_solver.plot()
+mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=25, aero=True)
+mmm_sweeper.add_dimension("cg_bias", np.linspace(0.45, 0.60, 16))
+mmm_sweeper.solve_all()
+mmm_sweeper.plot_all("cg_bias")
 
 # simulate competition
 # TODO

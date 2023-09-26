@@ -26,8 +26,16 @@ class MmmSolver:
         self.mesh = mesh
         self.velocity = velocity
         self.test_state_vector.aero = aero
+
         self.steered_angle_iso_lines = []
         self.body_slip_iso_lines = []
+
+        self.linear_control = 0
+        self.linear_stability = 0
+        self.max_lat_accel = 0
+        self.limit_yaw_stability = 0
+        self.max_yaw_accel = 0
+        self.trim_lat_accel = 0
 
     def _vehicle_model(self, x, y):
         # Prescribed values
@@ -78,6 +86,8 @@ class MmmSolver:
                     self.body_slip_iso_lines[j][1][i] = lat_accel
                     self.body_slip_iso_lines[j][2][i] = yaw_accel
 
+        self._calculate_key_points()
+
         self.done = True
 
     def plot(self):
@@ -108,39 +118,39 @@ class MmmSolver:
 
         plt.show()
 
-    def calc_linear_control(self):
+    def _calculate_key_points(self):
         mp = self.mesh // 2
+
         # delta (yaw accel) / delta (average tire steered angle)
-        return self.body_slip_iso_lines[mp][2][mp + 1] / self.steered_angle_iso_lines[mp + 1][0]
+        self.linear_control = self.body_slip_iso_lines[mp][2][mp + 1] / self.steered_angle_iso_lines[mp + 1][0]
 
-    def calc_linear_stability(self):
-        mp = self.mesh // 2
         # delta (yaw accel) / delta (body slip angle)
-        return self.steered_angle_iso_lines[mp][2][mp + 1] / self.body_slip_iso_lines[mp - 1][0]
+        self.linear_stability = self.steered_angle_iso_lines[mp][2][mp + 1] / self.body_slip_iso_lines[mp + 1][0]
 
-    def calc_max_lat_accel(self):
-        return 0  # TODO implement
+        self.max_lat_accel = 0
+        for steered_angle, lat_accels, yaw_accels in self.steered_angle_iso_lines:
+            for i in range(len(lat_accels)):
+                if lat_accels[i] > self.max_lat_accel:
+                    self.max_lat_accel = lat_accels[i]
+                    self.limit_yaw_stability = rad_to_deg(yaw_accels[i])
 
-    def calc_limit_yaw_stability(self):
-        return 0  # TODO implement
+        self.max_yaw_accel = rad_to_deg(max([max(x[2]) for x in self.steered_angle_iso_lines]))
 
-    def calc_trim_lat_accel(self):
-        return 0  # TODO implement
+        self.trim_lat_accel = 0
+        for steered_angle, lat_accels, yaw_accels in self.steered_angle_iso_lines:
+            lat = np.interp(0, yaw_accels, lat_accels)
+            if lat > self.trim_lat_accel:
+                self.trim_lat_accel = lat
 
-    def calc_max_yaw_accel(self):
-        return 0  # TODO implement
-
-    def print(self):
-        info = [
-            ("linear control at β=0", self.calc_linear_control()),
-            ("linear stability at δ=0", self.calc_linear_stability()),
-            ("max lat accel", self.calc_max_lat_accel()),
-            ("limit yaw stability", self.calc_limit_yaw_stability()),
-            ("trim lat accel", self.calc_trim_lat_accel()),
-            ("max yaw accel", self.calc_max_yaw_accel()),
+        self.key_points = [
+            ("linear control at β=0", self.linear_control, "(deg/s^2)/deg"),
+            ("linear stability at δ=0", self.linear_stability, "(deg/s^2)/deg"),
+            ("max lat accel", self.max_lat_accel, "m/s^2"),
+            ("yaw accel at max lat", self.limit_yaw_stability, "deg/s^2"),
+            ("max yaw accel", self.max_yaw_accel, "deg/s^2"),
+            ("trim lat accel", self.trim_lat_accel, "m/s^2"),
         ]
 
-        for label, value in info:
-            print(f'{label}:')
-            print(f'\t{value}')
-
+    def print_key_points(self):
+        for label, value, units in self.key_points:
+            print(f'{label.ljust(25)} | {str(round(value, 3)).ljust(8)} {units}')

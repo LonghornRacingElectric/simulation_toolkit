@@ -38,5 +38,8 @@ class ModelParameters:
                                 + "but it hasn't been set.")
         return super().__getattribute__(key).get()
 
+    def __setitem__(self, key: str, value):
+        self.__setattr__(key, value)
+
     def _lock(self):
         self._parameters_locked = True
