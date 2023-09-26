@@ -48,6 +48,7 @@ class MmmSweeper:
         plt.title(f'{self.results[0][kpi][0]} vs {dimension}')
         plt.xlabel(dimension)
         plt.ylabel(f'{self.results[0][kpi][0]} ({self.results[0][kpi][2]})')
+        plt.axhline(c="gray", linewidth=0.5)
         plt.plot(x, y, c="red", linewidth=0.8)
 
         plt.show()
