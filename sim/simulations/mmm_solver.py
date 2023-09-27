@@ -95,8 +95,8 @@ class MmmSolver:
             raise Exception("can't plot the MMM before you solve the MMM bruh")
 
         plt.title("Yaw Acceleration vs Lateral Acceleration")
-        plt.xlim(-25, 25)
-        plt.ylim(-45, 45)
+        plt.xlim(-20, 20)
+        plt.ylim(-35, 35)
         plt.xlabel("Lateral Acceleration (m/s^2)")
         plt.ylabel("Yaw Acceleration (rad/s^2)")
         plt.axhline(c="gray", linewidth=0.5)
@@ -108,13 +108,13 @@ class MmmSolver:
             plt.plot(lat_accels, yaw_accels, c="red", linewidth=0.8)
             plt.scatter(lat_accels, yaw_accels, s=0.5, c="black")
 
-            text_pos = ((lat_accels[mp] + lat_accels[mp - 1]) / 2 - 0.8, (yaw_accels[mp] + yaw_accels[mp - 1]) / 2 + 1.5)
+            text_pos = ((lat_accels[mp] + lat_accels[mp - 1]) / 2, (yaw_accels[mp] + yaw_accels[mp - 1]) / 2 - 1.0)
             plt.text(text_pos[0], text_pos[1], f'δ = {round(rad_to_deg(steered_angle), 1)}°', fontsize=6, c="red")
 
         for body_slip, lat_accels, yaw_accels in self.body_slip_iso_lines:
             plt.plot(lat_accels, yaw_accels, c="blue", linewidth=0.8)
-            text_pos = ((lat_accels[mp] + lat_accels[mp + 1]) / 2 - 1.9, (yaw_accels[mp] + yaw_accels[mp + 1]) / 2)
-            plt.text(text_pos[0], text_pos[1], f'β = {round(rad_to_deg(body_slip))}°', fontsize=6, c="blue")
+            text_pos = ((lat_accels[mp] + lat_accels[mp + 1]) / 2 + 0.3, (yaw_accels[mp] + yaw_accels[mp + 1]) / 2)
+            plt.text(text_pos[0], text_pos[1], f'β = {round(rad_to_deg(body_slip), 1)}°', fontsize=6, c="blue")
 
         plt.show()
 
@@ -132,9 +132,9 @@ class MmmSolver:
             for i in range(len(lat_accels)):
                 if lat_accels[i] > self.max_lat_accel:
                     self.max_lat_accel = lat_accels[i]
-                    self.limit_yaw_stability = rad_to_deg(yaw_accels[i])
+                    self.limit_yaw_stability = yaw_accels[i]
 
-        self.max_yaw_accel = rad_to_deg(max([max(x[2]) for x in self.steered_angle_iso_lines]))
+        self.max_yaw_accel = max([max(x[2]) for x in self.steered_angle_iso_lines])
 
         self.trim_lat_accel = 0
         for steered_angle, lat_accels, yaw_accels in self.steered_angle_iso_lines:
@@ -143,11 +143,11 @@ class MmmSolver:
                 self.trim_lat_accel = lat
 
         self.key_points = [
-            ("linear control at β=0", self.linear_control, "(deg/s^2)/deg"),
-            ("linear stability at δ=0", self.linear_stability, "(deg/s^2)/deg"),
+            ("linear control at β=0", self.linear_control, "(rad/s^2)/rad"),
+            ("linear stability at δ=0", self.linear_stability, "(rad/s^2)/rad"),
             ("max lat accel", self.max_lat_accel, "m/s^2"),
-            ("yaw accel at max lat", self.limit_yaw_stability, "deg/s^2"),
-            ("max yaw accel", self.max_yaw_accel, "deg/s^2"),
+            ("yaw accel at max lat", self.limit_yaw_stability, "rad/s^2"),
+            ("max yaw accel", self.max_yaw_accel, "rad/s^2"),
             ("trim lat accel", self.trim_lat_accel, "m/s^2"),
         ]
 
