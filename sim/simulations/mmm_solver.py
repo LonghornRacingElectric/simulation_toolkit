@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
+from scipy.spatial import ConvexHull
 
 from sim.model_parameters.cars.car import Car
 from sim.model_parameters.cars.lady_luck import LadyLuck
@@ -29,6 +30,7 @@ class MmmSolver:
 
         self.steered_angle_iso_lines = []
         self.body_slip_iso_lines = []
+        self.all_points = []
 
         self.linear_control = 0
         self.linear_stability = 0
@@ -64,6 +66,7 @@ class MmmSolver:
 
         self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
+        self.all_points = []
 
         for i, body_slip in enumerate(body_slip_sweep):
             for j, steered_angle in enumerate(steered_angle_sweep):
@@ -85,6 +88,7 @@ class MmmSolver:
                     self.body_slip_iso_lines[i][0] = body_slip
                     self.body_slip_iso_lines[j][1][i] = lat_accel
                     self.body_slip_iso_lines[j][2][i] = yaw_accel
+                    self.all_points.append((lat_accel, yaw_accel))
 
         self._calculate_key_points()
 
@@ -142,6 +146,10 @@ class MmmSolver:
             if lat > self.trim_lat_accel:
                 self.trim_lat_accel = lat
 
+        self.all_points = np.array(self.all_points)
+        convex_hull = ConvexHull(self.all_points)
+        self.hull = self.all_points[convex_hull.vertices, 0], self.all_points[convex_hull.vertices, 1]
+
         self.key_points = [
             ("linear control at β=0", self.linear_control, "(rad/s^2)/rad"),
             ("linear stability at δ=0", self.linear_stability, "(rad/s^2)/rad"),
@@ -149,8 +157,9 @@ class MmmSolver:
             ("yaw accel at max lat", self.limit_yaw_stability, "rad/s^2"),
             ("max yaw accel", self.max_yaw_accel, "rad/s^2"),
             ("trim lat accel", self.trim_lat_accel, "m/s^2"),
+            (self.hull[0], self.hull[1])
         ]
 
     def print_key_points(self):
-        for label, value, units in self.key_points:
+        for label, value, units in self.key_points[:6]:
             print(f'{label.ljust(25)} | {str(round(value, 3)).ljust(8)} {units}')

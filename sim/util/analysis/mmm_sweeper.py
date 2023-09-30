@@ -16,19 +16,30 @@ class MmmSweeper:
         self.dimensions.append((param_name, values))
 
     def solve_all(self):
-        def solve_all_recursive(dim):
+        def solve_all_recursive(dim, input_values):
             if dim < len(self.dimensions):
                 res = []
                 dim_name, dim_values = self.dimensions[dim]
                 for i in range(len(dim_values)):
                     self.car[dim_name] = ConstantParameter(dim_values[i])
-                    res.append(solve_all_recursive(dim + 1))
+                    new_input_values = input_values.copy()
+                    new_input_values[dim_name] = dim_values[i]
+                    res.append(solve_all_recursive(dim + 1, new_input_values))
                 return res
             else:
                 self.mmm_solver.solve()
+
+                print()
+                print("=============== single MMM finished ===============")
+                for k, v in input_values.items():
+                    print(f'{k.ljust(25)} | {str(round(v, 3))}')
+                print('---------------------------------------------------')
+                self.mmm_solver.print_key_points()
+                print()
+
                 return self.mmm_solver.key_points
 
-        self.results = solve_all_recursive(0)
+        self.results = solve_all_recursive(0, {})
 
     def _plot_key_point(self, dimension: str, kpi: int):
         if len(self.dimensions) > 1:
@@ -71,6 +82,40 @@ class MmmSweeper:
     def plot_trim_lat_accel(self, dimension: str):
         self._plot_key_point(dimension, 5)
 
-    def plot_all(self, dimension: str):
+    def plot_key_points(self, dimension: str):
         for i in range(6):
             self._plot_key_point(dimension, i)
+
+    def plot_convex_hull(self, dimension: str):
+        if len(self.dimensions) > 1:
+            raise Exception("plotting multidimensional sweeps isn't implemented yet because then you have to\
+                choose a value for the other dimensions and i don't feel like setting that up rn sorry - matt")
+
+        d = None
+        for dim in self.dimensions:
+            if dim[0] == dimension:
+                d = dim
+                break
+        if d is None:
+            raise Exception("dimension not found")
+
+        fig = plt.figure()
+        subplot = fig.add_subplot()
+
+        z_min = min(d[1])
+        z_max = max(d[1])
+        for i, res in enumerate(self.results):
+            x, y = res[6]
+            x = list(x) + [x[0]]  # wrap around
+            y = list(y) + [y[0]]
+            z = d[1][i]
+            c = (z-z_min) / (z_max-z_min)
+            subplot.plot(x, y, label=f'{d[0]} = {round(z, 3)}', color=(c, 0, 1-c))
+
+        subplot.set_xlabel('Lateral Acceleration (m/s^2)')
+        subplot.set_ylabel('Yaw Acceleration (rad/s^2)')
+        plt.axhline(c="gray", linewidth=0.5)
+        plt.axvline(c="gray", linewidth=0.5)
+        subplot.legend()
+
+        plt.show()
