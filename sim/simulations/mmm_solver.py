@@ -112,12 +112,14 @@ class MmmSolver:
             plt.plot(lat_accels, yaw_accels, c="red", linewidth=0.8)
             plt.scatter(lat_accels, yaw_accels, s=0.5, c="black")
 
-            text_pos = ((lat_accels[mp] + lat_accels[mp - 1]) / 2, (yaw_accels[mp] + yaw_accels[mp - 1]) / 2 - 1.0)
+            # text_pos = ((lat_accels[mp] + lat_accels[mp - 1]) / 2, (yaw_accels[mp] + yaw_accels[mp - 1]) / 2 - 1.0)
+            text_pos = (lat_accels[-1], yaw_accels[-1] + 0.7)
             plt.text(text_pos[0], text_pos[1], f'δ = {round(rad_to_deg(steered_angle), 1)}°', fontsize=6, c="red")
 
         for body_slip, lat_accels, yaw_accels in self.body_slip_iso_lines:
             plt.plot(lat_accels, yaw_accels, c="blue", linewidth=0.8)
-            text_pos = ((lat_accels[mp] + lat_accels[mp + 1]) / 2 + 0.3, (yaw_accels[mp] + yaw_accels[mp + 1]) / 2)
+            # text_pos = ((lat_accels[mp] + lat_accels[mp + 1]) / 2 + 0.3, (yaw_accels[mp] + yaw_accels[mp + 1]) / 2)
+            text_pos = (lat_accels[0] + 0.6, yaw_accels[0] + 0.3)
             plt.text(text_pos[0], text_pos[1], f'β = {round(rad_to_deg(body_slip), 1)}°', fontsize=6, c="blue")
 
         plt.show()
