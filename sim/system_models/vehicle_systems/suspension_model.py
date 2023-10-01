@@ -57,7 +57,6 @@ class SuspensionModel(VehicleSystemModel):
         chassis_roll = state_vector.roll
         long_accel = state_vector.long_accel
         lat_accel = state_vector.lateral_accel
-        yaw_accel = state_vector.yaw_accel
         steered_angle = controls_vector.steering_angle
         body_slip = state_vector.body_slip
         velocity = state_vector.velocity
@@ -142,35 +141,6 @@ class SuspensionModel(VehicleSystemModel):
             # Log force and moment calculations from above
             observables_vector.tire_forces_IMF[i] = vehicle_centric_forces
             observables_vector.tire_moments_IMF[i] = vehicle_centric_moments
-
-        if state_vector.aero == False:
-            aero_forces = 0
-            aero_moments = 0
-        else:
-            self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
-
-            aero_forces = np.array(observables_vector.aero_forces)
-            aero_moments = np.array(observables_vector.aero_moments)
-        
-        # Sum vehicle centric forces and moments
-        sus_forces = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)])
-        sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
-
-        gravity_forces = np.array([0, 0, -vehicle_parameters.total_mass * vehicle_parameters.accel_gravity])
-
-        total_forces = aero_forces + sus_forces + gravity_forces
-        total_moments = aero_moments + sus_moments
-
-        # Force and moment balance
-        m_a = vehicle_parameters.total_mass * translational_accelerations_IMF
-        force_residuals = m_a - total_forces
-
-        I_alpha = np.dot(vehicle_parameters.sprung_inertia, np.array([0, 0, yaw_accel]))
-        moment_residuals = I_alpha - total_moments
-
-        # Log force and moment residuals
-        observables_vector.summation_forces = force_residuals
-        observables_vector.summation_moments = moment_residuals
 
         # Log additional desired parameters
         observables_vector.average_steered_angle = (steered_angles[0] + steered_angles[1]) / 2
