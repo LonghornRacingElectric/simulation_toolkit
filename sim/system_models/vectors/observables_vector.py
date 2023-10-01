@@ -39,6 +39,7 @@ class ObservablesVector(Vector):
 
         self.summation_forces = [0, 0, 0]
         self.summation_moments = [0, 0, 0]
+        self.axle_residuals = [0, 0, 0, 0]
 
         # Tires [FL, FR, RL, RR]
         self.slip_angles = [0, 0, 0, 0]

@@ -12,6 +12,7 @@ from sim.model_parameters.parameters.constant_parameter import ConstantParameter
 from sim.model_parameters.telemetry.lady_luck_telemetry import LadyLuckTelemetry
 from sim.model_parameters.vcu.lady_luck_vcu import LadyLuckVcu
 from sim.simulations.mmm_solver import MmmSolver
+from sim.simulations.gg_generation import GGGeneration
 from sim.simulations.transient_sim import TransientSimulation
 from sim.util.analysis.mmm_sweeper import MmmSweeper
 
@@ -29,10 +30,16 @@ vcu = LadyLuckVcu()
 # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 # generate MMM
-mmm_solver = MmmSolver(car=car, mesh=21, velocity=25, aero=True)
+mmm_solver = MmmSolver(car=car, mesh=31, velocity=15, aero=True)
 mmm_solver.solve()
 mmm_solver.print_key_points()
 mmm_solver.plot()
+
+# generate GG
+# gg_generator = GGGeneration(car=car, mesh=11, velocity=15, aero=True)
+# gg_generator.solve()
+# gg_generator.print_key_points()
+# gg_generator.plot()
 
 # cg bias sweep
 # mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=25, aero=True)

@@ -21,7 +21,10 @@ class StateVector(Vector):
         self.lateral_accel = 0
         self.long_accel = 0
         self.yaw_accel = 0
-        self.slip_ratio = []
+        self.FL_SR = 0
+        self.FR_SR = 0
+        self.RL_SR = 0
+        self.RR_SR = 0
 
         self.body_slip = 0
         self.velocity = 0

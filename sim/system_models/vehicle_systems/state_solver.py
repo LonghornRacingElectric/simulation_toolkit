@@ -1,17 +1,12 @@
-from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
-
 from sim.model_parameters.cars.car import Car
 from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
-from sim.system_models.vehicle_systems.tire_model import TireModel
 from sim.system_models.vehicle_systems.suspension_model import SuspensionModel
 from sim.system_models.vehicle_systems.aero_model import AeroModel
-from sim.util.math import coords
 
 import numpy as np
-import pandas as pd
 
 
 class StateSolver:
@@ -62,3 +57,4 @@ class StateSolver:
         # Log force and moment residuals
         observables_vector.summation_forces = force_residuals
         observables_vector.summation_moments = moment_residuals
+        observables_vector.axle_residuals = [0, 0, 0, 0]
