@@ -9,7 +9,7 @@ from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
-from sim.system_models.vehicle_systems.state_solver import StateSolver
+from sim.system_models.aux_systems.steady_state_solver import SteadyStateSolver
 from sim.util.math.conversions import *
 
 
@@ -17,7 +17,7 @@ class GGGeneration:
 
     def __init__(self, car: Car, mesh: int = 21, velocity: float = 25.0, aero: bool = True):
         self.done = False
-        self.new_model = StateSolver()
+        self.new_model = SteadyStateSolver()
         self.test_car = car
         self.test_controls_vector = ControlsVector()
         self.test_state_vector = StateVector()

@@ -22,6 +22,16 @@ class TireModel:
     
     def _com_long(self, SA: float, SR: float, FX: float, FY: float, Ca: float):
         FY = abs(FY)
+        try:
+            if (SR**2 * FY**2 + FX**2 * (np.tan(SA))**2 == 0 or Ca == 0):
+                SA += 1e-64
+                SR += 1e-64
+                FX += 1e-64
+                FY += 1e-64
+                Ca += 1e-64
+        except:
+            pass
+
         adjusted_FX = ((FX * FY) / np.sqrt(SR**2 * FY**2 + FX**2 * (np.tan(SA))**2)) * \
                 (np.sqrt(SR**2 * Ca**2 + (1 - SR)**2 * (np.cos(SA))**2 * FX**2) / Ca)
         
@@ -29,6 +39,16 @@ class TireModel:
     
     def _com_lat(self, SA: float, SR: float, FX: float, FY: float, Cs: float):
         FX = abs(FX)
+        try:
+            if (SR**2 * FY**2 + FX**2 * (np.tan(SA))**2 == 0 or Cs == 0):
+                SA += 1e-64
+                SR += 1e-64
+                FX += 1e-64
+                FY += 1e-64
+                Cs += 1e-64
+        except:
+            pass
+
         adjusted_FY = ((FX * FY) / np.sqrt(SR**2 * FY**2 + FX**2 * (np.tan(SA))**2)) * \
             (np.sqrt((1 - SR)**2 * (np.cos(SA))**2 * FY**2 + (np.sin(SA))**2 * Cs**2) / (Cs * np.cos(SA)))
             
