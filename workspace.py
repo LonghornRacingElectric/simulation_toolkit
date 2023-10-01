@@ -29,16 +29,16 @@ vcu = LadyLuckVcu()
 # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 # generate MMM
-# mmm_solver = MmmSolver(car=car, mesh=21, velocity=25, aero=True)
-# mmm_solver.solve()
-# mmm_solver.print_key_points()
-# mmm_solver.plot()
+mmm_solver = MmmSolver(car=car, mesh=21, velocity=25, aero=True)
+mmm_solver.solve()
+mmm_solver.print_key_points()
+mmm_solver.plot()
 
 # cg bias sweep
-mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=25, aero=True)
-mmm_sweeper.add_dimension("cg_bias", np.linspace(0.46, 0.62, 9))
-mmm_sweeper.solve_all()
-mmm_sweeper.plot_convex_hull("cg_bias")
+# mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=25, aero=True)
+# mmm_sweeper.add_dimension("cg_bias", np.linspace(0.46, 0.62, 9))
+# mmm_sweeper.solve_all()
+# mmm_sweeper.plot_convex_hull("cg_bias")
 
 # simulate competition
 # TODO
