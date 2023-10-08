@@ -18,9 +18,19 @@ class TelemetryModel:
     def __init__(self, telemetry_parameters: Telemetry):
         self.parameters = telemetry_parameters
 
-    def eval(self, state: StateVector, state_dot: StateDotVector, driver_controls: DriverControlsVector) -> SensorDataVector:
+    def eval(self, state: StateVector, state_dot: StateDotVector,
+             driver_controls: DriverControlsVector) -> SensorDataVector:
+
         sensor_data = SensorDataVector()
 
         # TODO implement
+        sensor_data.apps1 = 1.0 + driver_controls.accel_pedal_pct * 3.0
+        sensor_data.apps2 = 0.5 + driver_controls.accel_pedal_pct * 1.5
+        sensor_data.bse1 = 0.5 + driver_controls.brake_pedal_pct * 4.0
+        sensor_data.bse2 = 0.5 + driver_controls.brake_pedal_pct * 4.0
+
+        sensor_data.drive_switch = driver_controls.drive_switch
+
+        sensor_data.inverter_ready = True
 
         return sensor_data

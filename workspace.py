@@ -23,8 +23,10 @@ telemetry = LadyLuckTelemetry()
 vcu = LadyLuckVcu()
 
 # simulate scenario
-transient_sim = TransientSimulation(duration=5, time_step=0.01, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
+transient_sim = TransientSimulation(duration=5, time_step=0.001, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
 transient_sim.run()
+transient_sim.plot_driver_control("accel_pedal_pct")
+transient_sim.plot_vcu_output("torque_request")
 transient_sim.plot_state("motor_rpm")
 transient_sim.plot_state_dot("hv_battery_current")
 transient_sim.plot_observable("hv_battery_terminal_voltage")

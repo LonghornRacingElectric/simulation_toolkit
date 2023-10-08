@@ -6,6 +6,7 @@ class DriverControlsVector(Vector):
         super().__init__()
 
         self.e_stop = False
+        self.drive_switch = False
         self.accel_pedal_pct = 0
         self.brake_pedal_pct = 0
         self.steering_angle = 0

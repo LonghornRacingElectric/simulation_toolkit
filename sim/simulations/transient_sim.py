@@ -61,8 +61,11 @@ class TransientSimulation:
     def _plot(self, i: int, name: str):
         x = np.array([t[0] for t in self.data])
         y = np.array([getattr(t[i], name) for t in self.data])
-        plt.scatter(x, y)
+        plt.scatter(x, y, s=0.5)
         plt.plot(x, y)
+        plt.title(name)
+        plt.xlabel("time (s)")
+        plt.ylabel(name)
         plt.show()
         pass
 

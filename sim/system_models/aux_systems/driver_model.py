@@ -24,10 +24,17 @@ class DriverModel:
     def eval(self, time: float, state: StateVector, state_dot: StateDotVector) -> DriverControlsVector:
         out = DriverControlsVector()
 
-        # TODO replace this shit
-        if time > 1:
-            out.accel_pedal_pct = 1
-        else:
+        if time < 0.5:
             out.accel_pedal_pct = 0
+            out.brake_pedal_pct = 0.5
+            out.drive_switch = False
+        elif time < 1.0:
+            out.accel_pedal_pct = 0
+            out.brake_pedal_pct = 0.5
+            out.drive_switch = True
+        else:
+            out.accel_pedal_pct = min(1.0, (time - 1.0)/4.0)
+            out.brake_pedal_pct = 0
+            out.drive_switch = True
 
         return out
