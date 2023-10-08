@@ -31,4 +31,7 @@ class TimeIntegrator:
                                     * self.car.hv_battery_thermal_resistance * self.time_step)
         state.coolant_temperature += (state_dot.coolant_net_heat
                                       * self.car.hv_battery_thermal_resistance * self.time_step)
+
+        # TODO call system-specific integrate functions to keep math out of here
+
         return state

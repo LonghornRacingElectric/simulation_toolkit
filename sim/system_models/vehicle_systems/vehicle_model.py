@@ -11,6 +11,7 @@ from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
+from sim.system_models.vehicle_systems.aero_model import AeroModel
 from sim.system_models.vehicle_systems.powertrain_model import PowertrainModel
 from sim.system_models.vehicle_systems.suspension_model import SuspensionModel
 from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
@@ -19,8 +20,9 @@ class VehicleModel:
     def __init__(self, vehicle_parameters: Car):
         self.vehicle_parameters = vehicle_parameters
         self.vehicle_system_models: list[VehicleSystemModel] = [
+            # AeroModel(),
             PowertrainModel(),
-            # SuspensionModel()
+            # SuspensionModel(),
         ]
         self.first_time = True
 

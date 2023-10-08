@@ -25,18 +25,33 @@ class SuspensionModel(VehicleSystemModel):
         # Haven't added 4 DOF for axles. Accel/brake pedal will come into play here
         self.controls_in = [
             "steering_angle"
+            # torque request (brake calc in powertrain)
         ]
 
         self.state_in = [
             "heave",
             "pitch",
             "roll",
-            "vehicle_velocity",
-            "body_slip",
-            "lateral_accel"
+
+            "heave_vel",
+            "pitch_vel",
+            "roll_vel",
+
+            "long_vel",
+            "lat_vel",
+
+            "yaw",
+            "yaw_vel",
         ]
 
         self.state_out = [
+            "heave_accel",
+            "pitch_accel",
+            "roll_accel",
+
+            "long_accel",
+            "lat_accel",
+            "yaw_accel",
         ]
 
         self.observables_out = [
