@@ -268,8 +268,8 @@ class SuspensionModel(VehicleSystemModel):
         front_track_to_CG = vehicle_parameters.wheelbase * vehicle_parameters.cg_bias
         rear_track_to_CG = vehicle_parameters.wheelbase * (1 - vehicle_parameters.cg_bias)
 
-        front_pitch_displacement = front_track_to_CG * np.tan(abs(pitch)) * (1 if pitch > 0 else -1)
-        rear_pitch_displacement = rear_track_to_CG * np.tan(abs(pitch)) * (1 if pitch < 0 else -1)
+        front_pitch_displacement = front_track_to_CG * np.tan(abs(pitch))
+        rear_pitch_displacement = rear_track_to_CG * np.tan(abs(pitch))
 
         F_heave = heave + front_pitch_displacement
         R_heave = heave + rear_pitch_displacement
