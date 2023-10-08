@@ -5,7 +5,6 @@ from sim.model_parameters.vcu.vcu import VehicleControlUnit
 from sim.system_models.aux_systems.controls_mux import ControlsMux
 from sim.system_models.aux_systems.driver_model import DriverModel
 from sim.system_models.aux_systems.telemetry_model import TelemetryModel
-from sim.system_models.aux_systems.time_integrator import TimeIntegrator
 from sim.system_models.aux_systems.vcu_model import VehicleControlUnitModel
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
@@ -24,7 +23,6 @@ class TransientSimulation:
         self.telemetry = TelemetryModel(telemetry)
         self.vcu = VehicleControlUnitModel(car, vcu)
         self.controls_mux = ControlsMux()
-        self.time_integrator = TimeIntegrator(time_step, car)
 
         self.duration = duration
         self.time_step = time_step
@@ -47,8 +45,7 @@ class TransientSimulation:
             sensor_data = self.telemetry.eval(state, state_dot, driver_controls)
             vcu_output = self.vcu.eval(sensor_data)
             controls = self.controls_mux.eval(driver_controls, vcu_output)
-            state_dot, observables = self.vehicle.eval(controls, state)
-            state = self.time_integrator.eval(state, state_dot)
+            state, state_dot, observables = self.vehicle.eval(controls, state, self.time_step)
 
             time += self.time_step
 

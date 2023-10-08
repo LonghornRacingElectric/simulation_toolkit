@@ -7,7 +7,7 @@ from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
-from sim.util.math.conversions import rpm_to_rads
+from sim.util.math.conversions import rpm_to_rads, rads_to_rpm
 
 
 class PowertrainModel(VehicleSystemModel):
@@ -131,6 +131,22 @@ class PowertrainModel(VehicleSystemModel):
 
         if controls_in.torque_request > 0:
             pass
+
+    def integrate(self, car: Car, state: StateVector, state_dot: StateDotVector, time_step: float):
+        state.hv_battery_charge -= state_dot.hv_battery_current * time_step
+        state.lv_battery_charge -= state_dot.lv_battery_current * time_step
+
+        # TODO state.motor_rpm also needs rolling resistance from tire
+        state.motor_rpm += rads_to_rpm(state_dot.motor_torque / car.drivetrain_moment_of_inertia) * time_step
+        
+        state.hv_battery_temperature += (state_dot.hv_battery_net_heat
+                                         * car.hv_battery_thermal_resistance * time_step)
+        state.inverter_temperature += (state_dot.inverter_net_heat
+                                       * car.inverter_thermal_resistance * time_step)
+        state.motor_temperature += (state_dot.motor_net_heat
+                                    * car.hv_battery_thermal_resistance * time_step)
+        state.coolant_temperature += (state_dot.coolant_net_heat
+                                      * car.hv_battery_thermal_resistance * time_step)
 
     def _calculate_battery_current(self, battery_power: float, battery_open_circuit_voltage: float,
                                    battery_internal_resistance: float) -> float:

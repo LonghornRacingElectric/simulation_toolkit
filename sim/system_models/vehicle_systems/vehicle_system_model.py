@@ -26,3 +26,7 @@ class VehicleSystemModel:
         Note that input and output vectors are passed as parameters to the function. There is no return value.
         """
         pass
+
+    @abstractmethod
+    def integrate(self, car: Car, state: StateVector, state_dot: StateDotVector, time_step: float):
+        pass

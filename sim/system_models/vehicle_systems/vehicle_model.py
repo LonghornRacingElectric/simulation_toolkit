@@ -26,7 +26,8 @@ class VehicleModel:
         ]
         self.first_time = True
 
-    def eval(self, controls: ControlsVector, state: StateVector) -> (StateDotVector, ObservablesVector):
+    def eval(self, controls: ControlsVector, state: StateVector,
+             time_step: float) -> (StateVector, StateDotVector, ObservablesVector):
         state_dot: StateDotVector = StateDotVector()
         observables: ObservablesVector = ObservablesVector()
 
@@ -46,4 +47,7 @@ class VehicleModel:
                 observables.confirm_expectations()
                 self.first_time = False
 
-        return state_dot, observables
+        for vehicle_system_model in self.vehicle_system_models:
+            vehicle_system_model.integrate(self.vehicle_parameters, state, state_dot, time_step)
+
+        return state, state_dot, observables
