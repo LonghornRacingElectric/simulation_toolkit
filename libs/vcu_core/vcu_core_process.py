@@ -23,6 +23,9 @@ class VcuCoreProcess:
         self.communicate()
         return self.read_all()
 
+    def terminate_subprocess(self):
+        self.process.terminate()
+
     def communicate(self):
         for line in self.input_lines:
             self.process.stdin.write(bytes(line, 'utf-8'))

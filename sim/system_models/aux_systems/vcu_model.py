@@ -6,10 +6,6 @@ from sim.system_models.vectors.vcu_output_vector import VcuOutputVector
 
 
 class VehicleControlUnitModel:
-    """
-    TODO driver controls, sensor data in --> vehicle controls out
-    """
-
     def __init__(self, car_parameters: Car, vcu_parameters: VehicleControlUnit):
         self.car = car_parameters
         self.parameters = vcu_parameters
@@ -18,4 +14,7 @@ class VehicleControlUnitModel:
     def eval(self, sensor_data: SensorDataVector) -> VcuOutputVector:
         out = self.core.execute(sensor_data)
         return out
+
+    def terminate_subprocess(self):
+        self.core.terminate_subprocess()
 

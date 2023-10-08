@@ -58,6 +58,8 @@ class TransientSimulation:
             if driver_controls.e_stop:
                 break
 
+        self.vcu.terminate_subprocess()
+
     def _plot(self, i: int, name: str):
         x = np.array([t[0] for t in self.data])
         y = np.array([getattr(t[i], name) for t in self.data])

@@ -1,3 +1,11 @@
+"""
+
+Plan for this file was originally to have all the vehicle systems run in parallel, but it seems like that
+structure didn't really work out so we might go back to having a kind of tree with suspension being the root
+and things like aero and powertrain being children.
+
+"""
+
 from sim.model_parameters.cars.car import Car
 from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
@@ -6,7 +14,6 @@ from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vehicle_systems.powertrain_model import PowertrainModel
 from sim.system_models.vehicle_systems.suspension_model import SuspensionModel
 from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
-
 
 class VehicleModel:
     def __init__(self, vehicle_parameters: Car):

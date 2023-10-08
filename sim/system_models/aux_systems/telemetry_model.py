@@ -1,6 +1,8 @@
 """
 
-TODO true vehicle state (x, x_dot) in, realistic sensor data out
+Telemetry model takes all real data and turns it into sensor data. Sensors are never ideal,
+and those imperfections are modeled here. This file also handles any control input transducers like
+the APPS and BSE sensors.
 
 An example would be a wheelspeed sensor only detecting discrete increments in wheel angle.
 

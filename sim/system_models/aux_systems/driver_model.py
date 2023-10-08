@@ -1,6 +1,6 @@
 """
 
-TODO x, x_dot in --> driver controls out
+Transient driver model.
 
 Remember that the driver needs to know the racing line to try to match it in a transient sim.
 For a simple scenario (like a single turn) the driver can be trying to follow a simple spline instead.
