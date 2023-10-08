@@ -16,7 +16,7 @@ class SteadyStateSolver:
         self.aero = AeroModel()
 
     def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_vector: StateVector,
-            state_dot_vector: StateDotVector, observables_vector: ObservablesVector) -> None:
+             state_dot_vector: StateDotVector, observables_vector: ObservablesVector) -> None:
 
         # Initialize heave, pitch, roll, long accel, lat accel, yaw accel, steered angle, body slip, velocity
         long_accel = state_vector.long_accel

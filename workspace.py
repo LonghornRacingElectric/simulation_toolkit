@@ -23,17 +23,17 @@ telemetry = LadyLuckTelemetry()
 vcu = LadyLuckVcu()
 
 # simulate scenario
-# transient_sim = TransientSimulation(duration=5, time_step=0.01, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
-# transient_sim.run()
-# transient_sim.plot_state("motor_rpm")
-# transient_sim.plot_state_dot("hv_battery_current")
-# transient_sim.plot_observable("hv_battery_terminal_voltage")
+transient_sim = TransientSimulation(duration=5, time_step=0.01, car=car, driver=driver, telemetry=telemetry, vcu=vcu)
+transient_sim.run()
+transient_sim.plot_state("motor_rpm")
+transient_sim.plot_state_dot("hv_battery_current")
+transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 # generate MMM
-mmm_solver = MmmSolver(car=car, mesh=31, velocity=15, aero=True)
-mmm_solver.solve()
-mmm_solver.print_key_points()
-mmm_solver.plot()
+# mmm_solver = MmmSolver(car=car, mesh=31, velocity=15, aero=True)
+# mmm_solver.solve()
+# mmm_solver.print_key_points()
+# mmm_solver.plot()
 
 # generate GG
 # gg_generator = GGGeneration(car=car, mesh=11, velocity=15, aero=True)

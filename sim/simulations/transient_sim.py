@@ -2,6 +2,7 @@ from sim.model_parameters.cars.car import Car
 from sim.model_parameters.drivers.driver import Driver
 from sim.model_parameters.telemetry.telemetry import Telemetry
 from sim.model_parameters.vcu.vcu import VehicleControlUnit
+from sim.system_models.aux_systems.controls_mux import ControlsMux
 from sim.system_models.aux_systems.driver_model import DriverModel
 from sim.system_models.aux_systems.telemetry_model import TelemetryModel
 from sim.system_models.aux_systems.time_integrator import TimeIntegrator
@@ -22,6 +23,7 @@ class TransientSimulation:
         self.driver = DriverModel(driver)
         self.telemetry = TelemetryModel(telemetry)
         self.vcu = VehicleControlUnitModel(car, vcu)
+        self.controls_mux = ControlsMux()
         self.time_integrator = TimeIntegrator(time_step, car)
 
         self.duration = duration
@@ -42,15 +44,16 @@ class TransientSimulation:
 
         while time < self.duration:
             driver_controls = self.driver.eval(time, state, state_dot)
-            sensor_data = self.telemetry.eval(state, state_dot)
-            vehicle_controls = self.vcu.eval(driver_controls, sensor_data)
-            state_dot, observables = self.vehicle.eval(vehicle_controls, state)
+            sensor_data = self.telemetry.eval(state, state_dot, driver_controls)
+            vcu_output = self.vcu.eval(sensor_data)
+            controls = self.controls_mux.eval(driver_controls, vcu_output)
+            state_dot, observables = self.vehicle.eval(controls, state)
             state = self.time_integrator.eval(state, state_dot)
 
             time += self.time_step
 
             self.data.append((time, copy.copy(state), copy.copy(state_dot), driver_controls,
-                              sensor_data, vehicle_controls, observables))
+                              sensor_data, vcu_output, controls, observables))
 
             if driver_controls.e_stop:
                 break
@@ -75,7 +78,11 @@ class TransientSimulation:
     def plot_sensor(self, name: str):
         self._plot(4, name)
 
-    def plot_vehicle_control(self, name: str):
+    def plot_vcu_output(self, name: str):
         self._plot(5, name)
-    def plot_observable(self, name: str):
+
+    def plot_vehicle_control(self, name: str):
         self._plot(6, name)
+
+    def plot_observable(self, name: str):
+        self._plot(7, name)
