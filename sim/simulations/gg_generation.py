@@ -15,7 +15,7 @@ from sim.util.math.conversions import *
 
 class GGGeneration:
 
-    def __init__(self, car: Car, mesh: int = 21, velocity: float = 25.0, aero: bool = True):
+    def __init__(self, car: Car, mesh: int = 21, velocity: float = 15.0, aero: bool = True):
         self.done = False
         self.new_model = SteadyStateSolver()
         self.test_car = car
@@ -28,16 +28,8 @@ class GGGeneration:
         self.velocity = velocity
         self.test_state_vector.aero = aero
 
-        self.steered_angle_iso_lines = []
-        self.body_slip_iso_lines = []
-        self.all_points = []
-
-        self.linear_control = 0
-        self.linear_stability = 0
-        self.max_lat_accel = 0
-        self.limit_yaw_stability = 0
-        self.max_yaw_accel = 0
-        self.trim_lat_accel = 0
+        self.lat_accels = []
+        self.long_accels = []
 
     def _vehicle_model(self, x, y):
         # Prescribed values
@@ -68,7 +60,7 @@ class GGGeneration:
     def solve(self):
         body_slip_sweep = np.linspace(deg_to_rad(-15), deg_to_rad(15), self.mesh)
         steered_angle_sweep = np.linspace(deg_to_rad(-55), deg_to_rad(55), self.mesh)
-        torque_request_sweep = np.linspace(-1, 1, self.mesh)
+        torque_request_sweep = np.linspace(-230, 230, self.mesh)
 
         self.lat_accels = []
         self.long_accels = []
@@ -95,7 +87,7 @@ class GGGeneration:
 
     def plot(self):
         if not self.done:
-            raise Exception("can't plot the MMM before you solve the MMM bruh")
+            raise Exception("can't plot the GG before you solve the GG bruh")
 
         plt.title("Lateral Acceleration vs Longitudinal Acceleration")
         plt.xlabel("Lateral Acceleration (m/s^2)")
@@ -120,5 +112,5 @@ class GGGeneration:
         ]
 
     def print_key_points(self):
-        for label, value, units in self.key_points[:6]:
+        for label, value, units in self.key_points:
             print(f'{label.ljust(25)} | {str(round(value, 3)).ljust(8)} {units}')

@@ -181,11 +181,11 @@ class LadyLuck(Car):
         self.CsA_dist = ConstantParameter([0.666, 0.000, 0.333]) # [front, undertray, rear]
 
         # Pitch, body_slip, and roll sensitivities,
-        self.p_sens	= ConstantParameter([[[ -15.7,  -10.6], [ -7.5,  -12.5], [0,0]],
+        self.p_sens = ConstantParameter([[[ -15.7,  -10.6], [ -7.5,  -12.5], [0,0]],
                                          [[  7.39,  -7.19], [ 10.1, -15.15], [0,0]],
                                          [[ -0.72,  -4.06], [ 2.02,  -5.94], [0,0]]])
         self.bs_sens = ConstantParameter([[-2.4,   -0.7, 0], [  0.61, 0.89, 0], [-0.96,  0.33, 0]])
-        self.r_sens	= ConstantParameter([[-10.1, -13.1, 0], [-1.37,     0, 0], [-4.24, -2.02, 0]])
+        self.r_sens = ConstantParameter([[-10.1, -13.1, 0], [-1.37,     0, 0], [-4.24, -2.02, 0]])
 
         # CoP positions from vehicle origin (CAD)
         # Front, Undertray and Rear [x , y , z] (Inches)
