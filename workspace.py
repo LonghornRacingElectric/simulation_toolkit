@@ -25,9 +25,13 @@ vcu = LadyLuckVcu()
 
 
 def general_transient_sim():
-    transient_sim = TransientSimulation(duration=5, time_step=0.001,
+    transient_sim = TransientSimulation(duration=5, time_step=0.001,  # TODO change to 0.003
                                         car=car, driver=driver, telemetry=telemetry, vcu=vcu)
     transient_sim.run()
+    transient_sim.plot_driver_control("brake_pedal_pct")
+    transient_sim.plot_driver_control("drive_switch")
+    transient_sim.plot_vcu_output("park_or_drive")
+    transient_sim.plot_vcu_output("r2d_buzzer")
     transient_sim.plot_driver_control("accel_pedal_pct")
     transient_sim.plot_vcu_output("torque_request")
     transient_sim.plot_state("motor_rpm")
@@ -83,5 +87,4 @@ def aero_CoP_MMM_sweep():
     mmm_sweeper.plot_key_points("CoP")
 
 
-# general_MMM()
-aero_coefficients_MMM_sweep()
+general_transient_sim()
