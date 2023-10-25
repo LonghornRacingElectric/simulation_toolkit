@@ -97,6 +97,7 @@ class LadyLuck(Car):
                                                       x_min=0, x_max=1, x_samples=20)  # m TODO temp 0
 
         # Tires
+        self.tire_radii = ConstantParameter([8 * 0.0254, 8 * 0.0254, 8 * 0.0254, 8 * 0.0254])
         self.front_tire_coeff_Fy = ConstantParameter(
             [0.349, -0.00115, 8.760, 730.300, 1745.322, 0.0139, -0.000277, 1.02025435, 0, 0, 0, 0, 0, 0, 0, 0.00362,
              -0.0143, -0.0116])  # coeffs
@@ -114,6 +115,18 @@ class LadyLuck(Car):
 
         self.front_tire_vertical_rate = ConstantParameter(725 * 175.127)  # N/m, but make these curve parameters once we add functionality
         self.rear_tire_vertical_rate = ConstantParameter(725 * 175.127)  # N/m, but make these curve parameters once we add functionality
+
+        # ======================
+        # ======= Pedals =======
+        # ======================
+
+        self.eff_rotor_radius = ConstantParameter([2.86 * 0.0254, 2.82 * 0.0254]) # [front, rear]
+        self.MC_SA = ConstantParameter([0.2386 * 0.0254**2, 0.2386 * 0.0254**2])
+        self.C_SA = ConstantParameter([2.8146 * 0.0254**2, 1.4024 * 0.0254**2])
+        self.mu = ConstantParameter([0.50, 0.50])
+        self.pedal_ratio = ConstantParameter(3.25)
+        self.brake_bias = ConstantParameter(0.56)
+        self.max_DF = ConstantParameter(150 * 4.448) # Maximum driver force
 
         # ======================
         # ===== Powertrain =====
@@ -146,6 +159,7 @@ class LadyLuck(Car):
         self.coolant_area_motor = ConstantParameter(0)  # [m^2]
 
         # ----- Drivetrain -----
+        self.max_torque = ConstantParameter(230) # Nm
         self.regen_enabled = ToggleParameter(False)  # [true/false]
         self.power_limit = ConstantParameter(80000)  # [W]
         self.motor_peak_torque = CurveParameter(from_function=lambda rpm: 230,
@@ -161,6 +175,8 @@ class LadyLuck(Car):
         self.inverter_thermal_resistance = ConstantParameter(0)  # [C/W]
         self.drivetrain_efficiency = ConstantParameter(0.97)  # [%]
         self.drivetrain_moment_of_inertia = ConstantParameter(1)  # [kgm^2] TODO lots of ptn are placeholders
+        self.gear_ratio = ConstantParameter(4) # diff to motor
+        self.diff_efficiency = ConstantParameter(1) # %
 
         # ======================
         # ==== Aerodynamics ====

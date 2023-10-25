@@ -86,6 +86,7 @@ class Car(ModelParameters):
         self.rear_roll_center_height = CurveParameter()  # m
 
         # Tires
+        self.tire_radii = ConstantParameter()  # [front, rear]
         self.front_tire_coeff_Fy = ConstantParameter()  # coeffs
         self.front_tire_coeff_Fx = ConstantParameter()  # coeffs
         self.rear_tire_coeff_Fy = ConstantParameter()  # coeffs
@@ -93,6 +94,18 @@ class Car(ModelParameters):
 
         self.front_tire_vertical_rate = ConstantParameter()  # N/m, but make these curve parameters once we add functionality
         self.rear_tire_vertical_rate = ConstantParameter()  # N/m, but make these curve parameters once we add functionality
+
+        # ======================
+        # ======= Pedals =======
+        # ======================
+
+        self.eff_rotor_radius = ConstantParameter() # [front, rear]
+        self.MC_SA = ConstantParameter()
+        self.C_SA = ConstantParameter()
+        self.mu = ConstantParameter()
+        self.pedal_ratio = ConstantParameter()
+        self.brake_bias = ConstantParameter() # Frontward bias (1 is pure front and 0 is pure rear)
+        self.max_DF = ConstantParameter() # Maximum driver force
 
         # ======================
         # ===== Powertrain =====
@@ -121,6 +134,7 @@ class Car(ModelParameters):
         self.coolant_area_motor = ConstantParameter()  # [m^2]
 
         # ----- Drivetrain -----
+        self.max_torque = ConstantParameter() # Nm
         self.regen_enabled = ToggleParameter()  # [true/false]
         self.power_limit = ConstantParameter()  # [W]
         self.motor_peak_torque = CurveParameter()  # [Nm] = f(RPM [RPM])
@@ -134,6 +148,8 @@ class Car(ModelParameters):
         self.inverter_thermal_resistance = ConstantParameter()  # [C/W]
         self.drivetrain_efficiency = ConstantParameter()  # [%]
         self.drivetrain_moment_of_inertia = ConstantParameter()  # [kgm^2]
+        self.gear_ratio = ConstantParameter() # diff to motor
+        self.diff_efficiency = ConstantParameter() # %
 
         # ======================
         # ==== Aerodynamics ====

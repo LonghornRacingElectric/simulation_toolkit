@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
 from scipy.spatial import ConvexHull
+import pandas as pd
 
 from sim.model_parameters.cars.car import Car
 from sim.model_parameters.cars.lady_luck import LadyLuck
@@ -48,7 +49,7 @@ class GGGeneration:
         self.test_state_vector.FL_SR = x[6]
         self.test_state_vector.FR_SR = x[7]
         self.test_state_vector.RL_SR = x[8]
-        self.test_state_vector.RL_SR = x[9]
+        self.test_state_vector.RR_SR = x[9]
 
         self.new_model.eval(vehicle_parameters=self.test_car, controls_vector=self.test_controls_vector,
                             state_vector=self.test_state_vector,
@@ -60,17 +61,33 @@ class GGGeneration:
     def solve(self):
         body_slip_sweep = np.linspace(deg_to_rad(-15), deg_to_rad(15), self.mesh)
         steered_angle_sweep = np.linspace(deg_to_rad(-55), deg_to_rad(55), self.mesh)
-        torque_request_sweep = np.linspace(-230, 230, self.mesh)
+        torque_request_sweep = np.linspace(-1, 1, self.mesh)
 
         self.lat_accels = []
         self.long_accels = []
+        self.slip_ratios = []
+        self.torque_requests = []
 
+        counter = 0
         for body_slip in body_slip_sweep:
             for steered_angle in steered_angle_sweep:
                 for torque_request in torque_request_sweep:
                     for velocity in [self.velocity]:
+                        
+                        print(f"Progress: {round(counter / self.mesh**3 * 100, 1)}%")
+                        counter += 1
+
                         def solve_attempt(x):
-                            return self._vehicle_model(x, [body_slip, velocity, steered_angle, torque_request])
+                            adjusted_SR = []
+                            for slip_ratio in x[6:]:
+                                if slip_ratio > 1:
+                                    adjusted_SR.append(1)
+                                elif slip_ratio < -1:
+                                    adjusted_SR.append(-1)
+                                else:
+                                    adjusted_SR.append(slip_ratio)
+
+                            return self._vehicle_model([*x[:6], *adjusted_SR], [body_slip, velocity, steered_angle, torque_request])
 
                         # try:
                             # long accel, lat accel, yaw accel, heave, pitch, roll, FL SR, FR SR, RL SR, RR SR
@@ -78,12 +95,23 @@ class GGGeneration:
                         # except:
                         #     continue
 
-                        self.lat_accels.append(fsolve_results[1])
                         self.long_accels.append(fsolve_results[0])
+                        self.lat_accels.append(fsolve_results[1])
+                        self.slip_ratios.append(fsolve_results[6:])
+                        self.torque_requests.append(torque_request)
 
         self._calculate_key_points()
 
         self.done = True
+
+        df = pd.DataFrame()
+
+        df["Long_Accels"] = self.long_accels
+        df["Lat_Accels"] = self.lat_accels
+        df["Slip_Ratios"] = self.slip_ratios
+        df["Torque_Requests"] = self.torque_requests
+
+        df.to_csv("checks")
 
     def plot(self):
         if not self.done:

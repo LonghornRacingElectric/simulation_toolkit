@@ -52,6 +52,10 @@ class MmmSolver:
         self.test_state_vector.heave = x[3]
         self.test_state_vector.pitch = x[4]
         self.test_state_vector.roll = x[5]
+        self.test_state_vector.FL_SR = 0
+        self.test_state_vector.FR_SR = 0
+        self.test_state_vector.RL_SR = 0
+        self.test_state_vector.RL_SR = 0
 
         self.new_model.eval(vehicle_parameters=self.test_car, controls_vector=self.test_controls_vector,
                             state_vector=self.test_state_vector,

@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
 
@@ -45,7 +46,7 @@ class PowertrainModel(VehicleSystemModel):
             "applied_torque_rr",
         ]
 
-        self.observables_out = [
+        self.observables = [
             "hv_battery_open_circuit_voltage",
             "hv_battery_terminal_voltage",
             "lv_battery_open_circuit_voltage",
@@ -58,7 +59,7 @@ class PowertrainModel(VehicleSystemModel):
     # TODO cooling from infrared radiation??
 
     def eval(self, car: Car, controls_in: ControlsVector, state_in: StateVector,
-             state_out: StateDotVector, observables_out: ObservablesVector):
+             state_out: StateDotVector, observables: ObservablesVector):
 
         lv_system_power_out = car.lv_system_constant_power_draw + car.cooling_power_draw(controls_in.cooling_percent)
         hv_battery_cooling, hv_battery_cooling_from_coolant = self._calculate_cooling(0, 0, 0)  # TODO implement
@@ -71,11 +72,19 @@ class PowertrainModel(VehicleSystemModel):
         hv_battery_internal_resistance = (
             car.hv_battery_internal_resistance(state_in.hv_battery_charge))  # , state_in.hv_battery_temperature))
 
+        diff_angular_velocity = np.average(observables.wheel_angular_velocities[2:])
+        state_in.motor_rpm = rads_to_rpm(diff_angular_velocity * car.gear_ratio)
+
         motor_torque = 0
+        diff_torque = motor_torque * car.gear_ratio
         motor_back_emf = state_in.motor_rpm / car.motor_induced_voltage
         motor_efficiency = car.motor_efficiency(motor_torque)
 
+        observables.line_pressures = [0, 0, 0, 0]
+        observables.mechanical_brake_torque = [0, 0, 0, 0]
+
         if controls_in.torque_request > 0:
+            torque_request = car.max_torque * controls_in.torque_request
             available_voltage = hv_battery_open_circuit_voltage - motor_back_emf
             available_current = available_voltage / (car.motor_winding_resistance + hv_battery_internal_resistance)
             rated_torque = car.motor_peak_torque(state_in.motor_rpm)
@@ -85,9 +94,39 @@ class PowertrainModel(VehicleSystemModel):
             available_power = min(possible_power, car.power_limit * car.inverter_efficiency * motor_efficiency)
             available_torque = available_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
 
-            motor_torque = min(controls_in.torque_request, rated_torque, available_torque)
+            # print(f"Torque Request: {torque_request}")
+            # print(f"Rated Torque: {rated_torque}")
+            # print(f"Available Torque: {available_torque}")
+
+            motor_torque = min(torque_request, rated_torque, available_torque)
+
+            diff_torque = motor_torque * car.gear_ratio * car.diff_efficiency
+
+            # print(f"Resultant Diff Torque: {diff_torque}")
+
         elif controls_in.torque_request < 0 and car.regen_enabled:
+            regen_torque = [0, 0, 0, 0]
+
+            observables.regen_torques = regen_torque
+
             raise NotImplementedError("regen not implemented yet, sorry :(")  # TODO regen!!
+
+        if controls_in.torque_request < 0:
+            max_driver_force = car.max_DF
+            pedal_ratio = car.pedal_ratio
+            brake_bias = car.brake_bias
+            master_cylinder_SAs = car.MC_SA
+            caliper_SAs = car.C_SA
+            pad_friction_coefficients = car.mu
+            effective_rotor_radii = car.eff_rotor_radius
+            tire_radii = car.tire_radii
+
+            brake_calcs = self._mech_brake_calcs(DF = max_driver_force, PR = pedal_ratio, BB = brake_bias, MC_SA = master_cylinder_SAs,
+                                                    C_SA = caliper_SAs, mu = pad_friction_coefficients, RR = effective_rotor_radii, 
+                                                    TR = tire_radii, torque_request = controls_in.torque_request)
+            
+            observables.line_pressures = brake_calcs[0]
+            observables.mechanical_brake_torque = brake_calcs[1]
 
         motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
         inverter_power_out = motor_power_out / motor_efficiency  # , state_in.motor_rpm)
@@ -120,13 +159,13 @@ class PowertrainModel(VehicleSystemModel):
         state_out.coolant_net_heat = coolant_heating - coolant_cooling
         state_out.applied_torque_fl = 0
         state_out.applied_torque_fr = 0
-        state_out.applied_torque_bl = motor_torque * car.drivetrain_efficiency / 2  # TODO add diff lmao
-        state_out.applied_torque_br = motor_torque * car.drivetrain_efficiency / 2
+        state_out.applied_torque_bl = diff_torque * car.drivetrain_efficiency / 2  # TODO add diff lmao
+        state_out.applied_torque_br = diff_torque * car.drivetrain_efficiency / 2
 
-        observables_out.hv_battery_open_circuit_voltage = hv_battery_open_circuit_voltage
-        observables_out.hv_battery_terminal_voltage = hv_battery_terminal_voltage
-        observables_out.lv_battery_open_circuit_voltage = lv_battery_open_circuit_voltage
-        observables_out.lv_battery_terminal_voltage = lv_battery_terminal_voltage
+        observables.hv_battery_open_circuit_voltage = hv_battery_open_circuit_voltage
+        observables.hv_battery_terminal_voltage = hv_battery_terminal_voltage
+        observables.lv_battery_open_circuit_voltage = lv_battery_open_circuit_voltage
+        observables.lv_battery_terminal_voltage = lv_battery_terminal_voltage
         # TODO add more observables from the existing variables
 
         if controls_in.torque_request > 0:
@@ -177,3 +216,56 @@ class PowertrainModel(VehicleSystemModel):
     def _calculate_cooling(self, object_temp: float, coolant_temp: float, coolant_area: float) -> (float, float):
         # TODO cooling calculations!!
         return 0, 0
+    
+    # def _diff_bias_ratio(self, steered_angle, body_slip, diff_torque, wheel_angular_velocities, diff_radius, motor_radius):
+    #     if steered_angle == 0 and body_slip == 0 or diff_torque == 0:
+    #         return [0.5, 0.5]
+
+    #     traction_bias = self.params.diff_fl + self.params.diff_preload/torque_on_diff
+
+    #     if self.state.is_left_diff_bias:
+    #         return np.array([traction_bias, 1 - traction_bias])
+    #     else:
+    #         return np.array([1 - traction_bias, traction_bias])
+    
+    def _mech_brake_calcs(self, DF, PR, BB, MC_SA, C_SA, mu, RR, TR, torque_request):
+        pedal_force = DF * abs(torque_request)
+
+        front_MC_SA = MC_SA[0]
+        rear_MC_SA = MC_SA[1]
+        front_C_SA = C_SA[0]
+        rear_C_SA = C_SA[1]
+        front_mu = mu[0]
+        rear_mu = mu[1]
+        front_RR = RR[0]
+        rear_RR = RR[1]
+        front_TR = TR[0]
+        rear_TR = TR[2]
+
+        front_pedal_force = pedal_force * PR * BB
+        rear_pedal_force = pedal_force * PR * (1 - BB)
+        front_line_pressure = front_pedal_force / front_MC_SA
+        rear_line_pressure = rear_pedal_force / rear_MC_SA
+
+        front_braking_force = front_line_pressure * front_C_SA * front_mu
+        rear_braking_force = rear_line_pressure * rear_C_SA * rear_mu
+
+        front_braking_torque = -1 * front_braking_force * front_RR
+        rear_braking_torque = -1 * rear_braking_force * rear_RR
+
+        line_pressures = [front_line_pressure, rear_line_pressure]
+        braking_torques = [front_braking_torque, front_braking_torque, rear_braking_torque, rear_braking_torque]
+
+        return [line_pressures, braking_torques]
+    
+    # def _torque_bias_ratio(self, steered_angle, body_slip, torque_on_diff):
+    #     # if on a pure straight, diff doesnt bias. Otherwise it does. BREAKAWAY TORQUE BABY
+    #     if steered_angle == 0 and body_slip == 0 or torque_on_diff == 0:
+    #         return np.array([0.5, 0.5])
+
+    #     traction_bias = self.params.diff_fl + self.params.diff_preload / torque_on_diff
+
+    #     if self.state.is_left_diff_bias:
+    #         return np.array([traction_bias, 1 - traction_bias])
+    #     else:
+    #         return np.array([1 - traction_bias, traction_bias])

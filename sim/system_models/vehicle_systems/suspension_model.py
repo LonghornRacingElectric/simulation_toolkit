@@ -113,7 +113,15 @@ class SuspensionModel(VehicleSystemModel):
                                    steering_angles = steered_angles,
                                    toe_angles = toe_angles,
                                    tire_position = tire_positions,
-                                   yaw_rate = yaw_rate)
+                                   yaw_rate = yaw_rate)[0]
+        
+        tire_IMF_velocities = self._get_SA(vehicle_velocity = IMF_velocity,
+                            steering_angles = steered_angles,
+                            toe_angles = toe_angles,
+                            tire_position = tire_positions,
+                            yaw_rate = yaw_rate)[1]
+        
+        slip_ratios = [state_vector.FL_SR, state_vector.FR_SR, state_vector.RL_SR, state_vector.RR_SR]
 
         inclination_angles = self._get_IA(vehicle_parameters = vehicle_parameters,
                                           IA_response = IA_response_surfaces, 
@@ -140,7 +148,7 @@ class SuspensionModel(VehicleSystemModel):
         # Get tire output
         tire_outputs = []
         for i in range(len(self.tires)):
-            tire_forces = self.tires[i]._get_comstock_forces(SR = 0,
+            tire_forces = self.tires[i]._get_comstock_forces(SR = slip_ratios[i],
                                                              SA = slip_angles[i],
                                                              FZ = normal_loads[i],
                                                              IA = inclination_angles[i])
@@ -153,9 +161,19 @@ class SuspensionModel(VehicleSystemModel):
             # Calculate vehicle moments due to tire forces
             vehicle_centric_moments = np.cross(tire_positions[i], vehicle_centric_forces)
 
+            # Calculate tire torques
+            tire_torque = vehicle_centric_forces[0] * vehicle_parameters.tire_radii[i]
+
+            # Calculate tire rotational velocities
+            tire_heading_unit_vector = np.linalg.norm(np.array([np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0]))
+            tire_heading_velocity = np.dot(tire_IMF_velocities[i], tire_heading_unit_vector)
+            wheel_speed = (slip_ratios[i] / 100 + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
+
             # Log force and moment calculations from above
             observables_vector.tire_forces_IMF[i] = vehicle_centric_forces
             observables_vector.tire_moments_IMF[i] = vehicle_centric_moments
+            observables_vector.tire_torques[i] = tire_torque
+            observables_vector.wheel_angular_velocities[i] = wheel_speed
 
         # Log additional desired parameters
         observables_vector.average_steered_angle = (steered_angles[0] + steered_angles[1]) / 2
@@ -260,7 +278,7 @@ class SuspensionModel(VehicleSystemModel):
             slip_angle = (steering_angles[i] + toe_angles[i]) - np.arctan2(tire_IMF_velocities[i][1], tire_IMF_velocities[i][0])
             slip_angles.append(slip_angle)
 
-        return slip_angles
+        return [slip_angles, tire_IMF_velocities]
 
     def _get_IA(self, vehicle_parameters: Car, IA_response: list[pd.DataFrame], adj_steering: list[float], heave: float, 
                 pitch: float, roll: float, static_IA: list[float]) -> list[float]:

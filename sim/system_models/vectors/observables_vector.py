@@ -46,4 +46,15 @@ class ObservablesVector(Vector):
         self.inclination_angles = [0, 0, 0, 0]
         self.normal_loads = [0, 0, 0, 0]
         self.tire_model_force_outputs = [[], [], [], []]
+        self.tire_torques = [0, 0, 0, 0]
         self.average_steered_angle = 0
+
+        # Brake Line Pressures
+        self.line_pressures = [0, 0] # [front, rear]
+
+        # Wheel Torques
+        self.motor_torques = [0, 0, 0, 0]
+        self.regen_torques = [0, 0, 0, 0]
+        self.mechanical_brake_torque = [0, 0, 0, 0]
+        self.diff_torques = [0, 0, 0, 0]
+        self.wheel_angular_velocities = [0, 0, 0, 0]
