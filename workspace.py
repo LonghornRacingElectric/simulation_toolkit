@@ -88,5 +88,5 @@ def aero_CoP_MMM_sweep():
 
 
 # general_MMM()
-general_GGV(car=car, mesh=11, velocity=15, aero=True)
+general_GGV(car=car, mesh=5, velocity=15, aero=True)
 # aero_coefficients_MMM_sweep()
