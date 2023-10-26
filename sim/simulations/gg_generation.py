@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
@@ -31,6 +33,8 @@ class GGGeneration:
 
         self.lat_accels = []
         self.long_accels = []
+        self.slip_ratios = []
+        self.torque_requests = []
 
     def _vehicle_model(self, x, y):
         # Prescribed values
@@ -73,8 +77,8 @@ class GGGeneration:
             for steered_angle in steered_angle_sweep:
                 for torque_request in torque_request_sweep:
                     for velocity in [self.velocity]:
-                        
-                        print(f"Progress: {round(counter / self.mesh**3 * 100, 1)}%")
+
+                        print(f"\rGG Progress: {round(counter / self.mesh**3 * 100, 1)}%", end='')
                         counter += 1
 
                         def solve_attempt(x):
@@ -91,7 +95,9 @@ class GGGeneration:
 
                         # try:
                             # long accel, lat accel, yaw accel, heave, pitch, roll, FL SR, FR SR, RL SR, RR SR
-                        fsolve_results: list[int] = list(fsolve(solve_attempt, np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            fsolve_results: list[int] = list(fsolve(solve_attempt, np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
                         # except:
                         #     continue
 
@@ -100,6 +106,7 @@ class GGGeneration:
                         self.slip_ratios.append(fsolve_results[6:])
                         self.torque_requests.append(torque_request)
 
+        print("\rGG Complete")
         self._calculate_key_points()
 
         self.done = True
