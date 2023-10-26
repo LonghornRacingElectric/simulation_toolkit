@@ -46,8 +46,8 @@ def general_MMM():
     mmm_solver.plot()
 
 
-def general_GGV():
-    gg_generator = GGGeneration(car=car, mesh=11, velocity=15, aero=True)
+def general_GGV(car=car, mesh=11, velocity=15, aero=True):
+    gg_generator = GGGeneration(car=car, mesh=mesh, velocity=velocity, aero=aero)
     gg_generator.solve()
     gg_generator.print_key_points()
     gg_generator.plot()
@@ -87,10 +87,6 @@ def aero_CoP_MMM_sweep():
     mmm_sweeper.plot_key_points("CoP")
 
 
-<<<<<<< HEAD
 # general_MMM()
-general_GGV()
+general_GGV(car=car, mesh=11, velocity=15, aero=True)
 # aero_coefficients_MMM_sweep()
-=======
-general_transient_sim()
->>>>>>> 7add0f3eea2504c14817a8b72b14cf1a712635ae

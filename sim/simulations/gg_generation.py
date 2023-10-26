@@ -104,15 +104,6 @@ class GGGeneration:
 
         self.done = True
 
-        df = pd.DataFrame()
-
-        df["Long_Accels"] = self.long_accels
-        df["Lat_Accels"] = self.lat_accels
-        df["Slip_Ratios"] = self.slip_ratios
-        df["Torque_Requests"] = self.torque_requests
-
-        df.to_csv("checks")
-
     def plot(self):
         if not self.done:
             raise Exception("can't plot the GG before you solve the GG bruh")

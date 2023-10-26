@@ -165,7 +165,8 @@ class SuspensionModel(VehicleSystemModel):
             tire_torque = vehicle_centric_forces[0] * vehicle_parameters.tire_radii[i]
 
             # Calculate tire rotational velocities
-            tire_heading_unit_vector = np.linalg.norm(np.array([np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0]))
+            tire_heading_vector = np.array([np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0])
+            tire_heading_unit_vector = tire_heading_vector / np.linalg.norm(tire_heading_vector)
             tire_heading_velocity = np.dot(tire_IMF_velocities[i], tire_heading_unit_vector)
             wheel_speed = (slip_ratios[i] / 100 + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
 
