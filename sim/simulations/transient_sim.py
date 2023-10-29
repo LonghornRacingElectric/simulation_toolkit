@@ -13,6 +13,7 @@ from sim.system_models.vehicle_systems.vehicle_model import VehicleModel
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
+import time
 
 
 class TransientSimulation:
@@ -38,24 +39,33 @@ class TransientSimulation:
     def run(self):
         state = self._get_initial_state(self.vehicle)
         state_dot = StateDotVector()
-        time = 0
 
-        while time < self.duration:
-            driver_controls = self.driver.eval(time, state, state_dot)
+        sim_time = 0
+        cpu_start_time = time.time()
+
+        while sim_time < self.duration:
+            cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
+            print(f"\rSimulation Progress: {round(sim_time / self.duration * 100, 1)}%\t({cpu_elapsed_time}s elapsed)",
+                  end='')
+
+            driver_controls = self.driver.eval(sim_time, state, state_dot)
             sensor_data = self.telemetry.eval(state, state_dot, driver_controls)
             vcu_output = self.vcu.eval(sensor_data)
             controls = self.controls_mux.eval(driver_controls, vcu_output)
             state, state_dot, observables = self.vehicle.eval(controls, state, self.time_step)
 
-            time += self.time_step
+            sim_time += self.time_step
 
-            self.data.append((time, copy.deepcopy(state), copy.deepcopy(state_dot), driver_controls,
+            self.data.append((sim_time, copy.deepcopy(state), copy.deepcopy(state_dot), driver_controls,
                               sensor_data, vcu_output, controls, observables))
 
             if driver_controls.e_stop:
                 break
 
         self.vcu.terminate_subprocess()
+
+        cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
+        print(f"\rSimulation Complete ({cpu_elapsed_time}s)")
 
     def _plot(self, i: int, name: str):
         x = np.array([t[0] for t in self.data])
