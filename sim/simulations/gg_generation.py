@@ -5,6 +5,7 @@ import numpy as np
 from scipy.optimize import fsolve
 from scipy.spatial import ConvexHull
 import pandas as pd
+import time
 
 from sim.model_parameters.cars.car import Car
 from sim.model_parameters.cars.lady_luck import LadyLuck
@@ -18,7 +19,7 @@ from sim.util.math.conversions import *
 
 class GGGeneration:
 
-    def __init__(self, car: Car, mesh: int = 21, velocity: float = 15.0, aero: bool = True):
+    def __init__(self, car: Car, mesh: int = 21, velocity: float = 15.0):
         self.done = False
         self.new_model = SteadyStateSolver()
         self.test_car = car
@@ -29,7 +30,6 @@ class GGGeneration:
 
         self.mesh = mesh
         self.velocity = velocity
-        self.test_state_vector.aero = aero
 
         self.lat_accels = []
         self.long_accels = []
@@ -39,28 +39,28 @@ class GGGeneration:
     def _vehicle_model(self, x, y):
         # Prescribed values
         self.test_state_vector.body_slip = y[0]
-        self.test_state_vector.velocity = y[1]
+        self.test_state_vector.speed = y[1]
         self.test_controls_vector.steering_angle = y[2]
-        self.test_controls_vector.torque_request = y[3]
+        self.test_controls_vector.torque_request = y[3] if y[3] > 0 else 0
+        self.test_controls_vector.brake_pct = abs(y[3]) if y[3] < 0 else 0
 
         # Iterated values
-        self.test_state_vector.long_accel = x[0]
-        self.test_state_vector.lateral_accel = x[1]
-        self.test_state_vector.yaw_accel = x[2]
+        self.test_observables_vector.long_accel = x[0]
+        self.test_observables_vector.lateral_accel = x[1]
+        self.test_observables_vector.yaw_accel = x[2]
         self.test_state_vector.heave = x[3]
         self.test_state_vector.pitch = x[4]
         self.test_state_vector.roll = x[5]
-        self.test_state_vector.FL_SR = x[6]
-        self.test_state_vector.FR_SR = x[7]
-        self.test_state_vector.RL_SR = x[8]
-        self.test_state_vector.RR_SR = x[9]
+        self.test_state_vector.wheel_slip_ratios = np.array(x[6:])
 
         self.new_model.eval(vehicle_parameters=self.test_car, controls_vector=self.test_controls_vector,
                             state_vector=self.test_state_vector,
                             state_dot_vector=self.test_state_dot_vector,
                             observables_vector=self.test_observables_vector)
-        
-        return [*self.test_observables_vector.summation_forces, *self.test_observables_vector.summation_moments, *self.test_observables_vector.axle_residuals]
+
+        residuals = [*self.test_observables_vector.summation_forces, *self.test_observables_vector.summation_moments, *self.test_observables_vector.axle_residuals]
+        # print(*[round(r) for r in residuals])
+        return residuals
 
     def solve(self):
         body_slip_sweep = np.linspace(deg_to_rad(-15), deg_to_rad(15), self.mesh)
@@ -73,40 +73,38 @@ class GGGeneration:
         self.torque_requests = []
 
         counter = 0
-        for body_slip in body_slip_sweep:
-            for steered_angle in steered_angle_sweep:
-                for torque_request in torque_request_sweep:
+        start_time = time.time()
+        for torque_request in torque_request_sweep:
+            for body_slip in body_slip_sweep:
+                for steered_angle in steered_angle_sweep:
                     for velocity in [self.velocity]:
-
-                        print(f"\rGG Progress: {round(counter / self.mesh**3 * 100, 1)}%", end='')
+                        elapsed_time = round(time.time() - start_time, 2)
+                        print(f"\rGG Progress: {round(counter / self.mesh**3 * 100, 1)}%\t({elapsed_time}s elapsed)",
+                              end='')
                         counter += 1
 
                         def solve_attempt(x):
-                            adjusted_SR = []
-                            for slip_ratio in x[6:]:
-                                if slip_ratio > 1:
-                                    adjusted_SR.append(1)
-                                elif slip_ratio < -1:
-                                    adjusted_SR.append(-1)
-                                else:
-                                    adjusted_SR.append(slip_ratio)
+                            # print(*[round(a, 2) for a in x])
+                            adjusted_SR = [max(-1, min(1, sr)) for sr in x[6:]]
+                            return self._vehicle_model([*x[:6], *adjusted_SR],
+                                                       [body_slip, velocity, steered_angle, torque_request])
 
-                            return self._vehicle_model([*x[:6], *adjusted_SR], [body_slip, velocity, steered_angle, torque_request])
 
-                        # try:
-                            # long accel, lat accel, yaw accel, heave, pitch, roll, FL SR, FR SR, RL SR, RR SR
+                        # long accel, lat accel, yaw accel, heave, pitch, roll, FL SR, FR SR, RL SR, RR SR
                         with warnings.catch_warnings():
                             warnings.simplefilter("ignore")
+                            # try:
                             fsolve_results: list[int] = list(fsolve(solve_attempt, np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
-                        # except:
-                        #     continue
+                            # except:
+                            #     continue
 
                         self.long_accels.append(fsolve_results[0])
                         self.lat_accels.append(fsolve_results[1])
-                        self.slip_ratios.append(fsolve_results[6:])
+                        self.slip_ratios.append([max(-1, min(1, sr)) for sr in fsolve_results[6:]])
                         self.torque_requests.append(torque_request)
 
-        print("\rGG Complete")
+        elapsed_time = round(time.time() - start_time, 2)
+        print(f"\rGG Complete ({elapsed_time}s)")
         self._calculate_key_points()
 
         self.done = True

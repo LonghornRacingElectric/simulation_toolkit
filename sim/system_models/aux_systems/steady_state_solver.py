@@ -9,6 +9,8 @@ from sim.system_models.vehicle_systems.powertrain_model import PowertrainModel
 
 import numpy as np
 
+from sim.util.math.conversions import rads_to_rpm
+
 
 class SteadyStateSolver:
     def __init__(self):
@@ -21,12 +23,15 @@ class SteadyStateSolver:
              state_dot_vector: StateDotVector, observables_vector: ObservablesVector) -> None:
 
         # Initialize heave, pitch, roll, long accel, lat accel, yaw accel, steered angle, body slip, velocity
-        long_accel = state_vector.long_accel
-        lat_accel = state_vector.lateral_accel
-        yaw_accel = state_vector.yaw_accel
+        long_accel = observables_vector.long_accel
+        lat_accel = observables_vector.lateral_accel
+        yaw_accel = observables_vector.yaw_accel
 
         # Initialize translational acceleration
         translational_accelerations_IMF = np.array([long_accel, lat_accel, 0])
+
+        # motor rpm
+        state_vector.motor_rpm = 0  # rads_to_rpm(diff_angular_velocity * vehicle_parameters.gear_ratio)
 
         # Evaluate powertrain
         self.powertrain.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
@@ -35,40 +40,22 @@ class SteadyStateSolver:
         self.suspension.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
 
         # Evaluate aerodynamics
-        if state_vector.aero == False:
-            aero_forces = 0
-            aero_moments = 0
-        else:
-            self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
-
-            aero_forces = np.array(observables_vector.aero_forces)
-            aero_moments = np.array(observables_vector.aero_moments)
-        
-        # Sum vehicle centric forces and moments
-        sus_forces = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)])
-        sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
+        self.aero.eval(vehicle_parameters, controls_vector, state_vector, state_dot_vector, observables_vector)
 
         gravity_forces = np.array([0, 0, -vehicle_parameters.total_mass * vehicle_parameters.accel_gravity])
-
-        total_forces = aero_forces + sus_forces + gravity_forces
-        total_moments = aero_moments + sus_moments
+        total_forces = state_dot_vector.aero_forces + state_dot_vector.sus_forces + gravity_forces
+        total_moments = state_dot_vector.aero_moments + state_dot_vector.sus_moments
 
         # Force and moment balance
-        m_a = vehicle_parameters.total_mass * (translational_accelerations_IMF )
+        m_a = vehicle_parameters.total_mass * translational_accelerations_IMF
         force_residuals = m_a - total_forces
 
         I_alpha = np.dot(vehicle_parameters.sprung_inertia, np.array([0, 0, yaw_accel]))
         moment_residuals = I_alpha - total_moments
 
         # Axle equilibrium
-        # print(f"Brake Torque: {observables_vector.mechanical_brake_torque}")
-        # print(f"Regen Torque: {observables_vector.regen_torques}")
-        # print(f"Motor Torque: {[state_dot_vector.applied_torque_fl, state_dot_vector.applied_torque_fr, state_dot_vector.applied_torque_bl, state_dot_vector.applied_torque_br]}")
-        requested_torque = np.array(observables_vector.mechanical_brake_torque) + np.array(observables_vector.regen_torques) + \
-            np.array([state_dot_vector.applied_torque_fl, state_dot_vector.applied_torque_fr, state_dot_vector.applied_torque_bl, state_dot_vector.applied_torque_br])
-        
-        front_axle = observables_vector.tire_torques[:2] - requested_torque[:2]
-        rear_axle = observables_vector.tire_torques[2:] - requested_torque[2:]
+        front_axle = state_dot_vector.tire_torques[:2] - state_dot_vector.powertrain_torques[:2]
+        rear_axle = state_dot_vector.tire_torques[2:] - state_dot_vector.powertrain_torques[2:]
         axle_residuals = [*front_axle, *rear_axle]
 
         # Log force and moment residuals

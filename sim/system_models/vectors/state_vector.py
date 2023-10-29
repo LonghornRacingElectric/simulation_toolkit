@@ -1,3 +1,5 @@
+import numpy as np
+
 from sim.system_models.vectors.vector import Vector
 
 
@@ -8,8 +10,6 @@ class StateVector(Vector):
         self.hv_battery_charge = 0
         self.lv_battery_charge = 0
 
-        self.motor_rpm = 0
-
         self.hv_battery_temperature = 0
         self.inverter_temperature = 0
         self.motor_temperature = 0
@@ -18,14 +18,18 @@ class StateVector(Vector):
         self.heave = 0
         self.pitch = 0
         self.roll = 0
-        self.lateral_accel = 0
-        self.long_accel = 0
-        self.yaw_accel = 0
-        self.FL_SR = 0
-        self.FR_SR = 0
-        self.RL_SR = 0
-        self.RR_SR = 0
+
+        # note that velocity and displacement are global, not IMF/NTB
+        self.velocity = np.array([0, 0, 0], dtype=float)
+        self.displacement = np.array([0, 0, 0], dtype=float)
+        self.yaw_rate = 0
+        self.yaw = 0
+
+        self.motor_rpm = 0
+
+        self.wheel_slip_ratios = np.array([0, 0, 0, 0], dtype=float)
+        self.wheel_angular_velocities = np.array([0, 0, 0, 0], dtype=float)
+        self.wheel_angular_displacements = np.array([0, 0, 0, 0], dtype=float)
 
         self.body_slip = 0
-        self.velocity = 0
-        self.aero = True
+        self.speed = 0

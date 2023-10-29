@@ -49,7 +49,7 @@ class TransientSimulation:
 
             time += self.time_step
 
-            self.data.append((time, copy.copy(state), copy.copy(state_dot), driver_controls,
+            self.data.append((time, copy.deepcopy(state), copy.deepcopy(state_dot), driver_controls,
                               sensor_data, vcu_output, controls, observables))
 
             if driver_controls.e_stop:
@@ -60,13 +60,21 @@ class TransientSimulation:
     def _plot(self, i: int, name: str):
         x = np.array([t[0] for t in self.data])
         y = np.array([getattr(t[i], name) for t in self.data])
-        plt.scatter(x, y, s=0.5)
-        plt.plot(x, y)
+        is_multiple = len(y.shape) > 1
+
+        ys = [y]
+        if is_multiple:
+            ys = y.T
+
+        for i, y in enumerate(ys):
+            plt.scatter(x, y, s=0.5)
+            plt.plot(x, y, label=f"[{i}]")
         plt.title(name)
         plt.xlabel("time (s)")
         plt.ylabel(name)
+        if is_multiple:
+            plt.legend()
         plt.show()
-        pass
 
     def plot_state(self, name: str):
         self._plot(1, name)

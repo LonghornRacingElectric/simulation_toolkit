@@ -99,13 +99,13 @@ class Car(ModelParameters):
         # ======= Pedals =======
         # ======================
 
-        self.eff_rotor_radius = ConstantParameter() # [front, rear]
+        self.eff_rotor_radius = ConstantParameter()  # [front, rear]
         self.MC_SA = ConstantParameter()
         self.C_SA = ConstantParameter()
         self.mu = ConstantParameter()
         self.pedal_ratio = ConstantParameter()
-        self.brake_bias = ConstantParameter() # Frontward bias (1 is pure front and 0 is pure rear)
-        self.max_DF = ConstantParameter() # Maximum driver force
+        self.brake_bias = ConstantParameter()  # Frontward bias (1 is pure front and 0 is pure rear)
+        self.max_DF = ConstantParameter()  # Maximum driver force
 
         # ======================
         # ===== Powertrain =====
@@ -134,7 +134,7 @@ class Car(ModelParameters):
         self.coolant_area_motor = ConstantParameter()  # [m^2]
 
         # ----- Drivetrain -----
-        self.max_torque = ConstantParameter() # Nm
+        self.max_torque = ConstantParameter()  # Nm
         self.regen_enabled = ToggleParameter()  # [true/false]
         self.power_limit = ConstantParameter()  # [W]
         self.motor_peak_torque = CurveParameter()  # [Nm] = f(RPM [RPM])
@@ -147,13 +147,16 @@ class Car(ModelParameters):
         self.inverter_efficiency = ConstantParameter()  # [%]
         self.inverter_thermal_resistance = ConstantParameter()  # [C/W]
         self.drivetrain_efficiency = ConstantParameter()  # [%]
-        self.drivetrain_moment_of_inertia = ConstantParameter()  # [kgm^2]
-        self.gear_ratio = ConstantParameter() # diff to motor
-        self.diff_efficiency = ConstantParameter() # %
+        self.front_unsprung_inertia = ConstantParameter()  # [kgm^2]
+        self.rear_unsprung_inertia = ConstantParameter()  # [kgm^2]
+        self.gear_ratio = ConstantParameter()  # diff to motor
+        self.diff_efficiency = ConstantParameter()  # %
 
         # ======================
         # ==== Aerodynamics ====
         # ======================
+
+        self.aero = ToggleParameter()
 
         self.air_density = ConstantParameter()  # kg/m^3
         self.air_temperature = ConstantParameter()  # degrees C

@@ -27,6 +27,3 @@ class VehicleSystemModel:
         """
         pass
 
-    @abstractmethod
-    def integrate(self, car: Car, state: StateVector, state_dot: StateDotVector, time_step: float):
-        pass

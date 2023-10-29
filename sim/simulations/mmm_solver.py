@@ -15,7 +15,7 @@ from sim.util.math.conversions import *
 
 class MmmSolver:
 
-    def __init__(self, car: Car, mesh: int = 21, velocity: float = 25.0, aero: bool = True):
+    def __init__(self, car: Car, mesh: int = 21, velocity: float = 25.0):
         self.done = False
         self.new_model = SteadyStateSolver()
         self.test_car = car
@@ -26,7 +26,6 @@ class MmmSolver:
 
         self.mesh = mesh
         self.velocity = velocity
-        self.test_state_vector.aero = aero
 
         self.steered_angle_iso_lines = []
         self.body_slip_iso_lines = []
@@ -42,20 +41,17 @@ class MmmSolver:
     def _vehicle_model(self, x, y):
         # Prescribed values
         self.test_state_vector.body_slip = y[0]
-        self.test_state_vector.velocity = y[1]
+        self.test_state_vector.speed = y[1]
         self.test_controls_vector.steering_angle = y[2]
 
         # Iterated values
-        self.test_state_vector.long_accel = x[0]
-        self.test_state_vector.lateral_accel = x[1]
-        self.test_state_vector.yaw_accel = x[2]
+        self.test_observables_vector.long_accel = x[0]
+        self.test_observables_vector.lateral_accel = x[1]
+        self.test_observables_vector.yaw_accel = x[2]
         self.test_state_vector.heave = x[3]
         self.test_state_vector.pitch = x[4]
         self.test_state_vector.roll = x[5]
-        self.test_state_vector.FL_SR = 0
-        self.test_state_vector.FR_SR = 0
-        self.test_state_vector.RL_SR = 0
-        self.test_state_vector.RL_SR = 0
+        self.test_state_vector.wheel_slip_ratios = np.array([0, 0, 0, 0])
 
         self.new_model.eval(vehicle_parameters=self.test_car, controls_vector=self.test_controls_vector,
                             state_vector=self.test_state_vector,

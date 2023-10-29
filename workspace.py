@@ -8,7 +8,7 @@ import numpy as np
 
 from sim.model_parameters.cars.lady_luck import LadyLuck
 from sim.model_parameters.drivers.ben_huff import BenHuff
-from sim.model_parameters.parameters.constant_parameter import ConstantParameter
+from sim.model_parameters.parameters import *
 from sim.model_parameters.telemetry.lady_luck_telemetry import LadyLuckTelemetry
 from sim.model_parameters.vcu.lady_luck_vcu import LadyLuckVcu
 from sim.simulations.mmm_solver import MmmSolver
@@ -25,29 +25,35 @@ vcu = LadyLuckVcu()
 
 
 def general_transient_sim():
+    car.aero = ToggleParameter(False)
+
     transient_sim = TransientSimulation(duration=5, time_step=0.001,  # TODO change to 0.003
                                         car=car, driver=driver, telemetry=telemetry, vcu=vcu)
     transient_sim.run()
-    transient_sim.plot_driver_control("brake_pedal_pct")
-    transient_sim.plot_driver_control("drive_switch")
-    transient_sim.plot_vcu_output("park_or_drive")
-    transient_sim.plot_vcu_output("r2d_buzzer")
+    # transient_sim.plot_driver_control("brake_pedal_pct")
+    # transient_sim.plot_driver_control("drive_switch")
+    # transient_sim.plot_vcu_output("park_or_drive")
+    # transient_sim.plot_vcu_output("r2d_buzzer")
     transient_sim.plot_driver_control("accel_pedal_pct")
     transient_sim.plot_vcu_output("torque_request")
+    transient_sim.plot_state_dot("powertrain_torques")
+    transient_sim.plot_state("wheel_slip_ratios")
     transient_sim.plot_state("motor_rpm")
-    transient_sim.plot_state_dot("hv_battery_current")
-    transient_sim.plot_observable("hv_battery_terminal_voltage")
+    transient_sim.plot_state("wheel_angular_velocities")
+    transient_sim.plot_state("velocity")
+    # transient_sim.plot_state_dot("hv_battery_current")
+    # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 
 def general_MMM():
-    mmm_solver = MmmSolver(car=car, mesh=31, velocity=15, aero=True)
+    mmm_solver = MmmSolver(car=car, mesh=31, velocity=15)
     mmm_solver.solve()
     mmm_solver.print_key_points()
     mmm_solver.plot()
 
 
-def general_GGV(car=car, mesh=11, velocity=15, aero=True):
-    gg_generator = GGGeneration(car=car, mesh=mesh, velocity=velocity, aero=aero)
+def general_GGV():
+    gg_generator = GGGeneration(car=car, mesh=5, velocity=15)
     gg_generator.solve()
     gg_generator.print_key_points()
     gg_generator.plot()
@@ -58,7 +64,7 @@ def general_competition():
 
 
 def aero_coefficients_MMM_sweep():
-    mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=30, aero=True)
+    mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=30)
 
     ClA = np.linspace(1.0, 5.0, 11)
     CdA = 0.187 * ((ClA - 1) ** 1.5) + 0.5
@@ -70,7 +76,7 @@ def aero_coefficients_MMM_sweep():
 
 
 def aero_CoP_MMM_sweep():
-    mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=15, aero=True)
+    mmm_sweeper = MmmSweeper(car=car, mesh=21, velocity=15)
 
     CoP0 = np.array([[0.51, 0, 0], [0.51, 0, 0], [0.51, 0, 0]]) * -car.wheelbase
     CoP1 = np.array([[0.54, 0, 0], [0.54, 0, 0], [0.54, 0, 0]]) * -car.wheelbase
@@ -87,6 +93,6 @@ def aero_CoP_MMM_sweep():
     mmm_sweeper.plot_key_points("CoP")
 
 
+# general_GGV()
 # general_MMM()
-general_GGV(car=car, mesh=5, velocity=15, aero=True)
-# aero_coefficients_MMM_sweep()
+general_transient_sim()

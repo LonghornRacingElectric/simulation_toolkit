@@ -23,18 +23,20 @@ class PowertrainModel(VehicleSystemModel):
         self.state_in = [
             "hv_battery_charge",
             "lv_battery_charge",
-            "motor_rpm",
+
             "hv_battery_temperature",
             "inverter_temperature",
             "motor_temperature",
             "coolant_temperature",
+
+            "motor_rpm",
             # "v_long",  # this will be for cooling from external airflow later
         ]
 
         self.state_out = [
             "hv_battery_current",
             "lv_battery_current",
-            "motor_torque",
+
             "hv_battery_net_heat",
             "inverter_net_heat",
             "motor_net_heat",
@@ -72,15 +74,15 @@ class PowertrainModel(VehicleSystemModel):
         hv_battery_internal_resistance = (
             car.hv_battery_internal_resistance(state_in.hv_battery_charge))  # , state_in.hv_battery_temperature))
 
-        diff_angular_velocity = np.average(observables.wheel_angular_velocities[2:])
-        state_in.motor_rpm = rads_to_rpm(diff_angular_velocity * car.gear_ratio)
-
         motor_torque = 0
-        diff_torque = motor_torque * car.gear_ratio
         motor_back_emf = state_in.motor_rpm / car.motor_induced_voltage
         motor_efficiency = car.motor_efficiency(motor_torque)
 
-        observables.line_pressures = [0, 0, 0, 0]
+        observables.line_pressures = [0, 0]
+        observables.motor_torque = 0
+
+        observables.applied_torques = [0, 0, 0, 0]
+        observables.regen_torques = [0, 0, 0, 0]
         observables.mechanical_brake_torque = [0, 0, 0, 0]
 
         if controls_in.torque_request > 0:
@@ -99,19 +101,24 @@ class PowertrainModel(VehicleSystemModel):
             # print(f"Available Torque: {available_torque}")
 
             motor_torque = min(torque_request, rated_torque, available_torque)
+            observables.motor_torque = motor_torque
 
             diff_torque = motor_torque * car.gear_ratio * car.diff_efficiency
+            observables.applied_torques = [
+                0,
+                0,
+                diff_torque * car.drivetrain_efficiency / 2,  # TODO add diff lmao
+                diff_torque * car.drivetrain_efficiency / 2,
+            ]
 
             # print(f"Resultant Diff Torque: {diff_torque}")
 
         elif controls_in.torque_request < 0 and car.regen_enabled:
-            regen_torque = [0, 0, 0, 0]
-
-            observables.regen_torques = regen_torque
+            observables.regen_torques = [0, 0, 0, 0]
 
             raise NotImplementedError("regen not implemented yet, sorry :(")  # TODO regen!!
 
-        if controls_in.torque_request < 0:
+        if controls_in.brake_pct > 0:
             max_driver_force = car.max_DF
             pedal_ratio = car.pedal_ratio
             brake_bias = car.brake_bias
@@ -121,10 +128,12 @@ class PowertrainModel(VehicleSystemModel):
             effective_rotor_radii = car.eff_rotor_radius
             tire_radii = car.tire_radii
 
-            brake_calcs = self._mech_brake_calcs(DF = max_driver_force, PR = pedal_ratio, BB = brake_bias, MC_SA = master_cylinder_SAs,
-                                                    C_SA = caliper_SAs, mu = pad_friction_coefficients, RR = effective_rotor_radii, 
-                                                    TR = tire_radii, torque_request = controls_in.torque_request)
-            
+            brake_calcs = self._mech_brake_calcs(DF=max_driver_force, PR=pedal_ratio, BB=brake_bias,
+                                                 MC_SA=master_cylinder_SAs,
+                                                 C_SA=caliper_SAs, mu=pad_friction_coefficients,
+                                                 RR=effective_rotor_radii,
+                                                 TR=tire_radii, brake_pct=controls_in.brake_pct)
+
             observables.line_pressures = brake_calcs[0]
             observables.mechanical_brake_torque = brake_calcs[1]
 
@@ -152,40 +161,18 @@ class PowertrainModel(VehicleSystemModel):
 
         state_out.hv_battery_current = hv_battery_current
         state_out.lv_battery_current = lv_battery_current
-        state_out.motor_torque = motor_torque
         state_out.hv_battery_net_heat = hv_battery_heat_loss - hv_battery_cooling
         state_out.inverter_net_heat = inverter_heat_loss - inverter_cooling
         state_out.motor_net_heat = motor_heat_loss - motor_cooling
         state_out.coolant_net_heat = coolant_heating - coolant_cooling
-        state_out.applied_torque_fl = 0
-        state_out.applied_torque_fr = 0
-        state_out.applied_torque_bl = diff_torque * car.drivetrain_efficiency / 2  # TODO add diff lmao
-        state_out.applied_torque_br = diff_torque * car.drivetrain_efficiency / 2
+        state_out.powertrain_torques = (np.array(observables.applied_torques) + np.array(observables.regen_torques)
+                                        + np.array(observables.mechanical_brake_torque))
 
         observables.hv_battery_open_circuit_voltage = hv_battery_open_circuit_voltage
         observables.hv_battery_terminal_voltage = hv_battery_terminal_voltage
         observables.lv_battery_open_circuit_voltage = lv_battery_open_circuit_voltage
         observables.lv_battery_terminal_voltage = lv_battery_terminal_voltage
         # TODO add more observables from the existing variables
-
-        if controls_in.torque_request > 0:
-            pass
-
-    def integrate(self, car: Car, state: StateVector, state_dot: StateDotVector, time_step: float):
-        state.hv_battery_charge -= state_dot.hv_battery_current * time_step
-        state.lv_battery_charge -= state_dot.lv_battery_current * time_step
-
-        # TODO state.motor_rpm also needs rolling resistance from tire
-        state.motor_rpm += rads_to_rpm(state_dot.motor_torque / car.drivetrain_moment_of_inertia) * time_step
-        
-        state.hv_battery_temperature += (state_dot.hv_battery_net_heat
-                                         * car.hv_battery_thermal_resistance * time_step)
-        state.inverter_temperature += (state_dot.inverter_net_heat
-                                       * car.inverter_thermal_resistance * time_step)
-        state.motor_temperature += (state_dot.motor_net_heat
-                                    * car.hv_battery_thermal_resistance * time_step)
-        state.coolant_temperature += (state_dot.coolant_net_heat
-                                      * car.hv_battery_thermal_resistance * time_step)
 
     def _calculate_battery_current(self, battery_power: float, battery_open_circuit_voltage: float,
                                    battery_internal_resistance: float) -> float:
@@ -216,7 +203,7 @@ class PowertrainModel(VehicleSystemModel):
     def _calculate_cooling(self, object_temp: float, coolant_temp: float, coolant_area: float) -> (float, float):
         # TODO cooling calculations!!
         return 0, 0
-    
+
     # def _diff_bias_ratio(self, steered_angle, body_slip, diff_torque, wheel_angular_velocities, diff_radius, motor_radius):
     #     if steered_angle == 0 and body_slip == 0 or diff_torque == 0:
     #         return [0.5, 0.5]
@@ -227,9 +214,9 @@ class PowertrainModel(VehicleSystemModel):
     #         return np.array([traction_bias, 1 - traction_bias])
     #     else:
     #         return np.array([1 - traction_bias, traction_bias])
-    
-    def _mech_brake_calcs(self, DF, PR, BB, MC_SA, C_SA, mu, RR, TR, torque_request):
-        pedal_force = DF * abs(torque_request)
+
+    def _mech_brake_calcs(self, DF, PR, BB, MC_SA, C_SA, mu, RR, TR, brake_pct):
+        pedal_force = DF * brake_pct
 
         front_MC_SA = MC_SA[0]
         rear_MC_SA = MC_SA[1]
@@ -257,7 +244,7 @@ class PowertrainModel(VehicleSystemModel):
         braking_torques = [front_braking_torque, front_braking_torque, rear_braking_torque, rear_braking_torque]
 
         return [line_pressures, braking_torques]
-    
+
     # def _torque_bias_ratio(self, steered_angle, body_slip, torque_on_diff):
     #     # if on a pure straight, diff doesnt bias. Otherwise it does. BREAKAWAY TORQUE BABY
     #     if steered_angle == 0 and body_slip == 0 or torque_on_diff == 0:

@@ -1,31 +1,30 @@
-from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
+from typing import Callable
 
+import numpy as np
+from numpy import ndarray
+
+from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
 from sim.model_parameters.cars.car import Car
 from sim.system_models.vectors.controls_vector import ControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vehicle_systems.tire_model import TireModel
-from sim.system_models.vehicle_systems.aero_model import AeroModel
 from sim.util.math import coords
-
-import numpy as np
-import pandas as pd
 
 
 # All coords with respect to SAE J670
 class SuspensionModel(VehicleSystemModel):
-    def __init__(self):
+    def __init__(self, transient=False):
         super().__init__()
 
-        # Initialize aero model and tire model
-        self.tires = [TireModel(), TireModel(), TireModel(), TireModel()] # [FL, FR, RL, RR]
-        self.aero = AeroModel()
-        
-        # Haven't added 4 DOF for axles. Accel/brake pedal will come into play here
+        self.transient = transient
+
+        # Initialize tire model
+        self.tires = [TireModel(), TireModel(), TireModel(), TireModel()]  # [FL, FR, RL, RR]
+
         self.controls_in = [
             "steering_angle"
-            # torque request (brake calc in powertrain)
         ]
 
         self.state_in = [
@@ -33,34 +32,20 @@ class SuspensionModel(VehicleSystemModel):
             "pitch",
             "roll",
 
-            "heave_vel",
-            "pitch_vel",
-            "roll_vel",
-
             "long_vel",
             "lat_vel",
 
             "yaw",
-            "yaw_vel",
+            "yaw_rate",
         ]
 
         self.state_out = [
-            "heave_accel",
-            "pitch_accel",
-            "roll_accel",
-
             "long_accel",
-            "lat_accel",
+            "lateral_accel",
             "yaw_accel",
         ]
 
         self.observables_out = [
-            "vehicle_FX",
-            "vehicle_FY",
-            "vehicle_FZ",
-            "vehicle_MX",
-            "vehicle_MY",
-            "vehicle_MZ"
         ]
 
     def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_vector: StateVector,
@@ -70,28 +55,28 @@ class SuspensionModel(VehicleSystemModel):
         chassis_heave = state_vector.heave
         chassis_pitch = state_vector.pitch
         chassis_roll = state_vector.roll
-        long_accel = state_vector.long_accel
-        lat_accel = state_vector.lateral_accel
         steered_angle = controls_vector.steering_angle
         body_slip = state_vector.body_slip
-        velocity = state_vector.velocity
-
-        # Initialize translational acceleration
-        translational_accelerations_IMF = np.array([long_accel, lat_accel, 0])
-        translational_accelerations_NTB = np.matmul(coords.rotation_z(body_slip), translational_accelerations_IMF)
+        velocity = state_vector.speed
 
         # Initialize additional slip angle params
         toe_angles = vehicle_parameters.toe_angles
         tire_positions = vehicle_parameters.tire_positions
 
         # Secondary slip angle calculations
-        steered_angles = self._get_steered_angles(vehicle_parameters = vehicle_parameters,
-                                                  steered_angle = steered_angle)
+        steered_angles = self._get_steered_angles(vehicle_parameters=vehicle_parameters,
+                                                  steered_angle=steered_angle)
         adjusted_steering_angles = np.array(steered_angles) + np.array(toe_angles)
-        IMF_velocity = self._get_IMF_vel(velocity = velocity, 
-                                         body_slip = body_slip)
-        yaw_rate = self._get_yaw_vel(lateral_accel = float(translational_accelerations_NTB[1]),
-                                     vehicle_velocity = IMF_velocity)
+        IMF_velocity = self._get_IMF_vel(velocity=velocity,
+                                         body_slip=body_slip)
+
+        if self.transient:
+            yaw_rate = state_vector.yaw_rate
+        else:
+            translational_accelerations_IMF = np.array([observables_vector.long_accel, observables_vector.lateral_accel, 0])
+            translational_accelerations_NTB = np.matmul(coords.rotation_z(body_slip), translational_accelerations_IMF)
+            yaw_rate = self._get_yaw_vel(lateral_accel=float(translational_accelerations_NTB[1]),
+                                         vehicle_velocity=IMF_velocity)
 
         # Initialize inclination angle params
         static_IAs = vehicle_parameters.static_IAs
@@ -104,32 +89,26 @@ class SuspensionModel(VehicleSystemModel):
         IA_response_surfaces = [FL_IA_gain, FR_IA_gain, RL_IA_gain, RR_IA_gain]
 
         # Calculate normal loads, slip angles, and inclination angles for each tire [Fl, FR, RL, RR]
-        normal_loads = self._get_FZ_decoupled(vehicle_parameters = vehicle_parameters,
-                                              heave = chassis_heave,
-                                              pitch = chassis_pitch,
-                                              roll = chassis_roll)
+        normal_loads = self._get_FZ_decoupled(vehicle_parameters=vehicle_parameters,
+                                              heave=chassis_heave,
+                                              pitch=chassis_pitch,
+                                              roll=chassis_roll)
 
-        slip_angles = self._get_SA(vehicle_velocity = IMF_velocity,
-                                   steering_angles = steered_angles,
-                                   toe_angles = toe_angles,
-                                   tire_position = tire_positions,
-                                   yaw_rate = yaw_rate)[0]
-        
-        tire_IMF_velocities = self._get_SA(vehicle_velocity = IMF_velocity,
-                            steering_angles = steered_angles,
-                            toe_angles = toe_angles,
-                            tire_position = tire_positions,
-                            yaw_rate = yaw_rate)[1]
-        
-        slip_ratios = [state_vector.FL_SR, state_vector.FR_SR, state_vector.RL_SR, state_vector.RR_SR]
+        slip_angles, tire_IMF_velocities = self._get_SA(vehicle_velocity=IMF_velocity,
+                                                        steering_angles=steered_angles,
+                                                        toe_angles=toe_angles,
+                                                        tire_position=tire_positions,
+                                                        yaw_rate=yaw_rate)
 
-        inclination_angles = self._get_IA(vehicle_parameters = vehicle_parameters,
-                                          IA_response = IA_response_surfaces, 
-                                          adj_steering = steered_angles,
-                                          heave = chassis_heave,
-                                          pitch = chassis_pitch,
-                                          roll = chassis_roll, 
-                                          static_IA = static_IAs)
+        slip_ratios = state_vector.wheel_slip_ratios
+
+        inclination_angles = self._get_IA(vehicle_parameters=vehicle_parameters,
+                                          IA_response=IA_response_surfaces,
+                                          adj_steering=steered_angles,
+                                          heave=chassis_heave,
+                                          pitch=chassis_pitch,
+                                          roll=chassis_roll,
+                                          static_IA=static_IAs)
 
         # Initialize tire coefficients
         front_FY_coeffs = vehicle_parameters.front_tire_coeff_Fy
@@ -139,7 +118,7 @@ class SuspensionModel(VehicleSystemModel):
 
         coeff_array = [(front_FX_coeffs, front_FY_coeffs), (front_FX_coeffs, front_FY_coeffs),
                        (rear_FX_coeffs, rear_FY_coeffs), (rear_FX_coeffs, rear_FY_coeffs)]
-        
+
         # Set tire coefficients
         for i in range(len(coeff_array)):
             self.tires[i].long_coeffs = coeff_array[i][0]
@@ -147,12 +126,18 @@ class SuspensionModel(VehicleSystemModel):
 
         # Get tire output
         tire_outputs = []
+        tire_torques = [0, 0, 0, 0]
         for i in range(len(self.tires)):
-            tire_forces = self.tires[i]._get_comstock_forces(SR = slip_ratios[i],
-                                                             SA = slip_angles[i],
-                                                             FZ = normal_loads[i],
-                                                             IA = inclination_angles[i])
-            
+            max_force = 1e9
+            if self.transient:
+                max_force = state_dot_vector.powertrain_torques[i] * vehicle_parameters.tire_radii[i]
+
+            tire_forces = self.tires[i].get_comstock_forces(SR=slip_ratios[i],
+                                                            SA=slip_angles[i],
+                                                            FZ=normal_loads[i],
+                                                            IA=inclination_angles[i],
+                                                            max_force=max_force)
+
             tire_outputs.append([round(x) for x in tire_forces])
 
             # Rotate tire forces to correspond with true steered angle (now in terms of force on the vehicle)
@@ -165,16 +150,19 @@ class SuspensionModel(VehicleSystemModel):
             tire_torque = vehicle_centric_forces[0] * vehicle_parameters.tire_radii[i]
 
             # Calculate tire rotational velocities
-            tire_heading_vector = np.array([np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0])
+            tire_heading_vector = np.array(
+                [np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0])
             tire_heading_unit_vector = tire_heading_vector / np.linalg.norm(tire_heading_vector)
             tire_heading_velocity = np.dot(tire_IMF_velocities[i], tire_heading_unit_vector)
-            wheel_speed = (slip_ratios[i] / 100 + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
+            # wheel_speed = (slip_ratios[i] + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
+
+            tire_torques[i] = tire_torque
 
             # Log force and moment calculations from above
+            observables_vector.tire_heading_velocities[i] = tire_heading_velocity
             observables_vector.tire_forces_IMF[i] = vehicle_centric_forces
             observables_vector.tire_moments_IMF[i] = vehicle_centric_moments
-            observables_vector.tire_torques[i] = tire_torque
-            observables_vector.wheel_angular_velocities[i] = wheel_speed
+            # observables_vector.wheel_angular_velocities[i] = wheel_speed
 
         # Log additional desired parameters
         observables_vector.average_steered_angle = (steered_angles[0] + steered_angles[1]) / 2
@@ -182,6 +170,17 @@ class SuspensionModel(VehicleSystemModel):
         observables_vector.slip_angles = slip_angles
         observables_vector.inclination_angles = inclination_angles
         observables_vector.tire_model_force_outputs = tire_outputs
+
+        # sum forces & moments
+        state_dot_vector.sus_forces = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)])
+        state_dot_vector.sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
+        state_dot_vector.tire_torques = tire_torques
+
+        # print("SR", slip_ratios)
+        # print("SA", slip_angles)
+        # print("FX", state_dot_vector.sus_forces[0])
+        # print("FY", state_dot_vector.sus_forces[1])
+        # print()
 
     def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
 
@@ -212,12 +211,12 @@ class SuspensionModel(VehicleSystemModel):
 
         # Roll contribution
         F_roll_rate_spring = 1 / 2 * vehicle_parameters.front_track ** 2 * (
-                    (vehicle_parameters.front_roll_springrate / vehicle_parameters.front_roll_MR ** 2) / 2)
+                (vehicle_parameters.front_roll_springrate / vehicle_parameters.front_roll_MR ** 2) / 2)
         F_roll_rate_tire = 1 / 2 * vehicle_parameters.front_track ** 2 * vehicle_parameters.front_tire_vertical_rate
         F_roll_rate = F_roll_rate_spring * F_roll_rate_tire / (F_roll_rate_spring + F_roll_rate_tire)
 
         R_roll_rate_spring = 1 / 2 * vehicle_parameters.rear_track ** 2 * (
-                    (vehicle_parameters.rear_roll_springrate / vehicle_parameters.rear_roll_MR ** 2) / 2)
+                (vehicle_parameters.rear_roll_springrate / vehicle_parameters.rear_roll_MR ** 2) / 2)
         R_roll_rate_tire = 1 / 2 * vehicle_parameters.rear_track ** 2 * vehicle_parameters.rear_tire_vertical_rate
         R_roll_rate = R_roll_rate_spring * R_roll_rate_tire / (R_roll_rate_spring + R_roll_rate_tire)
 
@@ -236,9 +235,9 @@ class SuspensionModel(VehicleSystemModel):
 
         # Static weights
         FL_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * (
-                    1 - vehicle_parameters.cg_bias) / 2
+                1 - vehicle_parameters.cg_bias) / 2
         FR_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * (
-                    1 - vehicle_parameters.cg_bias) / 2
+                1 - vehicle_parameters.cg_bias) / 2
         RL_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * vehicle_parameters.cg_bias / 2
         RR_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * vehicle_parameters.cg_bias / 2
 
@@ -252,7 +251,7 @@ class SuspensionModel(VehicleSystemModel):
         return adjusted_FZ
 
     def _get_FZ_coupled(self, heave: float, pitch: float, roll: float) -> list[float]:
-        return
+        return []
 
     def _get_steered_angles(self, vehicle_parameters: Car, steered_angle: float) -> list[float]:
         inner_angle_response = vehicle_parameters.FI_steering_response
@@ -266,8 +265,8 @@ class SuspensionModel(VehicleSystemModel):
         else:
             return [-outer_angle, -inner_angle, 0, 0]
 
-    def _get_SA(self, vehicle_velocity: list[float], steering_angles: list[float], toe_angles: list[float],
-                tire_position: list[float], yaw_rate: float) -> list[float]:
+    def _get_SA(self, vehicle_velocity: ndarray[float], steering_angles: list[float], toe_angles: list[float],
+                tire_position: list[float], yaw_rate: float) -> list[list[float]]:
 
         tire_IMF_velocities = []
         for i in range(len(tire_position)):
@@ -276,12 +275,13 @@ class SuspensionModel(VehicleSystemModel):
 
         slip_angles = []
         for i in range(len(steering_angles)):
-            slip_angle = (steering_angles[i] + toe_angles[i]) - np.arctan2(tire_IMF_velocities[i][1], tire_IMF_velocities[i][0])
+            slip_angle = (steering_angles[i] + toe_angles[i]) - np.arctan2(tire_IMF_velocities[i][1],
+                                                                           tire_IMF_velocities[i][0])
             slip_angles.append(slip_angle)
 
         return [slip_angles, tire_IMF_velocities]
 
-    def _get_IA(self, vehicle_parameters: Car, IA_response: list[pd.DataFrame], adj_steering: list[float], heave: float, 
+    def _get_IA(self, vehicle_parameters: Car, IA_response: list[Callable], adj_steering: list[float], heave: float,
                 pitch: float, roll: float, static_IA: list[float]) -> list[float]:
 
         front_track_to_CG = vehicle_parameters.wheelbase * vehicle_parameters.cg_bias
@@ -292,7 +292,7 @@ class SuspensionModel(VehicleSystemModel):
 
         F_heave = heave + front_pitch_displacement
         R_heave = heave + rear_pitch_displacement
-        
+
         heave_lst = [F_heave, F_heave, R_heave, R_heave]
 
         adjusted_IA = []
@@ -302,20 +302,20 @@ class SuspensionModel(VehicleSystemModel):
 
         return adjusted_IA
 
-    def _get_yaw_vel(self, lateral_accel: float, vehicle_velocity: list[float]) -> float:
+    def _get_yaw_vel(self, lateral_accel: float, vehicle_velocity: ndarray[float]) -> float:
         # a_c = v^2 / r
         # omega = v / r -> r = v / omega
         # a_c = omega * v -> omega = a_c / v
         # omega = a_c / v
         if lateral_accel == 0:
             yaw_vel = 0
-        
+
         else:
             yaw_vel = lateral_accel / np.linalg.norm(vehicle_velocity)
 
         return yaw_vel
 
-    def _get_IMF_vel(self, velocity: float, body_slip: float) -> list[float]:
+    def _get_IMF_vel(self, velocity: float, body_slip: float) -> ndarray[float]:
         IMF_velocity = velocity * np.array([np.cos(body_slip), np.sin(body_slip), 0])
 
         return IMF_velocity

@@ -7,9 +7,9 @@ from sim.simulations.mmm_solver import MmmSolver
 
 
 class MmmSweeper:
-    def __init__(self, car: Car, mesh: int, velocity: float, aero: bool):
+    def __init__(self, car: Car, mesh: int, velocity: float):
         self.car = car
-        self.mmm_solver = MmmSolver(car=car, mesh=mesh, velocity=velocity, aero=aero)
+        self.mmm_solver = MmmSolver(car=car, mesh=mesh, velocity=velocity)
         self.dimensions = []
         self.results = []
 

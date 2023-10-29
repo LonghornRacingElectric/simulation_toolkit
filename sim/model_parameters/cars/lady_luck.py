@@ -174,13 +174,16 @@ class LadyLuck(Car):
         self.inverter_efficiency = ConstantParameter(0.90)  # [%]
         self.inverter_thermal_resistance = ConstantParameter(0)  # [C/W]
         self.drivetrain_efficiency = ConstantParameter(0.97)  # [%]
-        self.drivetrain_moment_of_inertia = ConstantParameter(1)  # [kgm^2] TODO lots of ptn are placeholders
+        self.front_unsprung_inertia = ConstantParameter(1)  # [kgm^2] TODO lots of ptn are placeholders
+        self.rear_unsprung_inertia = ConstantParameter(1)  # [kgm^2]
         self.gear_ratio = ConstantParameter(4) # diff to motor
         self.diff_efficiency = ConstantParameter(1) # %
 
         # ======================
         # ==== Aerodynamics ====
         # ======================
+
+        self.aero = ToggleParameter(True)
 
         self.air_temperature = ConstantParameter(33.8889) # degrees C
         self.air_density = ConstantParameter(1.225 - 0.003975 * (self.air_temperature - 15)) # kg/m^3

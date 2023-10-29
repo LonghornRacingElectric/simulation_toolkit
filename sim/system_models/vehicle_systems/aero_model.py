@@ -19,7 +19,7 @@ class AeroModel(VehicleSystemModel):
         ]
 
         self.state_in = [
-            "velocity",
+            "speed",
             "heave",
             "pitch",
             "roll",
@@ -27,17 +27,17 @@ class AeroModel(VehicleSystemModel):
         ]
 
         self.state_out = [
+            "aero_forces",
+            "aero_moments"
         ]
 
         self.observables_out = [
-            "aero_forces",
-            "aero_moments"
         ]
 
     def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_in_vector: StateVector,
              state_out_vector: StateDotVector, observables_vector: ObservablesVector):
         
-        velocity = state_in_vector.velocity
+        velocity = state_in_vector.speed
         body_slip = state_in_vector.body_slip
         heave = state_in_vector.heave
         pitch = state_in_vector.pitch
@@ -45,12 +45,13 @@ class AeroModel(VehicleSystemModel):
 
         aero_forces, aero_moments = self._get_loads(vehicle_parameters, velocity, body_slip, heave, pitch, roll)
 
-        observables_vector.aero_forces = aero_forces
-        observables_vector.aero_moments = aero_moments
-
-        pass
+        state_out_vector.aero_forces = aero_forces
+        state_out_vector.aero_moments = aero_moments
 
     def _get_loads(self, vehicle_parameters: Car, speed: float, body_slip: float, heave: float, pitch: float, roll: float):
+        if not vehicle_parameters.aero:
+            return np.array([0, 0, 0]), np.array([0, 0, 0])
+
         # Conversion factors
         rad_to_deg = 180 / np.pi
 
@@ -114,7 +115,6 @@ class AeroModel(VehicleSystemModel):
         moments = np.cross(CoP_IMF[0], part_force.T[0]) \
                 + np.cross(CoP_IMF[1], part_force.T[1]) \
                 + np.cross(CoP_IMF[2], part_force.T[2])
-
 
         # account for drag and sideforce from rest of car
         drag_no_aero = 0.5 * vehicle_parameters.air_density * vehicle_parameters.CdA0 * speed ** 2
