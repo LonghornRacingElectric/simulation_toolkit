@@ -157,10 +157,6 @@ class SuspensionModel(VehicleSystemModel):
             # Calculate vehicle moments due to tire forces
             vehicle_centric_moments = np.cross(tire_positions[i], vehicle_centric_forces)
 
-            # if slip_angles[i] > 0:
-            #     print(i, vehicle_centric_forces)
-            #     print(i, vehicle_centric_moments)
-
             # Calculate tire torques
             tire_torque = vehicle_centric_forces[0] * vehicle_parameters.tire_radii[i]
 

@@ -6,23 +6,39 @@ class TireModel:
         self.long_coeffs: list[float] = []
         self.tire_scaling = 0.55
 
-    def get_comstock_forces(self, SA: float, SR: float, FZ: float, IA: float, max_force: float):
+    def get_comstock_forces(self, SA: float, SR: float, FZ: float, IA: float, max_force: float = None):
         SA, SR = self._zero_protection(SA, SR)
 
         FX = self._long_pacejka([FZ, SR])
         FY = self._lat_pacejka([FZ, SA, IA])
 
-        FX = np.sign(FX) * min(abs(FX), abs(max_force))
+        if max_force:
+            FX = np.where(FX > 0, np.minimum(FX, max_force), np.maximum(-FX, -max_force))
+
+        # watch = (FX == 0) and (abs(SA) > 1e-10)
+        # if watch:
+        #     print()
+        #     print("FX", FX)
+        #     print("FY", FY)
+        #     print("SR", SR)
+        #     print("SA", SA)
+        #     print("FZ", FZ)
+        #     print("IA", IA)
 
         Ca = (self._long_pacejka([FZ, 1 / 100]) - self._long_pacejka([FZ, 0])) * (180 / np.pi) # slip stiffness
         Cs = (self._lat_pacejka([FZ, 1 * np.pi / 180, IA]) - self._lat_pacejka([FZ, 0, IA])) * 100 # cornering stiffness
 
         adj_FX = self._com_long(SA, SR, FX, FY, Ca)
         adj_FY = self._com_lat(SA, SR, FX, FY, Cs)
+
+        # if watch:
+        #     print("adj_FX", adj_FX)
+        #     print("adj_FY", adj_FY)
+        #     exit(1)
         
         return [adj_FX, adj_FY, FZ]
     
-    def _com_long(self, SA: float, SR: float, FX: float, FY: float, Ca: float):
+    def _com_long(self, SA: float, SR: float, FX: float, FY: float, Ca: float) -> float:
         FY = abs(FY)
         try:
             if (SR**2 * FY**2 + FX**2 * (np.tan(SA))**2 == 0 or Ca == 0):
@@ -39,7 +55,7 @@ class TireModel:
         
         return adjusted_FX
     
-    def _com_lat(self, SA: float, SR: float, FX: float, FY: float, Cs: float):
+    def _com_lat(self, SA: float, SR: float, FX: float, FY: float, Cs: float) -> float:
         FX = abs(FX)
         try:
             if (SR**2 * FY**2 + FX**2 * (np.tan(SA))**2 == 0 or Cs == 0):
@@ -56,7 +72,7 @@ class TireModel:
             
         return adjusted_FY
     
-    def _long_pacejka(self, data: list[float]):
+    def _long_pacejka(self, data: list[float]) -> float:
         FZ = data[0] / 1000
         SR = data[1] * 100
         [b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13] = self.long_coeffs
@@ -78,7 +94,7 @@ class TireModel:
 
             return self.tire_scaling * (D * np.sin(C * np.arctan(Bx1 - E * (Bx1 - np.arctan(Bx1)))) + V)
 
-    def _lat_pacejka(self, data: list[float]):
+    def _lat_pacejka(self, data: list[float]) -> float:
         FZ = data[0]
         SA = data[1] * 180 / np.pi
         IA = data[2] * 180 / np.pi

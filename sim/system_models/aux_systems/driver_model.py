@@ -34,7 +34,7 @@ class DriverModel:
             out.brake_pedal_pct = 0.5
             out.drive_switch = True
         else:
-            out.accel_pedal_pct = min(1.0, (time - 1.0)/4.0)
+            out.accel_pedal_pct = min(0.5, (time - 1.0)/4.0)
             out.brake_pedal_pct = 0
             out.drive_switch = True
 
