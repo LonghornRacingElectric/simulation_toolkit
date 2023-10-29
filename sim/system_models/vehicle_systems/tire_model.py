@@ -7,13 +7,13 @@ class TireModel:
         self.tire_scaling = 0.55
 
     def get_comstock_forces(self, SA: float, SR: float, FZ: float, IA: float, max_force: float):
-        # SA = 0  # TODO remove
+        SA = 0  # TODO remove
         SA, SR = self._zero_protection(SA, SR)
 
         FX = self._long_pacejka([FZ, SR])
         FY = self._lat_pacejka([FZ, SA, IA])
 
-        # FX = np.sign(FX) * min(abs(FX), abs(max_force))
+        FX = np.sign(FX) * min(abs(FX), abs(max_force))
 
         Ca = (self._long_pacejka([FZ, 1 / 100]) - self._long_pacejka([FZ, 0])) * (180 / np.pi) # slip stiffness
         Cs = (self._lat_pacejka([FZ, 1 * np.pi / 180, IA]) - self._lat_pacejka([FZ, 0, IA])) * 100 # cornering stiffness

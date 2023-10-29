@@ -110,8 +110,10 @@ class VehicleModel:
         state.wheel_slip_ratios = np.divide(tire_surface_velocities - tire_velocities, tire_velocities,
                                             out=np.zeros_like(tire_velocities),
                                             where=tire_velocities != 0)
-        state.wheel_slip_ratios = np.where(abs(state.wheel_slip_ratios) < 10,
-                                           state.wheel_slip_ratios, np.sign(state.wheel_slip_ratios) * 10)
+        state.wheel_slip_ratios = np.where(state.wheel_slip_ratios < 10,
+                                           state.wheel_slip_ratios, np.full_like(state.wheel_slip_ratios, 10))
+        state.wheel_slip_ratios = np.where(state.wheel_slip_ratios > -1,
+                                           state.wheel_slip_ratios, np.full_like(state.wheel_slip_ratios, -1))
 
         state.motor_rpm = rads_to_rpm(np.average(state.wheel_angular_velocities[2:]) / car.gear_ratio)
 

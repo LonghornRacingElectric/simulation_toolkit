@@ -130,7 +130,7 @@ class SuspensionModel(VehicleSystemModel):
         for i in range(len(self.tires)):
             max_force = 1e9
             if self.transient:
-                max_force = state_dot_vector.powertrain_torques[i] * vehicle_parameters.tire_radii[i]
+                max_force = state_dot_vector.powertrain_torques[i] / vehicle_parameters.tire_radii[i]
 
             tire_forces = self.tires[i].get_comstock_forces(SR=slip_ratios[i],
                                                             SA=slip_angles[i],

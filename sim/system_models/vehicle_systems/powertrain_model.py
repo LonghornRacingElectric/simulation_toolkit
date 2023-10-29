@@ -86,7 +86,7 @@ class PowertrainModel(VehicleSystemModel):
         observables.mechanical_brake_torque = [0, 0, 0, 0]
 
         if controls_in.torque_request > 0:
-            torque_request = car.max_torque * controls_in.torque_request
+            torque_request = controls_in.torque_request
             available_voltage = hv_battery_open_circuit_voltage - motor_back_emf
             available_current = available_voltage / (car.motor_winding_resistance + hv_battery_internal_resistance)
             rated_torque = car.motor_peak_torque(state_in.motor_rpm)
