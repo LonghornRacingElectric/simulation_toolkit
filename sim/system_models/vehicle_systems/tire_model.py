@@ -13,7 +13,7 @@ class TireModel:
         FY = self._lat_pacejka([FZ, SA, IA])
 
         if max_force is not None:
-            FX = max(min(FX, max_force), 1e-64)
+            FX = max(min(FX, max_force), 1e-60)
 
         Ca = (self._long_pacejka([FZ, 1 / 100]) - self._long_pacejka([FZ, 0])) * (180 / np.pi) # slip stiffness
         Cs = (self._lat_pacejka([FZ, 1 * np.pi / 180, IA]) - self._lat_pacejka([FZ, 0, IA])) * 100 # cornering stiffness

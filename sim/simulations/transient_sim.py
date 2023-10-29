@@ -43,26 +43,32 @@ class TransientSimulation:
         sim_time = 0
         cpu_start_time = time.time()
 
-        while sim_time < self.duration:
-            cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
-            print(f"\rSimulation Progress: {round(sim_time / self.duration * 100, 1)}%\t({cpu_elapsed_time}s elapsed)",
-                  end='')
+        try:
 
-            driver_controls = self.driver.eval(sim_time, state, state_dot)
-            sensor_data = self.telemetry.eval(state, state_dot, driver_controls)
-            vcu_output = self.vcu.eval(sensor_data)
-            controls = self.controls_mux.eval(driver_controls, vcu_output)
-            state, state_dot, observables = self.vehicle.eval(controls, state, self.time_step)
+            while sim_time < self.duration:
+                cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
+                print(f"\rSimulation Progress: {round(sim_time / self.duration * 100, 1)}%\t({cpu_elapsed_time}s elapsed)",
+                      end='')
 
-            sim_time += self.time_step
+                driver_controls = self.driver.eval(sim_time, state, state_dot)
+                sensor_data = self.telemetry.eval(state, state_dot, driver_controls)
+                vcu_output = self.vcu.eval(sensor_data)
+                controls = self.controls_mux.eval(driver_controls, vcu_output)
+                state, state_dot, observables = self.vehicle.eval(controls, state, self.time_step)
 
-            self.data.append((sim_time, copy.deepcopy(state), copy.deepcopy(state_dot), driver_controls,
-                              sensor_data, vcu_output, controls, observables))
+                sim_time += self.time_step
 
-            if driver_controls.e_stop:
-                break
+                self.data.append((sim_time, copy.deepcopy(state), copy.deepcopy(state_dot), driver_controls,
+                                  sensor_data, vcu_output, controls, observables))
 
-        self.vcu.terminate_subprocess()
+                if driver_controls.e_stop:
+                    break
+
+        except Exception as e:
+            print(e)
+
+        finally:
+            self.vcu.terminate_subprocess()
 
         cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
         print(f"\rSimulation Complete ({cpu_elapsed_time}s)")

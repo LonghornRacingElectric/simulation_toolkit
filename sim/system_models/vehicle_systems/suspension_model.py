@@ -180,6 +180,11 @@ class SuspensionModel(VehicleSystemModel):
         state_dot_vector.sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
         state_dot_vector.tire_torques = tire_torques
 
+        # print()
+        # for i in range(4):
+        #     print(f"tire {i} F", observables_vector.tire_forces_IMF[i])
+        #     print(f"tire {i} M", observables_vector.tire_moments_IMF[i])
+        # print()
         # print("SR", slip_ratios)
         # print("SA", slip_angles)
         # print("FX", state_dot_vector.sus_forces[0])

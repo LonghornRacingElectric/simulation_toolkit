@@ -38,7 +38,7 @@ class DriverModel:
             out.brake_pedal_pct = 0
             out.drive_switch = True
 
-            if time > 2:
-                out.steering_angle = deg_to_rad(55)
+            if 2 < time < 3:
+                out.steering_angle = deg_to_rad(30)
 
         return out
