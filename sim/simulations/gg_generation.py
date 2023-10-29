@@ -30,6 +30,7 @@ class GGGeneration:
 
         self.mesh = mesh
         self.velocity = velocity
+        self.max_torque = 0
 
         self.lat_accels = []
         self.long_accels = []
@@ -41,8 +42,8 @@ class GGGeneration:
         self.test_state_vector.body_slip = y[0]
         self.test_state_vector.speed = y[1]
         self.test_controls_vector.steering_angle = y[2]
-        self.test_controls_vector.torque_request = y[3] if y[3] > 0 else 0
-        self.test_controls_vector.brake_pct = abs(y[3]) if y[3] < 0 else 0
+        self.test_controls_vector.torque_request = max(y[3], 0) * self.max_torque
+        self.test_controls_vector.brake_pct = max(-y[3], 0)
 
         # Iterated values
         self.test_observables_vector.long_accel = x[0]
@@ -63,6 +64,8 @@ class GGGeneration:
         return residuals
 
     def solve(self):
+        self.max_torque = self.test_car.max_torque
+
         body_slip_sweep = np.linspace(deg_to_rad(-15), deg_to_rad(15), self.mesh)
         steered_angle_sweep = np.linspace(deg_to_rad(-55), deg_to_rad(55), self.mesh)
         torque_request_sweep = np.linspace(-1, 1, self.mesh)
@@ -105,6 +108,7 @@ class GGGeneration:
 
         elapsed_time = round(time.time() - start_time, 2)
         print(f"\rGG Complete ({elapsed_time}s)")
+
         self._calculate_key_points()
 
         self.done = True

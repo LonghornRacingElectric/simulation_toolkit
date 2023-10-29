@@ -74,6 +74,7 @@ class VehicleModel:
 
         acceleration_ntb = total_forces / car.total_mass
         acceleration = rotation_z(state.yaw, acceleration_ntb)
+        acceleration = np.multiply(acceleration, [1, 1, 0])  # TODO just removing Z for now
         state.displacement += state.velocity * time_step
         state.velocity += acceleration * time_step
 
@@ -82,7 +83,7 @@ class VehicleModel:
         state.yaw += state.yaw_rate * time_step
         state.yaw_rate += yaw_accel * time_step
 
-        state.heave = 0  # -state.displacement[2]
+        state.heave = 0  # state.displacement[2]
         state.pitch = 0  # TODO value based on accel
         state.roll = 0  # TODO value based on accel
 

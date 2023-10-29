@@ -7,7 +7,6 @@ class TireModel:
         self.tire_scaling = 0.55
 
     def get_comstock_forces(self, SA: float, SR: float, FZ: float, IA: float, max_force: float):
-        SA = 0  # TODO remove
         SA, SR = self._zero_protection(SA, SR)
 
         FX = self._long_pacejka([FZ, SR])

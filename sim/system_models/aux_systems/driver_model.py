@@ -15,6 +15,7 @@ from sim.model_parameters.drivers.driver import Driver
 from sim.system_models.vectors.driver_controls_vector import DriverControlsVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
+from sim.util.math.conversions import deg_to_rad
 
 
 class DriverModel:
@@ -36,5 +37,8 @@ class DriverModel:
             out.accel_pedal_pct = min(1.0, (time - 1.0)/4.0)
             out.brake_pedal_pct = 0
             out.drive_switch = True
+
+            if time > 2:
+                out.steering_angle = deg_to_rad(55)
 
         return out

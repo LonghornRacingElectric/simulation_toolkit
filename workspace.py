@@ -25,8 +25,6 @@ vcu = LadyLuckVcu()
 
 
 def general_transient_sim():
-    car.aero = ToggleParameter(False)
-
     transient_sim = TransientSimulation(duration=5, time_step=0.001,  # TODO change to 0.003
                                         car=car, driver=driver, telemetry=telemetry, vcu=vcu)
     transient_sim.run()
@@ -41,12 +39,15 @@ def general_transient_sim():
     transient_sim.plot_state("motor_rpm")
     transient_sim.plot_state("wheel_angular_velocities")
     transient_sim.plot_state("velocity")
+    transient_sim.plot_observable("slip_angles")
+    transient_sim.plot_state("yaw_rate")
+    transient_sim.plot_state("yaw")
     # transient_sim.plot_state_dot("hv_battery_current")
     # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
 
 def general_MMM():
-    mmm_solver = MmmSolver(car=car, mesh=31, velocity=15)
+    mmm_solver = MmmSolver(car=car, mesh=21, velocity=15)
     mmm_solver.solve()
     mmm_solver.print_key_points()
     mmm_solver.plot()
@@ -93,6 +94,6 @@ def aero_CoP_MMM_sweep():
     mmm_sweeper.plot_key_points("CoP")
 
 
-# general_GGV()
-# general_MMM()
-general_transient_sim()
+general_GGV()
+general_MMM()
+# general_transient_sim()

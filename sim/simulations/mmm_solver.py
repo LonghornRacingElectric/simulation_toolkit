@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
 from scipy.spatial import ConvexHull
+import time
 
 from sim.model_parameters.cars.car import Car
 from sim.model_parameters.cars.lady_luck import LadyLuck
@@ -68,9 +69,16 @@ class MmmSolver:
         self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.all_points = []
 
+        counter = 0
+        start_time = time.time()
         for i, body_slip in enumerate(body_slip_sweep):
             for j, steered_angle in enumerate(steered_angle_sweep):
                 for velocity in [self.velocity]:
+                    elapsed_time = round(time.time() - start_time, 2)
+                    print(f"\rMMM Progress: {round(counter / self.mesh**2 * 100, 1)}%\t({elapsed_time}s elapsed)",
+                          end='')
+                    counter += 1
+
                     def solve_attempt(x):
                         return self._vehicle_model(x, [body_slip, velocity, steered_angle])
 
@@ -89,6 +97,9 @@ class MmmSolver:
                     self.body_slip_iso_lines[j][1][i] = lat_accel
                     self.body_slip_iso_lines[j][2][i] = yaw_accel
                     self.all_points.append((lat_accel, yaw_accel))
+
+        elapsed_time = round(time.time() - start_time, 2)
+        print(f"\rMMM Complete ({elapsed_time}s)")
 
         self._calculate_key_points()
 

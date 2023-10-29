@@ -1,5 +1,6 @@
 from typing import Callable
 
+import numpy
 import numpy as np
 from numpy import ndarray
 
@@ -132,6 +133,16 @@ class SuspensionModel(VehicleSystemModel):
             if self.transient:
                 max_force = state_dot_vector.powertrain_torques[i] / vehicle_parameters.tire_radii[i]
 
+            # Calculate tire rotational velocities
+            tire_heading_vector = np.array(
+                [np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0])
+            tire_heading_unit_vector = tire_heading_vector / np.linalg.norm(tire_heading_vector)
+            tire_heading_velocity = np.dot(tire_IMF_velocities[i], tire_heading_unit_vector)
+            # wheel_speed = (slip_ratios[i] + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
+
+            if tire_heading_velocity < 0.1 and self.transient:
+                slip_angles[i] = 0
+
             tire_forces = self.tires[i].get_comstock_forces(SR=slip_ratios[i],
                                                             SA=slip_angles[i],
                                                             FZ=normal_loads[i],
@@ -146,15 +157,12 @@ class SuspensionModel(VehicleSystemModel):
             # Calculate vehicle moments due to tire forces
             vehicle_centric_moments = np.cross(tire_positions[i], vehicle_centric_forces)
 
+            # if slip_angles[i] > 0:
+            #     print(i, vehicle_centric_forces)
+            #     print(i, vehicle_centric_moments)
+
             # Calculate tire torques
             tire_torque = vehicle_centric_forces[0] * vehicle_parameters.tire_radii[i]
-
-            # Calculate tire rotational velocities
-            tire_heading_vector = np.array(
-                [np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0])
-            tire_heading_unit_vector = tire_heading_vector / np.linalg.norm(tire_heading_vector)
-            tire_heading_velocity = np.dot(tire_IMF_velocities[i], tire_heading_unit_vector)
-            # wheel_speed = (slip_ratios[i] + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
 
             tire_torques[i] = tire_torque
 
