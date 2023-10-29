@@ -94,6 +94,6 @@ def aero_CoP_MMM_sweep():
     mmm_sweeper.plot_key_points("CoP")
 
 
-# general_GGV()
-# general_MMM()
-general_transient_sim()
+general_GGV()
+general_MMM()
+# general_transient_sim()
