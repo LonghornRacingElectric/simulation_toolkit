@@ -12,18 +12,18 @@ class TireModel:
         FX = self._long_pacejka([FZ, SR])
         FY = self._lat_pacejka([FZ, SA, IA])
 
-        if max_force:
-            FX = np.where(FX > 0, np.minimum(FX, max_force), np.maximum(-FX, -max_force))
+        if max_force is not None:
+            FX = np.sign(FX) * min(abs(FX), abs(max_force))
 
-        # watch = (FX == 0) and (abs(SA) > 1e-10)
-        # if watch:
-        #     print()
-        #     print("FX", FX)
-        #     print("FY", FY)
-        #     print("SR", SR)
-        #     print("SA", SA)
-        #     print("FZ", FZ)
-        #     print("IA", IA)
+        watch = (max_force is not None) and (FX == 0) and (abs(SA) > 1e-10)
+        if watch:
+            print()
+            print("FX", FX)
+            print("FY", FY)
+            print("SR", SR)
+            print("SA", SA)
+            print("FZ", FZ)
+            print("IA", IA)
 
         Ca = (self._long_pacejka([FZ, 1 / 100]) - self._long_pacejka([FZ, 0])) * (180 / np.pi) # slip stiffness
         Cs = (self._lat_pacejka([FZ, 1 * np.pi / 180, IA]) - self._lat_pacejka([FZ, 0, IA])) * 100 # cornering stiffness
@@ -31,11 +31,11 @@ class TireModel:
         adj_FX = self._com_long(SA, SR, FX, FY, Ca)
         adj_FY = self._com_lat(SA, SR, FX, FY, Cs)
 
-        # if watch:
-        #     print("adj_FX", adj_FX)
-        #     print("adj_FY", adj_FY)
-        #     exit(1)
-        
+        if watch:
+            print("adj_FX", adj_FX)
+            print("adj_FY", adj_FY)
+            exit(1)
+
         return [adj_FX, adj_FY, FZ]
     
     def _com_long(self, SA: float, SR: float, FX: float, FY: float, Ca: float) -> float:
