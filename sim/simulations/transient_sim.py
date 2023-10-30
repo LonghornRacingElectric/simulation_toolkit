@@ -112,3 +112,16 @@ class TransientSimulation:
 
     def plot_observable(self, name: str):
         self._plot(7, name)
+
+    def plot_map(self):
+        t = np.array([t[0] for t in self.data])
+        xyz = [t[1].displacement for t in self.data]
+        x, y = np.array([v[0] for v in xyz]), np.array([v[1] for v in xyz])
+
+        plt.scatter(x, y, c=[(0.5-np.sin(c*2*np.pi)/2, 0, 0.5+np.sin(c*2*np.pi)/2) for c in t], s=0.5)
+        # plt.plot(x, y)
+        plt.title("displacement")
+        plt.xlabel("x pos (m)")
+        plt.ylabel("y pos (m)")
+        plt.grid(color='gray', linestyle='-', linewidth=0.5)
+        plt.show()

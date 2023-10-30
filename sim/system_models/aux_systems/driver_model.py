@@ -11,6 +11,8 @@ Driver also needs to know the performance envelope so they can try to operate ne
 This implies that the quasi-steady state sim needs to be done before trying to model laps in a transient sim.
 
 """
+import numpy as np
+
 from sim.model_parameters.drivers.driver import Driver
 from sim.system_models.vectors.driver_controls_vector import DriverControlsVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
@@ -34,11 +36,22 @@ class DriverModel:
             out.brake_pedal_pct = 0.5
             out.drive_switch = True
         else:
-            out.accel_pedal_pct = min(0.5, (time - 1.0)/4.0)
+            out.accel_pedal_pct = 0.3
             out.brake_pedal_pct = 0
             out.drive_switch = True
+            out.steering_angle = 0
 
-            if 2 < time < 3:
-                out.steering_angle = deg_to_rad(30)
+            if 3 < time < 4:
+                out.steering_angle = deg_to_rad(-30) * (time - 3)
+            elif 4 < time < 5:
+                out.steering_angle = deg_to_rad(-30) * (5 - time)
+            elif 5 < time < 6:
+                out.steering_angle = deg_to_rad(15) * (time - 5)
+            elif 6 < time < 7:
+                out.steering_angle = deg_to_rad(15) * (7 - time)
+
+        # if we spin out just stop the sim
+        if abs(state.yaw_rate) > 2*np.pi * 3:
+            out.e_stop = True
 
         return out

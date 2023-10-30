@@ -326,5 +326,4 @@ class SuspensionModel(VehicleSystemModel):
 
     def _get_IMF_vel(self, velocity: float, body_slip: float) -> ndarray[float]:
         IMF_velocity = velocity * np.array([np.cos(body_slip), np.sin(body_slip), 0])
-
         return IMF_velocity
