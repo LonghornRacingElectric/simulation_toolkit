@@ -35,6 +35,9 @@ def general_transient_sim():
     transient_sim.plot_observable("slip_angles")
     transient_sim.plot_state("yaw_rate")
     transient_sim.plot_state("yaw")
+    transient_sim.plot_state("wheel_angular_velocities")
+    transient_sim.plot_observable("long_accel")
+    transient_sim.plot_observable("lateral_accel")
 
     transient_sim.plot_map()
 

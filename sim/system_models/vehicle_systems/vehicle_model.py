@@ -91,6 +91,10 @@ class VehicleModel:
         state.speed = np.linalg.norm(np.multiply(state.velocity, [1, 1, 0]))
         state.body_slip = velocity_angle - state.yaw if state.speed > 0.1 else 0
 
+        acceleration_imf = rotation_z(state.body_slip, acceleration_ntb)
+        observables.long_accel = acceleration_imf[0]
+        observables.lateral_accel = acceleration_imf[1]
+
         wheel_torques = state_dot.powertrain_torques - state_dot.tire_torques
         # print("ptn torques", state_dot.powertrain_torques)
         # print("tire torques", state_dot.tire_torques)
