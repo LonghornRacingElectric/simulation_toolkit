@@ -10,8 +10,8 @@ class TireModel:
     def get_comstock_forces(self, SA: float, SR: float, FZ: float, IA: float, max_force: float = None):
         SA, SR = self._zero_protection(SA, SR)
 
-        if SR > 0.15:
-            SR = max(0.15 - (SR - 0.15)/80, 1e-64)
+        # if SR > 0.15:
+        #     SR = max(0.15 - (SR - 0.15)/80, 1e-64)
 
         FX = self._long_pacejka([FZ, SR])
         FY = self._lat_pacejka([FZ, SA, IA])

@@ -85,6 +85,10 @@ class PowertrainModel(VehicleSystemModel):
         observables.regen_torques = [0, 0, 0, 0]
         observables.mechanical_brake_torque = [0, 0, 0, 0]
 
+        motor_power_out = 0
+        inverter_power_out = 0
+        hv_battery_power_out = 0
+
         if controls_in.torque_request > 0:
             torque_request = controls_in.torque_request
             available_voltage = hv_battery_open_circuit_voltage - motor_back_emf
@@ -96,9 +100,7 @@ class PowertrainModel(VehicleSystemModel):
             available_power = min(possible_power, car.power_limit * car.inverter_efficiency * motor_efficiency)
             available_torque = available_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
 
-            # print(f"Torque Request: {torque_request}")
-            # print(f"Rated Torque: {rated_torque}")
-            # print(f"Available Torque: {available_torque}")
+            # TODO let power limit be handled by VCU, not sim. The sim should allow illegal power limits for testing
 
             motor_torque = min(torque_request, rated_torque, available_torque)
             observables.motor_torque = motor_torque
@@ -111,12 +113,35 @@ class PowertrainModel(VehicleSystemModel):
                 diff_torque * car.drivetrain_efficiency / 2,
             ]
 
-            # print(f"Resultant Diff Torque: {diff_torque}")
+            motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
+            inverter_power_out = motor_power_out / motor_efficiency
+            hv_battery_power_out = inverter_power_out / car.inverter_efficiency
 
         elif controls_in.torque_request < 0 and car.regen_enabled:
-            observables.regen_torques = [0, 0, 0, 0]
+            torque_request = controls_in.torque_request
+            available_voltage = motor_back_emf
+            available_current = available_voltage / (car.motor_winding_resistance + hv_battery_internal_resistance)
+            rated_torque = car.motor_peak_torque(state_in.motor_rpm)
 
-            raise NotImplementedError("regen not implemented yet, sorry :(")  # TODO regen!!
+            possible_current = min(rated_torque / car.motor_kt, car.motor_peak_current, available_current)
+            possible_power = car.hv_battery_nominal_voltage * possible_current
+            available_power = min(possible_power, car.power_limit / car.inverter_efficiency / motor_efficiency)
+            available_torque = available_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
+
+            motor_torque = -min(-torque_request, rated_torque, available_torque)
+            observables.motor_torque = motor_torque
+
+            diff_torque = motor_torque * car.gear_ratio * car.diff_efficiency
+            observables.regen_torques = [
+                0,
+                0,
+                diff_torque * car.drivetrain_efficiency / 2,
+                diff_torque * car.drivetrain_efficiency / 2,
+            ]
+
+            motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
+            inverter_power_out = motor_power_out * motor_efficiency
+            hv_battery_power_out = inverter_power_out * car.inverter_efficiency
 
         if controls_in.brake_pct > 0:
             max_driver_force = car.max_DF
@@ -136,10 +161,6 @@ class PowertrainModel(VehicleSystemModel):
 
             observables.line_pressures = brake_calcs[0]
             observables.mechanical_brake_torque = brake_calcs[1]
-
-        motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
-        inverter_power_out = motor_power_out / motor_efficiency  # , state_in.motor_rpm)
-        hv_battery_power_out = inverter_power_out / car.inverter_efficiency
 
         hv_battery_power_out += car.has_dcdc * (lv_system_power_out / car.dcdc_efficiency)
         lv_battery_power_out = (not car.has_dcdc) * lv_system_power_out

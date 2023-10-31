@@ -71,7 +71,7 @@ def general_MMM():
 
 
 def general_GGV():
-    gg_generator = GGGeneration(car=car, mesh=5, velocity=15)
+    gg_generator = GGGeneration(car=car, mesh=9, velocity=15)
     gg_generator.solve()
     gg_generator.print_key_points()
     gg_generator.plot()
@@ -111,7 +111,27 @@ def aero_CoP_MMM_sweep():
     mmm_sweeper.plot_key_points("CoP")
 
 
-# general_GGV()
+def compare_gg_regen():
+    gg_generator = GGGeneration(car=car, mesh=9, velocity=15)
+
+    car.regen_enabled = ToggleParameter(False)
+    car.brake_bias = ConstantParameter(0.56)
+
+    print("======== without regen ========")
+    gg_generator.solve()
+    gg_generator.plot()
+    gg_generator.print_key_points()
+
+    car.regen_enabled = ToggleParameter(True)
+    car.brake_bias = ConstantParameter(0.70)
+
+    print("\n======== with regen ========")
+    gg_generator.solve()
+    gg_generator.plot()
+    gg_generator.print_key_points()
+
+
 # general_MMM()
 # general_transient_sim()
-floor_it_sim()
+# floor_it_sim()
+compare_gg_regen()

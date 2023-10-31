@@ -42,7 +42,7 @@ class GGGeneration:
         self.test_state_vector.body_slip = y[0]
         self.test_state_vector.speed = y[1]
         self.test_controls_vector.steering_angle = y[2]
-        self.test_controls_vector.torque_request = max(y[3], 0) * self.max_torque
+        self.test_controls_vector.torque_request = y[3] * self.max_torque
         self.test_controls_vector.brake_pct = max(-y[3], 0)
 
         # Iterated values
@@ -85,6 +85,9 @@ class GGGeneration:
                         print(f"\rGG Progress: {round(counter / self.mesh**3 * 100, 1)}%\t({elapsed_time}s elapsed)",
                               end='')
                         counter += 1
+
+                        if abs(torque_request) < 0.85 and (abs(steered_angle) < deg_to_rad(15) or abs(body_slip) < deg_to_rad(8)):
+                            continue
 
                         def solve_attempt(x):
                             # print(*[round(a, 2) for a in x])
