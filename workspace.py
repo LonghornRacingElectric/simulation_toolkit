@@ -30,10 +30,8 @@ def general_transient_sim():
                                         car=car, driver=driver, telemetry=telemetry, vcu=vcu)
     transient_sim.run()
 
+    transient_sim.plot_state("body_slip")
     transient_sim.plot_driver_control("steering_angle")
-    transient_sim.plot_driver_control("accel_pedal_pct")
-    transient_sim.plot_state("motor_rpm")
-    transient_sim.plot_state("wheel_angular_velocities")
     transient_sim.plot_observable("slip_angles")
     transient_sim.plot_state("yaw_rate")
     transient_sim.plot_state("yaw")
@@ -132,6 +130,6 @@ def compare_gg_regen():
 
 
 # general_MMM()
-# general_transient_sim()
+general_transient_sim()
 # floor_it_sim()
-compare_gg_regen()
+# compare_gg_regen()

@@ -84,8 +84,8 @@ class VehicleModel:
         state.yaw_rate += yaw_accel * time_step
 
         state.heave = 0  # state.displacement[2]
-        state.pitch = 0  # TODO value based on accel
-        state.roll = 0  # TODO value based on accel
+        state.pitch = acceleration_ntb[0] * -0.0015  # TODO value based on accel
+        state.roll = acceleration_ntb[1] * 0.0015  # TODO value based on accel
 
         velocity_angle = np.arctan2(state.velocity[1], state.velocity[0])
         state.speed = np.linalg.norm(np.multiply(state.velocity, [1, 1, 0]))

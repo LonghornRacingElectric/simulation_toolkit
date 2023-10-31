@@ -128,7 +128,7 @@ class TransientSimulation:
         y_min = min(y) - padding
         y_max = max(y) + padding
 
-        plt.scatter(x, y, c=[(0.5-np.sin(c*2*np.pi)/2, 0, 0.5+np.sin(c*2*np.pi)/2) for c in t], s=0.5)
+        plt.scatter(x, y, c=[(0.5-np.sign(np.sin(c*2*np.pi))/2, 0, 0.5+np.sign(np.sin(c*2*np.pi))/2) for c in t], s=0.5)
         # plt.plot(x, y)
         plt.title("displacement")
         plt.xlabel("x pos (m)")
