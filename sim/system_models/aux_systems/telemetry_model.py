@@ -33,6 +33,12 @@ class TelemetryModel:
 
         sensor_data.drive_switch = driver_controls.drive_switch
 
+        # TODO wheelspeeds won't respond instantly
+        sensor_data.wheel_displacement_fl = state.wheel_angular_displacements[0]
+        sensor_data.wheel_displacement_fr = state.wheel_angular_displacements[1]
+        sensor_data.wheel_displacement_bl = state.wheel_angular_displacements[2]
+        sensor_data.wheel_displacement_br = state.wheel_angular_displacements[3]
+
         sensor_data.inverter_ready = True
 
         return sensor_data

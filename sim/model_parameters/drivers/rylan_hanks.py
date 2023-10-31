@@ -5,18 +5,16 @@ from sim.model_parameters.drivers.driver import Driver
 from sim.system_models.vectors.driver_controls_vector import DriverControlsVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
-from sim.util.math.conversions import deg_to_rad
 
 
-class BenHuff(Driver):
+class RylanHanks(Driver):
     def __init__(self):
         super().__init__()
-        self._model_name = "Ben Huff"
+        self._model_name = "Rylan Hanks"
 
-        self.acceleration_confidence = ConstantParameter(1.0)
-        self.braking_confidence = ConstantParameter(0.1)
-        self.cornering_confidence = ConstantParameter(0.8)
-        # data is from the following paper: https://lhre.slack.com/files/U02E2NBSTCH/F05A78N20P4/vid_20230530_224750.mp4
+        self.acceleration_confidence = ConstantParameter(0.5)
+        self.braking_confidence = ConstantParameter(1.0)
+        self.cornering_confidence = ConstantParameter(1.0)
 
     def driver_program(self, time: float, state: StateVector, state_dot: StateDotVector) -> DriverControlsVector:
         out = DriverControlsVector()
@@ -30,22 +28,19 @@ class BenHuff(Driver):
             out.brake_pedal_pct = 0.5
             out.drive_switch = True
         else:
-            out.accel_pedal_pct = 0.3
+            out.accel_pedal_pct = 0.9
             out.brake_pedal_pct = 0
             out.drive_switch = True
-            out.steering_angle = 0
 
-            if 3 < time < 4:
-                out.steering_angle = deg_to_rad(-30) * (time - 3)
-            elif 4 < time < 5:
-                out.steering_angle = deg_to_rad(-30) * (5 - time)
-            elif 5 < time < 6:
-                out.steering_angle = deg_to_rad(15) * (time - 5)
-            elif 6 < time < 7:
-                out.steering_angle = deg_to_rad(15) * (7 - time)
+        # keep straight
+        out.steering_angle = 5 * state.body_slip
 
         # if we spin out just stop the sim
         if abs(state.yaw_rate) > 2*np.pi * 3:
+            out.e_stop = True
+
+        # if we finish acceleration event stop sim
+        if state.displacement[0] > 75:
             out.e_stop = True
 
         return out

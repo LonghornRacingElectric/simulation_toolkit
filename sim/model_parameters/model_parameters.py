@@ -27,7 +27,7 @@ class ModelParameters:
         self._parameters_set_count[key] += 1
 
     def __getattribute__(self, key: str):
-        if key[0] == "_":
+        if key[0] == "_" or key == "driver_program":
             return super().__getattribute__(key)
         if self._parameters_set_count[key] < 2:
             if self._parameters_set_count[key] == 0:

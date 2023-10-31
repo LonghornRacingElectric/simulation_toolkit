@@ -8,6 +8,7 @@ import numpy as np
 
 from sim.model_parameters.cars.lady_luck import LadyLuck
 from sim.model_parameters.drivers.ben_huff import BenHuff
+from sim.model_parameters.drivers.rylan_hanks import RylanHanks
 from sim.model_parameters.parameters import *
 from sim.model_parameters.telemetry.lady_luck_telemetry import LadyLuckTelemetry
 from sim.model_parameters.vcu.lady_luck_vcu import LadyLuckVcu
@@ -17,25 +18,18 @@ from sim.simulations.transient_sim import TransientSimulation
 from sim.util.analysis.mmm_sweeper import MmmSweeper
 
 
-# create parameter models
 car = LadyLuck()
-driver = BenHuff()
-telemetry = LadyLuckTelemetry()
-vcu = LadyLuckVcu()
 
 
 def general_transient_sim():
-    # car.aero = ToggleParameter(False)
+    driver = BenHuff()
+    telemetry = LadyLuckTelemetry()
+    vcu = LadyLuckVcu()
 
-    transient_sim = TransientSimulation(duration=8, time_step=0.003,  # TODO change to 0.003 internally
+    transient_sim = TransientSimulation(duration=10, time_step=0.003,
                                         car=car, driver=driver, telemetry=telemetry, vcu=vcu)
     transient_sim.run()
-    # transient_sim.plot_driver_control("brake_pedal_pct")
-    # transient_sim.plot_driver_control("drive_switch")
-    # transient_sim.plot_vcu_output("park_or_drive")
-    # transient_sim.plot_vcu_output("r2d_buzzer")
-    # transient_sim.plot_driver_control("accel_pedal_pct")
-    # transient_sim.plot_vcu_output("torque_request")
+
     transient_sim.plot_driver_control("steering_angle")
     transient_sim.plot_driver_control("accel_pedal_pct")
     transient_sim.plot_state("motor_rpm")
@@ -43,10 +37,30 @@ def general_transient_sim():
     transient_sim.plot_observable("slip_angles")
     transient_sim.plot_state("yaw_rate")
     transient_sim.plot_state("yaw")
-    # transient_sim.plot_state_dot("hv_battery_current")
-    # transient_sim.plot_observable("hv_battery_terminal_voltage")
 
     transient_sim.plot_map()
+
+    transient_sim.print_key_points()
+
+
+def floor_it_sim():
+    driver = RylanHanks()
+    telemetry = LadyLuckTelemetry()
+    vcu = LadyLuckVcu()
+
+    transient_sim = TransientSimulation(duration=10, time_step=0.003,
+                                        car=car, driver=driver, telemetry=telemetry, vcu=vcu)
+    transient_sim.run()
+
+    transient_sim.plot_driver_control("accel_pedal_pct")
+    transient_sim.plot_vcu_output("torque_request")
+    transient_sim.plot_state("motor_rpm")
+    transient_sim.plot_state("speed")
+    transient_sim.plot_state("wheel_angular_velocities")
+
+    transient_sim.plot_map()
+
+    transient_sim.print_key_points()
 
 
 def general_MMM():
@@ -99,4 +113,5 @@ def aero_CoP_MMM_sweep():
 
 # general_GGV()
 # general_MMM()
-general_transient_sim()
+# general_transient_sim()
+floor_it_sim()

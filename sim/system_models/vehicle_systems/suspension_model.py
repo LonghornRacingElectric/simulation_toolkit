@@ -129,10 +129,6 @@ class SuspensionModel(VehicleSystemModel):
         tire_outputs = []
         tire_torques = [0, 0, 0, 0]
         for i in range(len(self.tires)):
-            max_force = None
-            if self.transient:
-                max_force = state_dot_vector.powertrain_torques[i] / vehicle_parameters.tire_radii[i]
-
             # Calculate tire rotational velocities
             tire_heading_vector = np.array(
                 [np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0])
@@ -140,8 +136,13 @@ class SuspensionModel(VehicleSystemModel):
             tire_heading_velocity = np.dot(tire_IMF_velocities[i], tire_heading_unit_vector)
             # wheel_speed = (slip_ratios[i] + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
 
-            if tire_heading_velocity < 0.1 and self.transient:
-                slip_angles[i] = 0
+            max_force = None
+
+            if self.transient:
+                if state_vector.wheel_angular_velocities[i] == 0:
+                    max_force = state_dot_vector.powertrain_torques[i] / vehicle_parameters.tire_radii[i]
+                if tire_heading_velocity < 0.1:
+                    slip_angles[i] = 0
 
             tire_forces = self.tires[i].get_comstock_forces(SR=slip_ratios[i],
                                                             SA=slip_angles[i],

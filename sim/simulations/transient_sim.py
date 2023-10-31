@@ -27,8 +27,10 @@ class TransientSimulation:
 
         self.duration = duration
         self.time_step = time_step
+        self.sim_time = 0
 
         self.data = []
+        self.key_points = []
 
     def _get_initial_state(self, vehicle: VehicleModel) -> StateVector:
         state = StateVector()
@@ -40,25 +42,25 @@ class TransientSimulation:
         state = self._get_initial_state(self.vehicle)
         state_dot = StateDotVector()
 
-        sim_time = 0
+        self.sim_time = 0
         cpu_start_time = time.time()
 
         try:
 
-            while sim_time < self.duration:
+            while self.sim_time < self.duration:
                 cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
-                print(f"\rSimulation Progress: {round(sim_time / self.duration * 100, 1)}%\t({cpu_elapsed_time}s elapsed)",
+                print(f"\rSimulation Progress: {round(self.sim_time / self.duration * 100, 1)}%\t({cpu_elapsed_time}s elapsed)",
                       end='')
 
-                driver_controls = self.driver.eval(sim_time, state, state_dot)
+                driver_controls = self.driver.eval(self.sim_time, state, state_dot)
                 sensor_data = self.telemetry.eval(state, state_dot, driver_controls)
                 vcu_output = self.vcu.eval(sensor_data)
                 controls = self.controls_mux.eval(driver_controls, vcu_output)
                 state, state_dot, observables = self.vehicle.eval(controls, state, self.time_step)
 
-                sim_time += self.time_step
+                self.sim_time += self.time_step
 
-                self.data.append((sim_time, copy.deepcopy(state), copy.deepcopy(state_dot), driver_controls,
+                self.data.append((self.sim_time, copy.deepcopy(state), copy.deepcopy(state_dot), driver_controls,
                                   sensor_data, vcu_output, controls, observables))
 
                 if driver_controls.e_stop:
@@ -69,6 +71,8 @@ class TransientSimulation:
 
         finally:
             self.vcu.terminate_subprocess()
+
+        self._calculate_key_points()
 
         cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
         print(f"\rSimulation Complete ({cpu_elapsed_time}s)")
@@ -118,10 +122,29 @@ class TransientSimulation:
         xyz = [t[1].displacement for t in self.data]
         x, y = np.array([v[0] for v in xyz]), np.array([v[1] for v in xyz])
 
+        padding = 10
+        x_min = min(x) - padding
+        x_max = max(x) + padding
+        y_min = min(y) - padding
+        y_max = max(y) + padding
+
         plt.scatter(x, y, c=[(0.5-np.sin(c*2*np.pi)/2, 0, 0.5+np.sin(c*2*np.pi)/2) for c in t], s=0.5)
         # plt.plot(x, y)
         plt.title("displacement")
         plt.xlabel("x pos (m)")
         plt.ylabel("y pos (m)")
+        plt.xlim(x_min, x_max)
+        plt.ylim(y_min, y_max)
         plt.grid(color='gray', linestyle='-', linewidth=0.5)
         plt.show()
+
+
+    def _calculate_key_points(self):
+        self.key_points = [
+            ("planned duration", float(self.duration), "s"),
+            ("actual duration", self.sim_time, "s"),
+        ]
+
+    def print_key_points(self):
+        for label, value, units in self.key_points:
+            print(f'{label.ljust(25)} | {str(round(value, 3)).ljust(8)} {units}')
