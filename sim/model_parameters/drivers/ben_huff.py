@@ -30,11 +30,11 @@ class BenHuff(Driver):
             out.brake_pedal_pct = 0.5
             out.drive_switch = True
         elif time < 2:
-            out.accel_pedal_pct = 0.3
+            out.accel_pedal_pct = 0.5
             out.brake_pedal_pct = 0
             out.drive_switch = True
         else:
-            out.accel_pedal_pct = 0.3
+            out.accel_pedal_pct = 0.4
             out.brake_pedal_pct = 0
             out.drive_switch = True
 
@@ -43,8 +43,8 @@ class BenHuff(Driver):
             else:
                 target_yaw = 0
 
-            target_yaw_rate = max(min(10*(target_yaw - state.yaw), deg_to_rad(70)), deg_to_rad(-70))
-            out.steering_angle = max(min(5*(target_yaw_rate - state.yaw_rate), deg_to_rad(55)), deg_to_rad(-55))
+            target_yaw_rate = max(min(10*(target_yaw - state.yaw), deg_to_rad(50)), deg_to_rad(-50))
+            out.steering_angle = max(min(8*(target_yaw_rate - state.yaw_rate), deg_to_rad(55)), deg_to_rad(-55))
 
         # if we spin out just stop the sim
         if abs(state.yaw_rate) > 2*np.pi * 3:
