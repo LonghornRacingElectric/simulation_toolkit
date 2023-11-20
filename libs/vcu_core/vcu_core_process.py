@@ -55,6 +55,9 @@ class VcuCoreProcess:
         self.write_float(sensor_data.battery_soc)
         self.write_bool(sensor_data.inverter_ready)
 
+        self.write_float(sensor_data.battery_voltage)
+        self.write_float(sensor_data.battery_current)
+
         self.write_bool(sensor_data.drive_switch)
 
         self.write_float(sensor_data.gps_lat)

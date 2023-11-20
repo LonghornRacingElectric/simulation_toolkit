@@ -44,7 +44,7 @@ def general_transient_sim():
     transient_sim.print_key_points()
 
 
-def floor_it_sim():
+def accel_event_sim():
     driver = RylanHanks()
     telemetry = LadyLuckTelemetry()
     vcu = LadyLuckVcu()
@@ -58,7 +58,9 @@ def floor_it_sim():
     transient_sim.plot_state("motor_rpm")
     transient_sim.plot_state("speed")
     transient_sim.plot_state("wheel_angular_velocities")
-
+    transient_sim.plot_observable("hv_battery_terminal_voltage")
+    transient_sim.plot_state_dot("hv_battery_current")
+    transient_sim.plot_observable("hv_battery_power_out")
     transient_sim.plot_map()
 
     transient_sim.print_key_points()
@@ -133,6 +135,6 @@ def compare_gg_regen():
 
 
 # general_MMM()
-general_transient_sim()
-# floor_it_sim()
+# general_transient_sim()
+accel_event_sim()
 # compare_gg_regen()

@@ -12,6 +12,9 @@ class ObservablesVector(Vector):
         self.hv_battery_terminal_voltage = 0
         self.lv_battery_open_circuit_voltage = 0
         self.lv_battery_terminal_voltage = 0
+        self.hv_battery_power_out = 0
+        self.inverter_power_out = 0
+        self.motor_power_out = 0
 
         self.motor_torque = 0
 

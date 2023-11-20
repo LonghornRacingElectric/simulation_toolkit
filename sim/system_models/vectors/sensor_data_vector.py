@@ -29,6 +29,9 @@ class SensorDataVector(Vector):
 
         self.drive_switch = False
 
+        self.battery_voltage = 0
+        self.battery_current = 0
+
         self.gps_lat = 0
         self.gps_long = 0
         self.gps_speed = 0

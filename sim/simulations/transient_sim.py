@@ -6,6 +6,7 @@ from sim.system_models.aux_systems.controls_mux import ControlsMux
 from sim.system_models.aux_systems.driver_model import DriverModel
 from sim.system_models.aux_systems.telemetry_model import TelemetryModel
 from sim.system_models.aux_systems.vcu_model import VehicleControlUnitModel
+from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vehicle_systems.vehicle_model import VehicleModel
@@ -41,6 +42,7 @@ class TransientSimulation:
     def run(self):
         state = self._get_initial_state(self.vehicle)
         state_dot = StateDotVector()
+        observables = ObservablesVector()
 
         self.sim_time = 0
         cpu_start_time = time.time()
@@ -53,7 +55,7 @@ class TransientSimulation:
                       end='')
 
                 driver_controls = self.driver.eval(self.sim_time, state, state_dot)
-                sensor_data = self.telemetry.eval(state, state_dot, driver_controls)
+                sensor_data = self.telemetry.eval(state, state_dot, observables, driver_controls)
                 vcu_output = self.vcu.eval(sensor_data)
                 controls = self.controls_mux.eval(driver_controls, vcu_output)
                 state, state_dot, observables = self.vehicle.eval(controls, state, self.time_step)
@@ -89,6 +91,10 @@ class TransientSimulation:
         for i, y in enumerate(ys):
             plt.scatter(x, y, s=0.5)
             plt.plot(x, y, label=f"[{i}]")
+
+        if name == "hv_battery_power_out":
+            plt.plot([min(x), max(x)], [80000, 80000])
+
         plt.title(name)
         plt.xlabel("time (s)")
         plt.ylabel(name)

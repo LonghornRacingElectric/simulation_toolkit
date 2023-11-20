@@ -97,10 +97,7 @@ class PowertrainModel(VehicleSystemModel):
 
             possible_current = min(rated_torque / car.motor_kt, car.motor_peak_current, available_current)
             possible_power = car.hv_battery_nominal_voltage * possible_current
-            available_power = min(possible_power, car.power_limit * car.inverter_efficiency * motor_efficiency)
-            available_torque = available_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
-
-            # TODO let power limit be handled by VCU, not sim. The sim should allow illegal power limits for testing
+            available_torque = possible_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
 
             motor_torque = min(torque_request, rated_torque, available_torque)
             observables.motor_torque = motor_torque
@@ -193,6 +190,9 @@ class PowertrainModel(VehicleSystemModel):
         observables.hv_battery_terminal_voltage = hv_battery_terminal_voltage
         observables.lv_battery_open_circuit_voltage = lv_battery_open_circuit_voltage
         observables.lv_battery_terminal_voltage = lv_battery_terminal_voltage
+        observables.hv_battery_power_out = hv_battery_power_out
+        observables.inverter_power_out = inverter_power_out
+        observables.motor_power_out = motor_power_out
         # TODO add more observables from the existing variables
 
     def _calculate_battery_current(self, battery_power: float, battery_open_circuit_voltage: float,
