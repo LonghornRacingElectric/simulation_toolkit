@@ -13,7 +13,7 @@ class LadyLuck(Car):
 
         self.sprung_inertia = ConstantParameter([[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]])  # kgm^2 (inertia tensor)
         self.accel_gravity = ConstantParameter(9.81)  # m/s^2
-        self.cg_bias = ConstantParameter(0.52)  # m (percent from front. 0 -> frontmost, 1 -> rearmost)
+        self.cg_bias = ConstantParameter(0.486)  # m (percent from front. 0 -> frontmost, 1 -> rearmost)
         self.cg_left = ConstantParameter(0.50)  # m (percent from left. 0 -> leftmost, 1 -> rightmost)
         self.cg_height = ConstantParameter(0.28448)  # m
         self.wheelbase = ConstantParameter(1.5494)  # m
@@ -98,20 +98,10 @@ class LadyLuck(Car):
 
         # Tires
         self.tire_radii = ConstantParameter([8 * 0.0254, 8 * 0.0254, 8 * 0.0254, 8 * 0.0254])
-        self.front_tire_coeff_Fy = ConstantParameter(
-            [0.349, -0.00115, 8.760, 730.300, 1745.322, 0.0139, -0.000277, 1.02025435, 0, 0, 0, 0, 0, 0, 0, 0.00362,
-             -0.0143, -0.0116])  # coeffs
-        self.front_tire_coeff_Fx = ConstantParameter(
-            [0.46024966176377113, 4000.509873697152, 1097.1712081460967, 202.18848632159495, 100.8812198037175,
-             -0.2557010431649166, 0.3066955241461764, 0.011822770671297778, -1.9521015799737094, 0, 0, 0, 0,
-             0])  # coeffs
-        self.rear_tire_coeff_Fy = ConstantParameter(
-            [0.349, -0.00115, 8.760, 730.300, 1745.322, 0.0139, -0.000277, 1.02025435, 0, 0, 0, 0, 0, 0, 0, 0.00362,
-             -0.0143, -0.0116])  # coeffs
-        self.rear_tire_coeff_Fx = ConstantParameter(
-            [0.46024966176377113, 4000.509873697152, 1097.1712081460967, 202.18848632159495, 100.8812198037175,
-             -0.2557010431649166, 0.3066955241461764, 0.011822770671297778, -1.9521015799737094, 0, 0, 0, 0,
-             0])  # coeffs
+        self.front_tire_coeff_Fy = ConstantParameter([3.06312013e-01, -4.84039800e-04, 9.28662043e+00, 7.26482752e+02, 1.37727265e+03, 4.12679421e-02, 2.53429368e-05, 1.01054136e+00, 1.46808723e-04, -1.59143742e-01, -1.29418581e-01, -1.00903302e-01, 9.57798247e+01, 2.27490918e-05, -1.83997391e-02, -1.13901618e-03, -1.56217480e-02, -4.89395709e-04])  # coeffs
+        self.front_tire_coeff_Fx = ConstantParameter([1.6273891721090612, -698.8419595678488, 3484.805352225537, 0.05134138933309365, 767.1901442937605, 0.3582710405478557, -1.6410632545280734, 3.169678791610308, -1.1006443264258339, -0.18232465799105665, 0.255295041808798, 20.326956445391467, -42.92101885459951, 0.07200020453003882])  # coeffs
+        self.rear_tire_coeff_Fy = ConstantParameter([3.06312013e-01, -4.84039800e-04, 9.28662043e+00, 7.26482752e+02, 1.37727265e+03, 4.12679421e-02, 2.53429368e-05, 1.01054136e+00, 1.46808723e-04, -1.59143742e-01, -1.29418581e-01, -1.00903302e-01, 9.57798247e+01, 2.27490918e-05, -1.83997391e-02, -1.13901618e-03, -1.56217480e-02, -4.89395709e-04])  # coeffs
+        self.rear_tire_coeff_Fx = ConstantParameter([1.6273891721090612, -698.8419595678488, 3484.805352225537, 0.05134138933309365, 767.1901442937605, 0.3582710405478557, -1.6410632545280734, 3.169678791610308, -1.1006443264258339, -0.18232465799105665, 0.255295041808798, 20.326956445391467, -42.92101885459951, 0.07200020453003882])  # coeffs
 
         self.front_tire_vertical_rate = ConstantParameter(725 * 175.127)  # N/m, but make these curve parameters once we add functionality
         self.rear_tire_vertical_rate = ConstantParameter(725 * 175.127)  # N/m, but make these curve parameters once we add functionality

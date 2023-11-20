@@ -16,6 +16,7 @@ from sim.simulations.mmm_solver import MmmSolver
 from sim.simulations.gg_generation import GGGeneration
 from sim.simulations.transient_sim import TransientSimulation
 from sim.util.analysis.mmm_sweeper import MmmSweeper
+from sim.util.analysis.coeff_gen import CoeffSolver
 
 
 car = LadyLuck()
@@ -65,14 +66,14 @@ def floor_it_sim():
 
 
 def general_MMM():
-    mmm_solver = MmmSolver(car=car, mesh=21, velocity=15)
+    mmm_solver = MmmSolver(car=car, mesh=21, velocity=25)
     mmm_solver.solve()
     mmm_solver.print_key_points()
     mmm_solver.plot()
 
 
-def general_GGV():
-    gg_generator = GGGeneration(car=car, mesh=9, velocity=15)
+def general_GG():
+    gg_generator = GGGeneration(car=car, mesh=5, velocity=30)
     gg_generator.solve()
     gg_generator.print_key_points()
     gg_generator.plot()
@@ -131,8 +132,26 @@ def compare_gg_regen():
     gg_generator.plot()
     gg_generator.print_key_points()
 
+def lat_coeff_gen():
+    lat_coeff_solver = CoeffSolver()
+    results = lat_coeff_solver.lat_coeff_solve("./data/tires/Hoosier_16x7.5-10_R20_7_cornering.csv")
 
-# general_MMM()
-general_transient_sim()
+    print(f"Lateral Coefficients: {list(results[0])}\
+          \n Residual: {results[1]}")
+    
+def long_coeff_gen():
+    long_coeff_solver = CoeffSolver()
+    results = long_coeff_solver.long_coeff_solve("./data/tires/Hoosier_16x7.5-10_R20_7_braking.csv")
+
+    print(f"Longitudinal Coefficients: {list(results[0])}\
+          \n Residual: {results[1]}")
+
+
+
+# general_GG()
+general_MMM()
+# general_transient_sim()
 # floor_it_sim()
 # compare_gg_regen()
+# lat_coeff_gen()
+# long_coeff_gen()

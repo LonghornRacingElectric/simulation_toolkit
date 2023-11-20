@@ -74,6 +74,11 @@ class GGGeneration:
         self.long_accels = []
         self.slip_ratios = []
         self.torque_requests = []
+        self.heaves = []
+        self.pitches = []
+        self.rolls = []
+        self.steered_angles = []
+        self.tan_pitch = []
 
         counter = 0
         start_time = time.time()
@@ -108,11 +113,27 @@ class GGGeneration:
                         self.lat_accels.append(fsolve_results[1])
                         self.slip_ratios.append([max(-1, min(1, sr)) for sr in fsolve_results[6:]])
                         self.torque_requests.append(torque_request)
+                        self.heaves.append(fsolve_results[3])
+                        self.pitches.append(fsolve_results[4])
+                        self.rolls.append(fsolve_results[5])
+                        self.steered_angles.append(steered_angle)
+                        self.tan_pitch.append(np.tan(fsolve_results[4]))
 
         elapsed_time = round(time.time() - start_time, 2)
         print(f"\rGG Complete ({elapsed_time}s)")
 
         self._calculate_key_points()
+
+        df = pd.DataFrame()
+
+        df["steered_angle"] = self.steered_angles
+        df["heave"] = list(np.array(self.heaves) / 0.0254)
+        df["pitch"] = list(np.array(self.pitches) * 180 / (2 * np.pi))
+        df["front_heave"] = list(np.array(self.heaves) / 0.0254 + np.array(self.tan_pitch) * 61 * 0.51)
+        df["rear_heave"] = list(np.array(self.heaves) / 0.0254 - np.array(self.tan_pitch) * 61 * (1 - 0.51))
+        df["roll"] = list(np.array(self.rolls) * 180 / (2 * np.pi))
+
+        df.to_csv("sus_displacements.csv")
 
         self.done = True
 

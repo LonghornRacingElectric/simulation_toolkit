@@ -11,6 +11,7 @@ from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.state_vector import StateVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vehicle_systems.tire_model import TireModel
+from sim.model_parameters.parameters import CurveParameter
 from sim.util.math import coords
 
 
@@ -181,27 +182,16 @@ class SuspensionModel(VehicleSystemModel):
         state_dot_vector.sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
         state_dot_vector.tire_torques = tire_torques
 
-        # print()
-        # for i in range(4):
-        #     print(f"tire {i} F", observables_vector.tire_forces_IMF[i])
-        #     print(f"tire {i} M", observables_vector.tire_moments_IMF[i])
-        # print()
-        # print("SR", slip_ratios)
-        # print("SA", slip_angles)
-        # print("FX", state_dot_vector.sus_forces[0])
-        # print("FY", state_dot_vector.sus_forces[1])
-        # print()
-
     def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
 
         # Heave contribution
-        F_heave_rate_spring = vehicle_parameters.front_heave_springrate / vehicle_parameters.front_heave_MR ** 2
+        F_heave_rate_spring = (vehicle_parameters.front_heave_springrate / vehicle_parameters.front_heave_MR ** 2) / 2
         F_heave_rate_tire = vehicle_parameters.front_tire_vertical_rate
-        F_heave_rate = F_heave_rate_spring * (2 * F_heave_rate_tire) / (F_heave_rate_spring + (2 * F_heave_rate_tire))
+        F_heave_rate = 2 * (F_heave_rate_spring * F_heave_rate_tire) / (F_heave_rate_spring + F_heave_rate_tire)
 
-        R_heave_rate_spring = vehicle_parameters.rear_heave_springrate / vehicle_parameters.rear_heave_MR ** 2
+        R_heave_rate_spring = (vehicle_parameters.rear_heave_springrate / vehicle_parameters.rear_heave_MR ** 2) / 2
         R_heave_rate_tire = vehicle_parameters.rear_tire_vertical_rate
-        R_heave_rate = R_heave_rate_spring * (2 * R_heave_rate_tire) / (R_heave_rate_spring + (2 * R_heave_rate_tire))
+        R_heave_rate = 2 * (R_heave_rate_spring * R_heave_rate_tire) / (R_heave_rate_spring + R_heave_rate_tire)
 
         front_heave = heave
         rear_heave = heave
@@ -311,6 +301,10 @@ class SuspensionModel(VehicleSystemModel):
             adjusted_IA.append(static_IA[i] + IA_gain)
 
         return adjusted_IA
+    
+    def _get_rates(self, spring_response: CurveParameter, MR_response: CurveParameter):
+        
+        pass
 
     def _get_yaw_vel(self, lateral_accel: float, vehicle_velocity: ndarray[float]) -> float:
         # a_c = v^2 / r
