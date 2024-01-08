@@ -7,7 +7,9 @@ from sim.system_models.vehicle_systems.tire_model52 import TireModel
 
 class CoeffSolver:
     def __init__(self, initial_tire: TireModel = None, final_tire: TireModel = None, lat_file: str = "", long_combined_file: str = "", simplified: bool = True, iterations: int = 1):
-        self.initial_tire = copy.deepcopy(initial_tire)
+        self.initial_tire = initial_tire
+        
+        self.initial_tire_copy = copy.deepcopy(initial_tire)
         self.final_tire = copy.deepcopy(final_tire)
 
         self.lat_data = lat_file
@@ -39,7 +41,7 @@ class CoeffSolver:
         self.IA = list(data["IA"] * np.pi / 180)[::n_skip]
         self.FY = list(data["FY"] * -1)[::n_skip]
 
-        initial_guess = self.initial_tire.pure_lat_coeffs
+        initial_guess = self.initial_tire_copy.pure_lat_coeffs
 
         self.combined = False
 
@@ -71,7 +73,7 @@ class CoeffSolver:
 
         self.combined = False
 
-        initial_guess = self.initial_tire.pure_long_coeffs
+        initial_guess = self.initial_tire_copy.pure_long_coeffs
 
         long_coeff_soln = basinhopping(self._long_residual_calc, initial_guess, niter = self.iterations)
         long_coeffs = long_coeff_soln.x
@@ -98,7 +100,7 @@ class CoeffSolver:
         self.IA = list(data["IA"] * np.pi / 180)[::n_skip]
         self.MZ = list(data["MZ"] * -1)[::n_skip]
 
-        initial_guess = self.initial_tire.pure_aligning_coeffs
+        initial_guess = self.initial_tire_copy.pure_aligning_coeffs
 
         aligning_coeff_soln = basinhopping(self._aligning_residual_calc, initial_guess, niter = self.iterations)
         aligning_coeffs = aligning_coeff_soln.x
@@ -108,31 +110,31 @@ class CoeffSolver:
 
     def _lat_tire_eval(self, lat_coeffs, FZ, SA, SR, IA):
         if self.combined:
-            self.initial_tire.combined_lat_coeffs = lat_coeffs
-            FY = self.initial_tire._combined_lat(data = [FZ, SA, SR, IA])
+            self.initial_tire_copy.combined_lat_coeffs = lat_coeffs
+            FY = self.initial_tire_copy._combined_lat(data = [FZ, SA, SR, IA])
         else:
-            self.initial_tire.pure_lat_coeffs = lat_coeffs
-            FY = self.initial_tire._pure_lat(data = [FZ, SA, IA])
+            self.initial_tire_copy.pure_lat_coeffs = lat_coeffs
+            FY = self.initial_tire_copy._pure_lat(data = [FZ, SA, IA])
 
         return FY
     
     def _long_tire_eval(self, long_coeffs, FZ, SA, SR, IA):
         if self.combined:
-            self.initial_tire.combined_long_coeffs = long_coeffs
-            FX = self.initial_tire._combined_long(data = [FZ, SA, SR, IA])
+            self.initial_tire_copy.combined_long_coeffs = long_coeffs
+            FX = self.initial_tire_copy._combined_long(data = [FZ, SA, SR, IA])
         else:
-            self.initial_tire.pure_long_coeffs = long_coeffs
-            FX = self.initial_tire._pure_long(data = [FZ, SR, IA])
+            self.initial_tire_copy.pure_long_coeffs = long_coeffs
+            FX = self.initial_tire_copy._pure_long(data = [FZ, SR, IA])
         
         return FX
     
     def _aligning_tire_eval(self, aligning_coeffs, FZ, SA, SR, IA):
         if self.combined:
-            self.initial_tire.combined_aligning_coeffs = aligning_coeffs
-            MZ = self.initial_tire._combined_aligning(data = [FZ, SA, SR, IA])
+            self.initial_tire_copy.combined_aligning_coeffs = aligning_coeffs
+            MZ = self.initial_tire_copy._combined_aligning(data = [FZ, SA, SR, IA])
         else:
-            self.initial_tire.pure_aligning_coeffs = aligning_coeffs
-            MZ = self.initial_tire._pure_aligning(data = [FZ, SR, IA])
+            self.initial_tire_copy.pure_aligning_coeffs = aligning_coeffs
+            MZ = self.initial_tire_copy._pure_aligning(data = [FZ, SR, IA])
         
         return MZ
     
@@ -144,10 +146,13 @@ class CoeffSolver:
 
             residual = self.FY[i] - current_step
 
-            if abs(lat_coeffs[2]) < 0.75:
-                residuals.append(residual**2)
+            if self.combined:
+                pass
             else:
-                residuals.append(residual)
+                if abs(lat_coeffs[2]) < 0.75:
+                    residuals.append(residual**2)
+                else:
+                    residuals.append(residual)
 
         print(f"\rCurrent Residual Norm: {np.linalg.norm(residuals)}", end = '')
         print("\nLat Coeffs" + str(list(lat_coeffs)))
@@ -162,10 +167,60 @@ class CoeffSolver:
 
             residual = self.FX[i] - current_step
 
-            if (long_coeffs[0] > 10):
-                residuals.append(residual**2)
+            if self.combined:
+                pass
             else:
+                for i in range(len(long_coeffs)):
+                    if self.initial_tire_copy.pure_long_coeffs[i] != 0:
+                        if long_coeffs[i] * np.sign(long_coeffs[i]) > 2 * self.initial_tire_copy.pure_long_coeffs[i] * np.sign(self.initial_tire_copy.pure_long_coeffs[i]):
+                            residuals.append(residual**2)
+                        elif long_coeffs[i] * np.sign(long_coeffs[i]) < 1/2 * self.initial_tire_copy.pure_long_coeffs[i] * np.sign(self.initial_tire_copy.pure_long_coeffs[i]):
+                            residuals.append(residual**2)
+                    else:
+                        continue
+                
                 residuals.append(residual)
+
+                # if long_coeffs[0] < 0:
+                #     residuals.append(residual**2)
+                # if long_coeffs[1] < 0:
+                #     residuals.append(residual**2)
+                # if long_coeffs[2] > 0:
+                #     residuals.append(residual**2)
+                # elif long_coeffs[3] < 0:
+                #     residuals.append(residual**2)
+                # elif long_coeffs[4] > 0:
+                #     residuals.append(residual**2)
+                # elif long_coeffs[5] > 0:
+                #     residuals.append(residual**2)
+                # elif long_coeffs[6] > 0:
+                #     residuals.append(residual**2)
+                # elif long_coeffs[7] < 0:
+                #     residuals.append(residual**2)
+                # elif long_coeffs[8] < 0:
+                #     residuals.append(residual**2)
+                # elif long_coeffs[9] < 0:
+                #     residuals.append(residual**2)
+
+                # if long_coeffs[4] > 0:
+                #     residuals.append(residual**2)
+                # if long_coeffs[8] < 0:
+                #     residuals.append(residual**2)
+                # if long_coeffs[9] < 0:
+                #     residuals.append(residual**2)
+                # if long_coeffs[10] > 0:
+                #     residuals.append(residual**2)
+
+                # if abs(long_coeffs[0]) > 2:
+                #     residuals.append(residual**abs(long_coeffs[0]))
+                # elif long_coeffs[1] > 3:
+                #     residuals.append(residual**2)
+                # if abs(long_coeffs[0]) > 2:
+                #     residuals.append(residual**2)
+                # if abs(long_coeffs[2]) < 0.75:
+                #     residuals.append(residual**2)
+                
+                # residuals.append(residual)
 
         print(f"\rCurrent Residual Norm: {np.format_float_scientific(np.linalg.norm(residuals))}", end = '')
         print("\nLong Coeffs: " + str(list(long_coeffs)), end='')

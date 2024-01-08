@@ -9,7 +9,7 @@ class TireModel:
                  FZ_nom: float = 350 * 4.44822, 
                  scaling_coeffs: list[float] = [1 for x in range(28)], 
                  pure_lat_coeffs: list[float] = [1.4, -3, 0, 0, 0, 0, 0, 0, 30, 3, 0, 0, 0, 0, 0, 0, 0, 0], 
-                 pure_long_coeffs: list[float] = [1.65, 1, 0, 0, -0.5, 0, 0, 0, 12, 10, -0.6, 0, 0, 0, 0, 5, 8, 1, 0, 0, 0], 
+                 pure_long_coeffs: list[float] = [1.2, 2.3, -0.65, 17, -2.3, -8, -6, 0.1, 40, 34, -2, -0.002, -0.002, -0.1, -0.05], 
                  pure_aligning_coeffs: list[float] = [6, -4, 0.6, 0, 0, 0, 0.7, 1.05, 0.12, -0.03, 0, -1, 0, 0, 0.6, 0.2, -10, 0, 0, 0, 0, 0, 0, 0, 0], 
                  combined_lat_coeffs: list[float] = [7, 2.5, 0, 1, 0, 0, 0.02, 0, 0, 0, -0.2, 14, 1.9, 10], 
                  combined_long_coeffs: list[float] = [5, 8, 1, 0, 0, 0], 
@@ -389,7 +389,7 @@ class TireModel:
         
         elif plot_type == plot_types[1]:
             if scatter:
-                ax.scatter3D(FZ, SA, FY, cmap='Greens', s = 10)
+                ax.scatter3D(FZ, SR, FX, cmap='Greens', s = 10)
                 fig.add_axes(ax)
 
                 ax.set_xlabel('Normal Load (N)')

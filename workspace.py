@@ -135,16 +135,22 @@ def compare_gg_regen():
 
 def coeff_solving():
     new_tire = TireModel()
-    new_solver = CoeffSolver(initial_tire = new_tire, lat_file = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv")
+    new_solver = CoeffSolver(initial_tire = new_tire, 
+                             lat_file = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv", 
+                             long_combined_file = "./data/tires/Hoosier_18x6.0-10_R20_7_braking.csv")
 
-    lat_coeff_soln = new_solver.pure_lat_coeff_solve()
+    # lat_coeff_soln = new_solver.pure_lat_coeff_solve()
+    # print(lat_coeff_soln)
 
-    print(lat_coeff_soln)
+    long_coeff_soln = new_solver.pure_long_coeff_solve()
+    print(long_coeff_soln)
 
 def plot_tire():
-    new_tire = TireModel(pure_lat_coeffs = [1.4275324693483036, -2.255746043949771, 0.7531915873378026, 0.12956669501732465, 0.6813284445097716, 0.23885218635804512, 0.05489785167312618, -0.014852214405782035, 28.317328600336044, 1.618426294523789, 1.8793303226731732, -0.006541062184730178, -0.0066976720294467055, 0.027924392505731175, 0.03860784157420319, 0.11652979343774711, 0.2922171302702214, -0.10336365034336442])
-
-    print(new_tire.plot(plot_type = "pure_lat", scatter = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv"))
+    new_tire = TireModel(pure_lat_coeffs = [1.4275324693483036, -2.255746043949771, 0.7531915873378026, 0.12956669501732465, 0.6813284445097716, 0.23885218635804512, 0.05489785167312618, -0.014852214405782035, 28.317328600336044, 1.618426294523789, 1.8793303226731732, -0.006541062184730178, -0.0066976720294467055, 0.027924392505731175, 0.03860784157420319, 0.11652979343774711, 0.2922171302702214, -0.10336365034336442],
+                         pure_long_coeffs =  [1.2508706151229338, 2.435564830808038, -0.04367455517295262, 19.00247289648425, -0.012580943211965998, -0.03669280427661592, -0.019371568620225068, -225.03268133075804, 37.51437918736448, 34.36793489388575, -1.9611441049072624, 0.007481806347840445, 0.012639590647437653, -0.43169693558375566, -0.762112962304972])
+    
+    # new_tire.plot(plot_type = "pure_lat", scatter = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv")
+    new_tire.plot(plot_type = "pure_long", scatter = "./data/tires/Hoosier_18x6.0-10_R20_7_braking.csv")
 
 
 
