@@ -17,6 +17,7 @@ from sim.simulations.gg_generation import GGGeneration
 from sim.simulations.transient_sim import TransientSimulation
 from sim.util.analysis.mmm_sweeper import MmmSweeper
 from sim.util.analysis.coeff_gen import CoeffSolver
+from sim.system_models.vehicle_systems.tire_model52 import TireModel
 
 
 car = LadyLuck()
@@ -132,42 +133,18 @@ def compare_gg_regen():
     gg_generator.plot()
     gg_generator.print_key_points()
 
-def lat_scaling_match():
-    lat_coeff_solver = CoeffSolver(car)
+def coeff_solving():
+    new_tire = TireModel()
+    new_solver = CoeffSolver(initial_tire = new_tire, lat_file = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv")
 
-    coeffs_start = [1.3527376401722393, -2.5036312664108062, 0.6505973463169893, 9.423768050812576, 0.17849509152594265, -0.04752524063648042, 0.8079559806081511, 42.81076780141361, 31.076122612890995, 1.2651199149814782, 0.6105325571031571, -0.0025491228717106594, 0.001096211018526508, -0.06944567882483914, 0.012229623569108243, -0.018945437981311805, -1.4250325348174189, -1.0850605408574026]
+    lat_coeff_soln = new_solver.pure_lat_coeff_solve()
 
-    coeffs_end = [1.3621019747547105, -2.435216396304886, 0.65, 9.423678477311629, 0.14799132747634844, -0.062214373627922905, 0.8075703695312021, 42.81227067232975, 22.19707765833606, 0.904357602882356, 0.6108200318681702, -0.0026565847602868942, -0.0020774251539237916, -0.07082967061402329, 0.009860302616368338, -0.030866236429790993, -1.8590779944132787, -1.519168529358441]
+    print(lat_coeff_soln)
 
-    scaling_coeffs1 = [1 for x in range(28)]
-    scaling_coeffs2 = [1 for x in range(28)]
+def plot_tire():
+    new_tire = TireModel(pure_lat_coeffs = [1.4275324693483036, -2.255746043949771, 0.7531915873378026, 0.12956669501732465, 0.6813284445097716, 0.23885218635804512, 0.05489785167312618, -0.014852214405782035, 28.317328600336044, 1.618426294523789, 1.8793303226731732, -0.006541062184730178, -0.0066976720294467055, 0.027924392505731175, 0.03860784157420319, 0.11652979343774711, 0.2922171302702214, -0.10336365034336442])
 
-    lat_coeff_solver.import_lat_data("./data/tires/Hoosier_20.5x7.0-13_R20_7_cornering.csv")
-    results = lat_coeff_solver.match_pure_lat(coeffs_start, coeffs_end, scaling_coeffs1, scaling_coeffs2)
-
-    print(f"Lat Scaling Coeffs: {list(results[0])}\
-        \n Residual: {results[1]}")
-
-def lat_coeff_gen():
-    lat_coeff_solver = CoeffSolver(car)
-    results = lat_coeff_solver.lat_coeff_solve("./data/tires/Hoosier_16x7.5-10_R20_7_cornering.csv")
-
-    print(f"Lateral Coefficients: {list(results[0])}\
-          \n Residual: {results[1]}")
-    
-def long_coeff_gen():
-    long_coeff_solver = CoeffSolver(car)
-    results = long_coeff_solver.long_coeff_solve("./data/tires/Hoosier_20.5x7.0-13_R20_7_braking.csv")
-
-    print(f"Longitudinal Coefficients: {list(results[0])}\
-          \n Residual: {results[1]}")
-    
-def aligning_coeff_gen():
-    aligning_coeff_solver = CoeffSolver(car)
-    results = aligning_coeff_solver.aligning_coeff_solve("./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv")
-
-    print(f"Aligning Coefficients: {list(results[0])}\
-          \n Residual: {results[1]}")
+    print(new_tire.plot(plot_type = "pure_lat", scatter = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv"))
 
 
 
@@ -176,7 +153,8 @@ def aligning_coeff_gen():
 # general_transient_sim()
 # floor_it_sim()
 # compare_gg_regen()
-lat_coeff_gen()
+# coeff_solving()
+plot_tire()
 # long_coeff_gen()
 # aligning_coeff_gen()
 # lat_scaling_match()
