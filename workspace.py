@@ -156,11 +156,11 @@ def plot_tire():
 
 # general_GG()
 # general_MMM()
-# general_transient_sim()
+general_transient_sim()
 # floor_it_sim()
 # compare_gg_regen()
 # coeff_solving()
-plot_tire()
+# plot_tire()
 # long_coeff_gen()
 # aligning_coeff_gen()
 # lat_scaling_match()

@@ -14,6 +14,8 @@ from sim.system_models.vectors.driver_controls_vector import DriverControlsVecto
 from sim.system_models.vectors.sensor_data_vector import SensorDataVector
 from sim.system_models.vectors.state_dot_vector import StateDotVector
 from sim.system_models.vectors.state_vector import StateVector
+from haversine import inverse_haversine
+import math
 
 
 class TelemetryModel:
@@ -38,6 +40,14 @@ class TelemetryModel:
         sensor_data.wheel_displacement_fr = state.wheel_angular_displacements[1]
         sensor_data.wheel_displacement_bl = state.wheel_angular_displacements[2]
         sensor_data.wheel_displacement_br = state.wheel_angular_displacements[3]
+
+        heading = state.yaw
+
+        displacement = math.sqrt(state.displacement[0]**2 + state.displacement[1] ** 2)
+
+        new_loc = inverse_haversine((30, 30), displacement, heading)
+        sensor_data.gps_lat = new_loc[0]
+        sensor_data.gps_long = new_loc[1]
 
         sensor_data.inverter_ready = True
 
