@@ -12,8 +12,13 @@ class VcuOutputVector(Vector):
 
         self.park_or_drive = False
         self.r2d_buzzer = False
+        self.brake_light = False
 
         self.enable_drs = False
+
+        self.pump_output = 0
+        self.rad_fans_output = 0
+        self.batt_fans_output = 0
 
         self.estimated_displacement = np.array([0, 0, 0])
         self.estimated_velocity = np.array([0, 0, 0])

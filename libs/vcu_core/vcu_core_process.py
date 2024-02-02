@@ -32,7 +32,7 @@ class VcuCoreProcess:
             self.process.stdin.write(bytes('\n', 'utf-8'))
         self.process.stdin.flush()
 
-        self.output_lines = [self.process.stdout.readline().decode('utf-8').strip() for _ in range(18)]
+        self.output_lines = [self.process.stdout.readline().decode('utf-8').strip() for _ in range(22)]
 
     def write_all(self, sensor_data: SensorDataVector):
         self.write_float(sensor_data.apps1)
@@ -80,8 +80,13 @@ class VcuCoreProcess:
 
         out.park_or_drive = self.read_bool()
         out.r2d_buzzer = self.read_bool()
+        out.brake_light = self.read_bool()
 
         out.enable_drs = self.read_bool()
+
+        out.pump_output = self.read_float()
+        out.rad_fans_output = self.read_float()
+        out.batt_fans_output = self.read_float()
 
         out.estimated_displacement = self.read_vector()
         out.estimated_velocity = self.read_vector()

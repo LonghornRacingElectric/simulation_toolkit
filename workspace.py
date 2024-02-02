@@ -135,6 +135,6 @@ def compare_gg_regen():
 
 
 # general_MMM()
-# general_transient_sim()
-accel_event_sim()
+general_transient_sim()
+# accel_event_sim()
 # compare_gg_regen()
