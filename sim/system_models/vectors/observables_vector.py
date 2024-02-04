@@ -7,6 +7,7 @@ class ObservablesVector(Vector):
 
         self.long_accel = 0
         self.lateral_accel = 0
+        self.yaw_accel = 0
 
         self.hv_battery_open_circuit_voltage = 0
         self.hv_battery_terminal_voltage = 0

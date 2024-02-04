@@ -149,8 +149,10 @@ class SuspensionModel(VehicleSystemModel):
                                                             FZ=normal_loads[i],
                                                             IA=inclination_angles[i],
                                                             max_force=max_force)
-
-            tire_outputs.append([round(x) for x in tire_forces])
+            try:
+                tire_outputs.append([round(x) for x in tire_forces])
+            except:
+                break
 
             # Rotate tire forces to correspond with true steered angle (now in terms of force on the vehicle)
             vehicle_centric_forces = np.matmul(coords.rotation_z(adjusted_steering_angles[i]), tire_forces)
