@@ -5,18 +5,19 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class TireModel:
     def __init__(self, 
-                 R_nom: float = 8 * 0.0254, 
-                 FZ_nom: float = 350 * 4.44822, 
-                 scaling_coeffs: list[float] = [1 for x in range(28)], 
-                 pure_lat_coeffs: list[float] = [1.4, -3, 0, 0, 0, 0, 0, 0, 30, 3, 0, 0, 0, 0, 0, 0, 0, 0], 
-                 pure_long_coeffs: list[float] = [1.2, 2.3, -0.65, 17, -2.3, -8, -6, 0.1, 40, 34, -2, -0.002, -0.002, -0.1, -0.05], 
-                 pure_aligning_coeffs: list[float] = [6, -4, 0.6, 0, 0, 0, 0.7, 1.05, 0.12, -0.03, 0, -1, 0, 0, 0.6, 0.2, -10, 0, 0, 0, 0, 0, 0, 0, 0], 
-                 combined_lat_coeffs: list[float] = [7, 2.5, 0, 1, 0, 0, 0.02, 0, 0, 0, -0.2, 14, 1.9, 10], 
-                 combined_long_coeffs: list[float] = [5, 8, 1, 0, 0, 0], 
-                 combined_aligning_coeffs: list[float] = [0, -0.1, -1.0, 0], 
-                 overturning_coeffs: list[float] = [0, 0, 0], 
-                 rolling_coeffs: list[float] = [0, 0, 0, 0, 25]
-                 ):
+                R_nom: float = 8 * 0.0254, 
+                FZ_nom: float = 350 * 4.44822, 
+                scaling_coeffs: list[float] = [1 for x in range(28)], 
+                pure_lat_coeffs: list[float] = [1.4, -2.3, 0.75, 0.13, 0.68, 0.24, 0.05, -0.015, 28, 1.62, 1.88, 0, 0, 0, 0, 0, 0, 0], 
+                #  pure_long_coeffs: list[float] = [1.35, 2.25, -0.85, 12.35, -0.55, -1.45, -0.05, 0.35, 48.73, 34.80, -1.10, 0, 0, 0, 0],
+                pure_long_coeffs: list[float] = [1.2, 2.3, -1, 17, -2.3, -8.3, -5.7, 0.2, 39, 34, -2, 0, 0, 0, 0], 
+                #  pure_long_coeffs: list[float] = [1.65, 1, 0, 0, -0.5, 0, 0, 0, 12, 10, -0.6, 0, 0, 0, 0], 
+                pure_aligning_coeffs: list[float] = [6, -4, 0.6, 0, 0, 0, 0.7, 1.05, 0.12, -0.03, 0, -1, 0, 0, 0.6, 0.2, -10, 0, 0, 0, 0, 0, 0, 0, 0], 
+                combined_lat_coeffs: list[float] = [7, 2.5, 0, 1, 0, 0, 0.02, 0, 0, 0, -0.2, 14, 1.9, 10], 
+                combined_long_coeffs: list[float] = [5, 8, 1, 0, 0, 0], 
+                combined_aligning_coeffs: list[float] = [0, -0.1, -1.0, 0], 
+                overturning_coeffs: list[float] = [0, 0, 0], 
+                rolling_coeffs: list[float] = [0, 0, 0, 0, 25]):
         
         # Constant Model Parameters
         self.R_nom = R_nom
@@ -54,7 +55,7 @@ class TireModel:
 
         return [FX, FY, FZ, MX, MY, MZ]
 
-    def _pure_long(self, data: list[float]) -> float:
+    def _pure_long(self, data: list[float], sign_condition: bool = False) -> float:
         FZ, SR, IA = data
 
         [CFX1, CFX2, CFX3, CFX4, CFX5, CFX6, CFX7, CFX8, CFX9, CFX10, CFX11, CFX12, CFX13, CFX14, CFX15] = self.pure_long_coeffs
@@ -63,25 +64,23 @@ class TireModel:
         df_z = (FZ - self.FZ_nom * self.scaling_coeffs[0]) / (self.FZ_nom * self.scaling_coeffs[0])
         mu_x = (CFX2 + CFX3 * df_z) * (1 - CFX4 * IA_x**2) * self.scaling_coeffs[2]
 
-        C_x = CFX1 * self.scaling_coeffs[1]
-        D_x = mu_x * FZ
+        self.C_x = CFX1 * self.scaling_coeffs[1]
+        self.D_x = mu_x * FZ
         K_x = FZ * (CFX9 + CFX10 * df_z) * np.exp(CFX11 * df_z) * self.scaling_coeffs[4]
-        B_x = K_x / (C_x * D_x)
+        self.B_x = K_x / (self.C_x * self.D_x)
 
         S_Hx = (CFX12 + CFX13 * df_z) * self.scaling_coeffs[5]
         S_Vx = FZ * (CFX14 + CFX15 * df_z) * self.scaling_coeffs[6] * self.scaling_coeffs[2]
         SR_x = SR + S_Hx
 
-        E_x = (CFX5 + CFX6 * df_z + CFX7 * df_z**2) * (1 - CFX8 * np.sign(SR_x)) * self.scaling_coeffs[3]
+        self.E_x = (CFX5 + CFX6 * df_z + CFX7 * df_z**2) * (1 - CFX8 * np.sign(SR_x)) * self.scaling_coeffs[3]
         
-        self.shape = B_x * SR_x - E_x * (B_x * SR_x - np.arctan(B_x * SR_x))
-
-        F_X0 = D_x * np.sin(C_x * np.arctan(self.shape)) + S_Vx
-        F_X = F_X0
+        self.F_X0 = self.D_x * np.sin(self.C_x * np.arctan(self.B_x * SR_x - self.E_x * (self.B_x * SR_x - np.arctan(self.B_x * SR_x)))) + S_Vx
+        F_X = self.F_X0
         
-        return F_X
+        return self.E_x > 1 if sign_condition else F_X
 
-    def _pure_lat(self, data: list[float]) -> float:
+    def _pure_lat(self, data: list[float], sign_condition: bool = False) -> float:
         FZ, SA, IA = data
 
         [CFY1, CFY2, CFY3, CFY4, CFY5, CFY6, CFY7, CFY8, CFY9, CFY10, \
@@ -91,22 +90,22 @@ class TireModel:
         df_z = (FZ - self.FZ_nom * self.scaling_coeffs[0]) / (self.FZ_nom * self.scaling_coeffs[0])
         mu_y = (CFY2 + CFY3 * df_z) * (1 - CFY4 * IA_y**2) * self.scaling_coeffs[9]
 
-        C_y = CFY1 * self.scaling_coeffs[8]
-        D_y = mu_y * FZ
+        self.C_y = CFY1 * self.scaling_coeffs[8]
+        self.D_y = mu_y * FZ
         K_y = CFY9 * self.FZ_nom * np.sin(2 * np.arctan(FZ / (CFY10 * self.FZ_nom * self.scaling_coeffs[0]))) * \
             (1 - CFY11 * abs(IA_y)) * self.scaling_coeffs[0] * self.scaling_coeffs[11]
-        B_y = K_y / (C_y * D_y)
+        self.B_y = K_y / (self.C_y * self.D_y)
 
         S_Hy = (CFY12 + CFY13 * df_z) * self.scaling_coeffs[12] + CFY14 * IA_y
         S_Vy = FZ * ((CFY15 + CFY16 * df_z) * self.scaling_coeffs[13] + (CFY17 + CFY18 * df_z) * IA_y) * self.scaling_coeffs[9]
         SA_y = SA + S_Hy
 
-        E_y = (CFY5 + CFY6 * df_z) * (1 - (CFY7 + CFY8 * IA_y) * np.sign(SA_y)) * self.scaling_coeffs[10]
+        self.E_y = (CFY5 + CFY6 * df_z) * (1 - (CFY7 + CFY8 * IA_y) * np.sign(SA_y)) * self.scaling_coeffs[10]
 
-        F_Y0 = D_y * np.sin(C_y * np.arctan(B_y * SA_y - E_y * (B_y * SA_y - np.arctan(B_y * SA_y)))) + S_Vy
+        F_Y0 = self.D_y * np.sin(self.C_y * np.arctan(self.B_y * SA_y - self.E_y * (self.B_y * SA_y - np.arctan(self.B_y * SA_y)))) + S_Vy
         F_Y = F_Y0
 
-        return F_Y
+        return self.E_y > 1 if sign_condition else F_Y
     
     def _pure_aligning(self, data: list[float]) -> float:
         FZ, SA, IA = data
@@ -374,8 +373,8 @@ class TireModel:
                 ax.set_ylabel('Slip Angle (rad)')
                 ax.set_zlabel('Lateral Force (N)')
             
-            model_FZ_data = np.linspace(0, 1200, 1000)
-            model_SA_data = np.linspace(-20 * np.pi / 180, 20 * np.pi / 180, 1000)
+            model_FZ_data = np.linspace(0, 3000, 1000)
+            model_SA_data = np.linspace(-90 * np.pi / 180, 90 * np.pi / 180, 1000)
 
             X, Y = np.meshgrid(model_FZ_data, model_SA_data)
 
@@ -396,7 +395,7 @@ class TireModel:
                 ax.set_ylabel('Slip Ratio')
                 ax.set_zlabel('Longitudinal Force (N)')
             
-            model_FZ_data = np.linspace(0, 3000, 1000)
+            model_FZ_data = np.linspace(100, 3000, 1000)
             model_SR_data = np.linspace(-1, 1, 1000)
 
             X, Y = np.meshgrid(model_FZ_data, model_SR_data)
@@ -466,13 +465,15 @@ class TireModel:
             plt.show()
             pass
         else:
-            return
-        f"""Plot type not recognized. Please call one of the following: \n\n
-            1. {plot_types[0]} \n
-            2. {plot_types[1]} \n
-            3. {plot_types[2]} \n
-            4. {plot_types[3]} \n
-            5. {plot_types[4]} \n
-            6. {plot_types[5]} \n
-            7. {plot_types[6]} \n
-            8. {plot_types[7]} \n"""
+            error = \
+        f"""\nPlot type not recognized. Please call one of the following: \n
+            \r1. {plot_types[0]}
+            \r2. {plot_types[1]}
+            \r3. {plot_types[2]}
+            \r4. {plot_types[3]}
+            \r5. {plot_types[4]}
+            \r6. {plot_types[5]}
+            \r7. {plot_types[6]}
+            \r8. {plot_types[7]} \n"""
+
+            print(error)

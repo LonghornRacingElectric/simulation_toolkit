@@ -6,7 +6,18 @@ from scipy.optimize import basinhopping
 from sim.system_models.vehicle_systems.tire_model52 import TireModel
 
 class CoeffSolver:
-    def __init__(self, initial_tire: TireModel = None, final_tire: TireModel = None, lat_file: str = "", long_combined_file: str = "", simplified: bool = True, iterations: int = 1):
+    def __init__(self, 
+                 initial_tire: TireModel = None, 
+                 final_tire: TireModel = None, 
+                 lat_file: str = "", 
+                 long_combined_file: str = "", 
+                 sample_rate: int = 50, 
+                 iterations: int = 1,
+                 FZ_range: list[int] = [100, 3000],
+                 acc_coeff_dev: float = 2.0,
+                 force_peak: bool = True
+                 ):
+        
         self.initial_tire = initial_tire
         
         self.initial_tire_copy = copy.deepcopy(initial_tire)
@@ -19,8 +30,13 @@ class CoeffSolver:
         self.iterations = iterations
 
         # Decreases number of data points to decrease runtime
-        self.simplified = simplified
+        self.sample_rate = sample_rate
         self.combined = False
+
+        # Sets range for valid fit
+        self.FZ_range = FZ_range
+        self.acc_coeff_dev = acc_coeff_dev
+        self.force_peak = force_peak
 
     def pure_lat_coeff_solve(self):
         data = pd.read_csv(self.lat_data)
@@ -28,28 +44,53 @@ class CoeffSolver:
         velocity = 25 * 1.60934
         pressure = 12 * 6.89476
 
-        data = data[(data["velocity"] == velocity) & (data["pressure"] == pressure)]
+        self.data = data[(data["velocity"] == velocity) & (data["pressure"] == pressure)]
 
-        if self.simplified:
-            n_skip = 50
-        else:
-            n_skip = 1
-
-        self.FZ = list(data["FZ"] * -1)[::n_skip]
-        self.SA = list(data["SA"] * np.pi / 180)[::n_skip]
+        self.FZ = list(self.data["FZ"] * -1)[::self.sample_rate]
+        self.SA = list(self.data["SA"] * np.pi / 180)[::self.sample_rate]
         self.SR = list(0 for x in range(len(self.FZ)))
-        self.IA = list(data["IA"] * np.pi / 180)[::n_skip]
-        self.FY = list(data["FY"] * -1)[::n_skip]
+        self.IA = list(self.data["IA"] * np.pi / 180)[::self.sample_rate]
+        self.FY = list(self.data["FY"] * -1)[::self.sample_rate]
 
-        initial_guess = self.initial_tire_copy.pure_lat_coeffs
+        ### PLACEHOLDER
+        self.bounds = []
+        self.load = list(self.data["load"].unique())
+
+        for load in self.load:
+            FY_slice = self.data[(self.data["load"] == load)]
+            max_FY, min_FY = max(FY_slice["FY"]), min(FY_slice["FY"])
+
+            self.bounds.append([load, [min_FY, max_FY]])
+
+        # Hacky solution to force desired behavior
+        for bound in self.bounds:
+            for i in range(100):
+                self.FZ.append(abs(bound[0]))
+                self.SR.append(0)
+                self.SA.append(np.pi / 2)
+                self.IA.append(0)
+                self.FY.append(bound[1][0] * -1 * 0.85)
+
+                self.FZ.append(abs(bound[0]))
+                self.SR.append(0)
+                self.SA.append(-np.pi / 2)
+                self.IA.append(0)
+                self.FY.append(bound[1][1] * -1 * 0.85)
+        ### PLACEHOLDER
 
         self.combined = False
 
-        lat_coeff_soln = basinhopping(self._lat_residual_calc, initial_guess, niter = self.iterations)
-        lat_coeffs = lat_coeff_soln.x
-        lat_residuals = lat_coeff_soln.fun
+        initial_guesses = [self.initial_tire_copy.pure_lat_coeffs]
+        for i in range(self.iterations):
+            lat_coeff_soln = basinhopping(self._lat_residual_calc, initial_guesses[-1], niter = 1)
+            lat_coeffs = lat_coeff_soln.x
+            lat_residuals = lat_coeff_soln.fun
 
-        return f"\nPure Lateral Coefficients: {list(lat_coeffs)}\nResidual: {lat_residuals}\n"
+            lat_coeffs[-7:] = [0, 0, 0, 0, 0, 0, 0]
+
+            initial_guesses.append(lat_coeffs)
+
+        return [f"\nPure Lateral Coefficients: {list(lat_coeffs)}\nResidual: {lat_residuals}\n", list(lat_coeffs)]
     
     def pure_long_coeff_solve(self):
         data = pd.read_csv(self.long_combined_data)
@@ -58,28 +99,53 @@ class CoeffSolver:
         pressure = 12 * 6.89476
         slip_angle = 0
 
-        data = data[(data["pressure"] == pressure) & (data["velocity"] == velocity) & (data["slip"] == slip_angle)]
+        self.data = data[(data["pressure"] == pressure) & (data["velocity"] == velocity) & (data["slip"] == slip_angle)]
 
-        if self.simplified:
-            n_skip = 50
-        else:
-            n_skip = 1
-
-        self.FZ = list(data["FZ"] * -1)[::n_skip]
+        self.FZ = list(self.data["FZ"] * -1)[::self.sample_rate]
         self.SA = list(0 for x in range(len(self.FZ)))
-        self.SR = list(data["SL"])[::n_skip]
-        self.IA = list(data["IA"] * np.pi / 180)[::n_skip]
-        self.FX = list(data["FX"])[::n_skip]
+        self.SR = list(self.data["SL"])[::self.sample_rate]
+        self.IA = list(self.data["IA"] * np.pi / 180)[::self.sample_rate]
+        self.FX = list(self.data["FX"])[::self.sample_rate]
 
+        ### PLACEHOLDER
+        self.bounds = []
+        self.load = list(self.data["load"].unique())
+
+        for load in self.load:
+            FX_slice = self.data[(self.data["load"] == load)]
+            max_FX, min_FX = max(FX_slice["FX"]), min(FX_slice["FX"])
+
+            self.bounds.append([load, [min_FX, max_FX]])
+
+        # Hacky solution to force desired behavior
+        for bound in self.bounds:
+            for i in range(40):
+                self.FZ.append(abs(bound[0]))
+                self.SR.append(1)
+                self.SA.append(0)
+                self.IA.append(0)
+                self.FX.append(bound[1][0] * -1 * 0.85)
+
+                self.FZ.append(abs(bound[0]))
+                self.SR.append(-1)
+                self.SA.append(0)
+                self.IA.append(0)
+                self.FX.append(bound[1][1] * -1 * 0.85)
+        ### PLACEHOLDER
+                
         self.combined = False
 
-        initial_guess = self.initial_tire_copy.pure_long_coeffs
+        initial_guesses = [self.initial_tire_copy.pure_long_coeffs]
+        for i in range(self.iterations):
+            long_coeff_soln = basinhopping(self._long_residual_calc, initial_guesses[-1], niter = 1)
+            long_coeffs = long_coeff_soln.x
+            long_residuals = long_coeff_soln.fun
 
-        long_coeff_soln = basinhopping(self._long_residual_calc, initial_guess, niter = self.iterations)
-        long_coeffs = long_coeff_soln.x
-        long_residuals = long_coeff_soln.fun
+            long_coeffs[-4:] = [0, 0, 0, 0]
 
-        return f"\nPure Longitudinal Coefficients: {list(long_coeffs)}\nResidual: {long_residuals}\n"
+            initial_guesses.append(long_coeffs)
+
+        return [f"\nPure Longitudinal Coefficients: {list(long_coeffs)}\nResidual: {long_residuals}\n", list(long_coeffs)]
     
     def pure_aligning_coeff_solve(self):
         data = pd.read_csv(self.lat_data)
@@ -87,18 +153,13 @@ class CoeffSolver:
         velocity = 25 * 1.60934
         pressure = 12 * 6.89476
 
-        data = data[(data["velocity"] == velocity) & (data["pressure"] == pressure) & (data["SA"] < 10) & (data["SA"] > -10)]
+        self.data = data[(data["velocity"] == velocity) & (data["pressure"] == pressure) & (data["SA"] < 10) & (data["SA"] > -10)]
 
-        if self.simplified:
-            n_skip = 50
-        else:
-            n_skip = 1
-
-        self.FZ = list(data["FZ"] * -1)[::n_skip]
-        self.SA = list(data["SA"] * np.pi / 180 * -1)[::n_skip]
+        self.FZ = list(self.data["FZ"] * -1)[::self.sample_rate]
+        self.SA = list(self.data["SA"] * np.pi / 180 * -1)[::self.sample_rate]
         self.SR = list(0 for x in range(len(self.FZ)))
-        self.IA = list(data["IA"] * np.pi / 180)[::n_skip]
-        self.MZ = list(data["MZ"] * -1)[::n_skip]
+        self.IA = list(self.data["IA"] * np.pi / 180)[::self.sample_rate]
+        self.MZ = list(self.data["MZ"] * -1)[::self.sample_rate]
 
         initial_guess = self.initial_tire_copy.pure_aligning_coeffs
 
@@ -139,6 +200,9 @@ class CoeffSolver:
         return MZ
     
     def _lat_residual_calc(self, lat_coeffs):
+        # Disable translations
+        lat_coeffs[-7:] = [0, 0, 0, 0, 0, 0, 0]
+
         residuals = []
         
         for i in range(len(self.SA)):
@@ -149,17 +213,35 @@ class CoeffSolver:
             if self.combined:
                 pass
             else:
-                if abs(lat_coeffs[2]) < 0.75:
+                # Explicit coefficient constraints
+                if (lat_coeffs[0] < 1) or (lat_coeffs[0] > 2):
                     residuals.append(residual**2)
-                else:
-                    residuals.append(residual)
+                if abs(lat_coeffs[2]) < 0.25:
+                    residuals.append(residual**2)
 
-        print(f"\rCurrent Residual Norm: {np.linalg.norm(residuals)}", end = '')
-        print("\nLat Coeffs" + str(list(lat_coeffs)))
+                # Implicit coefficient constraint such that E_x <= 1 on desired domain
+                if self.sample_rate >= 10:
+                    model_FZ_data = np.linspace(self.FZ_range[0], self.FZ_range[1], 100)
+                    model_SA_data = np.linspace(-np.pi / 2, np.pi / 2, 100)
+
+                    X, Y = np.meshgrid(model_FZ_data, model_SA_data)
+
+                    Z = self.initial_tire_copy._pure_lat(data = [X, Y, 0], sign_condition = True)
+
+                    if Z.any():
+                        residuals.append(residual**2)
+                
+                residuals.append(residual)
+
+        print(f"\rCurrent Residual Norm: {np.format_float_scientific(np.linalg.norm(residuals), precision = 10)}     ", end = '')
+        # print("\rLong Coeffs: " + str(list(long_coeffs)), end='')
         
         return np.linalg.norm(residuals)
     
     def _long_residual_calc(self, long_coeffs):
+        # Disable translations
+        long_coeffs[-4:] = [0, 0, 0, 0]
+
         residuals = []
         
         for i in range(len(self.SR)):
@@ -170,60 +252,28 @@ class CoeffSolver:
             if self.combined:
                 pass
             else:
-                for i in range(len(long_coeffs)):
-                    if self.initial_tire_copy.pure_long_coeffs[i] != 0:
-                        if long_coeffs[i] * np.sign(long_coeffs[i]) > 2 * self.initial_tire_copy.pure_long_coeffs[i] * np.sign(self.initial_tire_copy.pure_long_coeffs[i]):
-                            residuals.append(residual**2)
-                        elif long_coeffs[i] * np.sign(long_coeffs[i]) < 1/2 * self.initial_tire_copy.pure_long_coeffs[i] * np.sign(self.initial_tire_copy.pure_long_coeffs[i]):
-                            residuals.append(residual**2)
-                    else:
-                        continue
+                # Explicit coefficient constraints
+                if (long_coeffs[0] < 1) or (long_coeffs[0] > 2):
+                    residuals.append(residual**2)
+                if abs(long_coeffs[2]) < 0.5:
+                    residuals.append(residual**2)
+
+                # Implicit coefficient constraint such that E_x <= 1 on desired domain
+                if self.sample_rate >= 10:
+                    model_FZ_data = np.linspace(self.FZ_range[0], self.FZ_range[1], 100)
+                    model_SR_data = np.linspace(-1, 1, 100)
+
+                    X, Y = np.meshgrid(model_FZ_data, model_SR_data)
+
+                    Z = self.initial_tire_copy._pure_long(data = [X, Y, 0], sign_condition = True)
+
+                    if Z.any():
+                        residuals.append(residual**2)
                 
                 residuals.append(residual)
 
-                # if long_coeffs[0] < 0:
-                #     residuals.append(residual**2)
-                # if long_coeffs[1] < 0:
-                #     residuals.append(residual**2)
-                # if long_coeffs[2] > 0:
-                #     residuals.append(residual**2)
-                # elif long_coeffs[3] < 0:
-                #     residuals.append(residual**2)
-                # elif long_coeffs[4] > 0:
-                #     residuals.append(residual**2)
-                # elif long_coeffs[5] > 0:
-                #     residuals.append(residual**2)
-                # elif long_coeffs[6] > 0:
-                #     residuals.append(residual**2)
-                # elif long_coeffs[7] < 0:
-                #     residuals.append(residual**2)
-                # elif long_coeffs[8] < 0:
-                #     residuals.append(residual**2)
-                # elif long_coeffs[9] < 0:
-                #     residuals.append(residual**2)
-
-                # if long_coeffs[4] > 0:
-                #     residuals.append(residual**2)
-                # if long_coeffs[8] < 0:
-                #     residuals.append(residual**2)
-                # if long_coeffs[9] < 0:
-                #     residuals.append(residual**2)
-                # if long_coeffs[10] > 0:
-                #     residuals.append(residual**2)
-
-                # if abs(long_coeffs[0]) > 2:
-                #     residuals.append(residual**abs(long_coeffs[0]))
-                # elif long_coeffs[1] > 3:
-                #     residuals.append(residual**2)
-                # if abs(long_coeffs[0]) > 2:
-                #     residuals.append(residual**2)
-                # if abs(long_coeffs[2]) < 0.75:
-                #     residuals.append(residual**2)
-                
-                # residuals.append(residual)
-
-        print(f"\rCurrent Residual Norm: {np.format_float_scientific(np.linalg.norm(residuals))}", end = '')
-        print("\nLong Coeffs: " + str(list(long_coeffs)), end='')
+        print(f"\rCurrent Residual Norm: {np.format_float_scientific(np.linalg.norm(residuals), precision = 10)}     ", end = '')
+        # print("\rLong Coeffs: " + str(list(long_coeffs)), end='')
         
         return np.linalg.norm(residuals)
     
