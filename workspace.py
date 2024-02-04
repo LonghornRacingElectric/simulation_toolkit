@@ -16,6 +16,8 @@ from sim.simulations.mmm_solver import MmmSolver
 from sim.simulations.gg_generation import GGGeneration
 from sim.simulations.transient_sim import TransientSimulation
 from sim.util.analysis.mmm_sweeper import MmmSweeper
+from sim.util.analysis.coeff_gen import CoeffSolver
+from sim.system_models.vehicle_systems.tire_model52 import TireModel
 
 
 car = LadyLuck()
@@ -38,13 +40,17 @@ def general_transient_sim():
     transient_sim.plot_state("wheel_angular_velocities")
     transient_sim.plot_observable("long_accel")
     transient_sim.plot_observable("lateral_accel")
+    transient_sim.plot_observable("hv_battery_terminal_voltage")
+    transient_sim.plot_state_dot("hv_battery_current")
+    transient_sim.plot_observable("hv_battery_power_out")
+
 
     transient_sim.plot_map()
 
     transient_sim.print_key_points()
 
 
-def accel_event_sim():
+def floor_it_sim():
     driver = RylanHanks()
     telemetry = LadyLuckTelemetry()
     vcu = LadyLuckVcu()
@@ -58,23 +64,21 @@ def accel_event_sim():
     transient_sim.plot_state("motor_rpm")
     transient_sim.plot_state("speed")
     transient_sim.plot_state("wheel_angular_velocities")
-    transient_sim.plot_observable("hv_battery_terminal_voltage")
-    transient_sim.plot_state_dot("hv_battery_current")
-    transient_sim.plot_observable("hv_battery_power_out")
+
     transient_sim.plot_map()
 
     transient_sim.print_key_points()
 
 
 def general_MMM():
-    mmm_solver = MmmSolver(car=car, mesh=21, velocity=15)
+    mmm_solver = MmmSolver(car=car, mesh=21, velocity=25)
     mmm_solver.solve()
     mmm_solver.print_key_points()
     mmm_solver.plot()
 
 
-def general_GGV():
-    gg_generator = GGGeneration(car=car, mesh=9, velocity=15)
+def general_GG():
+    gg_generator = GGGeneration(car=car, mesh=5, velocity=30)
     gg_generator.solve()
     gg_generator.print_key_points()
     gg_generator.plot()
@@ -133,8 +137,34 @@ def compare_gg_regen():
     gg_generator.plot()
     gg_generator.print_key_points()
 
+def coeff_solving():
+    new_tire = TireModel()
+    new_solver = CoeffSolver(initial_tire = new_tire, 
+                             lat_file = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv", 
+                             long_combined_file = "./data/tires/Hoosier_18x6.0-10_R20_7_braking.csv")
 
+    # lat_coeff_soln = new_solver.pure_lat_coeff_solve()
+    # print(lat_coeff_soln)
+
+    long_coeff_soln = new_solver.pure_long_coeff_solve()
+    print(long_coeff_soln)
+
+def plot_tire():
+    new_tire = TireModel(pure_lat_coeffs = [1.4275324693483036, -2.255746043949771, 0.7531915873378026, 0.12956669501732465, 0.6813284445097716, 0.23885218635804512, 0.05489785167312618, -0.014852214405782035, 28.317328600336044, 1.618426294523789, 1.8793303226731732, -0.006541062184730178, -0.0066976720294467055, 0.027924392505731175, 0.03860784157420319, 0.11652979343774711, 0.2922171302702214, -0.10336365034336442],
+                         pure_long_coeffs =  [1.2508706151229338, 2.435564830808038, -0.04367455517295262, 19.00247289648425, -0.012580943211965998, -0.03669280427661592, -0.019371568620225068, -225.03268133075804, 37.51437918736448, 34.36793489388575, -1.9611441049072624, 0.007481806347840445, 0.012639590647437653, -0.43169693558375566, -0.762112962304972])
+    
+    # new_tire.plot(plot_type = "pure_lat", scatter = "./data/tires/Hoosier_18x6.0-10_R20_7_cornering.csv")
+    new_tire.plot(plot_type = "pure_long", scatter = "./data/tires/Hoosier_18x6.0-10_R20_7_braking.csv")
+
+
+
+# general_GG()
 # general_MMM()
-general_transient_sim()
-# accel_event_sim()
+# general_transient_sim()
+# floor_it_sim()
 # compare_gg_regen()
+# coeff_solving()
+plot_tire()
+# long_coeff_gen()
+# aligning_coeff_gen()
+# lat_scaling_match()
