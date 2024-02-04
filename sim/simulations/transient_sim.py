@@ -55,7 +55,7 @@ class TransientSimulation:
                       end='')
 
                 driver_controls = self.driver.eval(self.sim_time, state, state_dot)
-                sensor_data = self.telemetry.eval(state, state_dot, observables, driver_controls)
+                sensor_data = self.telemetry.eval(self.sim_time, state, state_dot, observables, driver_controls)
                 vcu_output = self.vcu.eval(sensor_data)
                 controls = self.controls_mux.eval(driver_controls, vcu_output)
                 state, state_dot, observables = self.vehicle.eval(controls, state, self.time_step)
