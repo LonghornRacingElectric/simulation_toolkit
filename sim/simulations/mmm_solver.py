@@ -63,7 +63,7 @@ class MmmSolver:
 
     def solve(self):
         body_slip_sweep = np.linspace(deg_to_rad(-15), deg_to_rad(15), self.mesh)
-        steered_angle_sweep = np.linspace(deg_to_rad(-15 * 3.5), deg_to_rad(15 * 3.5), self.mesh)
+        steered_angle_sweep = np.linspace(deg_to_rad(-55), deg_to_rad(55), self.mesh)
 
         self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
