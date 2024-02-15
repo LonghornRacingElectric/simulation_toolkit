@@ -5,10 +5,20 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
 from scipy.optimize import fsolve
 from scipy.optimize import basinhopping
+from scipy.optimize import minimize
+import time
 
 class Track:
     def __init__(self, points, width, car_track, mesh):
-        self.points = [list(row) for index, row in pd.read_csv(points).iterrows()]
+        self.raw_data = [list(row) for index, row in pd.read_csv(points).iterrows()]
+        self.points = [list(np.array(row) * 0.3048) for index, row in pd.read_csv(points).iterrows()]
+        print(self.raw_data)
+        self.points = [[(data[2] + data[0]) / 2, (data[3] + data[1]) / 2] for data in self.raw_data]
+        print(self.points)
+        x = [point[0] for point in self.points]
+        y = [point[1] for point in self.points]
+        plt.scatter(x, y)
+        plt.show()
         self.width = width
         self.car_track = car_track
         self.mesh = mesh
@@ -21,6 +31,8 @@ class Track:
         self.equidistant_params = self._equal_spacing(self.arc_length_integral)
 
         self.gates = [Gate(eq_p, self.spline_y.derivative(1)(eq_p) / self.spline_x.derivative(1)(eq_p), self.spline_x, self.spline_y) for eq_p in self.equidistant_params]
+        
+        print("Gates defined")
 
         # Optimal path generation
         # self.optimal = Path(self.gates, self.eq_t, width)
@@ -53,12 +65,15 @@ class Track:
         return CubicSpline(discrete_t, discretized_integrand).antiderivative(1)
     
     def _equal_spacing(self, arc_length_integral):
-        desired_spacing = arc_length_integral(self.parameter[-1]) / (arc_length_integral(self.parameter[-1]) // self.car_track)
+        desired_spacing = arc_length_integral(self.parameter[-1]) / (arc_length_integral(self.parameter[-1]) // (self.car_track))
         param_vals = [0]
 
+        counter = 0
         while arc_length_integral(param_vals[-1]) < arc_length_integral(self.parameter[-1]) - desired_spacing:
             param_vals.append(fsolve(lambda x: arc_length_integral(x) - arc_length_integral(param_vals[-1]) - desired_spacing, param_vals[-1])[0])
-        
+            # print(f"Gate {counter} found")
+            counter += 1
+
         return param_vals
 
     def _curvature_calc(self, spline_x: CubicSpline, spline_y: CubicSpline, param):
@@ -75,11 +90,18 @@ class Track:
         return (cross / ((r_dot_x)**2 + (r_dot_y)**2)**(3/2))
     
     def _optimal_line(self):
-        optimal_traversal = basinhopping(self._cost, [0 for x in range(len(self.equidistant_params))], niter = 2).x
+        self.start_time = time.time()
+        optimal_traversal = basinhopping(self._cost, [0 for x in range(len(self.equidistant_params))], niter = 1).x
 
         self.optimal_traversal = list(optimal_traversal)
     
     def _cost(self, initial_guess: list):
+        elapsed_time = round(time.time() - self.start_time, 2)
+        print(f"Elapsed time: {round(elapsed_time // 60)} min, {round(elapsed_time % 60, 1)} sec \r", end = '')
+        for val in initial_guess:
+            if abs(val) > self.car_track / 2:
+                return 1e9
+            
         iterated_points = []
         for i in range(len(self.gates)):
             iterated_points.append(self.gates[i].gate_traverse(initial_guess[i]))
@@ -92,15 +114,13 @@ class Track:
         iterated_spline_y = CubicSpline(iterated_params, [point[1] for point in iterated_points], bc_type = "periodic")
 
         iterated_arc_length_integral = self._arc_length(x_t = iterated_spline_x, y_t = iterated_spline_y)
-        iterated_equidistant_params = self._equal_spacing(iterated_arc_length_integral)
+        # iterated_equidistant_params = self._equal_spacing(iterated_arc_length_integral)
 
-        cost = sum(np.abs([self._curvature_calc(iterated_spline_x, iterated_spline_y, param_val) for param_val in np.linspace(0, iterated_arc_length_integral(iterated_equidistant_params[-1]), self.mesh)]))
+        cost = sum(np.abs([self._curvature_calc(iterated_spline_x, iterated_spline_y, param_val) for param_val in np.linspace(0, iterated_arc_length_integral(iterated_params[-1]), self.mesh)]))
 
-        for val in initial_guess:
-            if abs(val) > self.car_track / 2:
-                return cost**3
+        # print(cost)
 
-            return cost
+        return cost
     
     def plot(self):
         fig, ax = plt.subplots()
@@ -108,10 +128,12 @@ class Track:
         plt.plot(self.spline_x(np.linspace(0, self.parameter[-1], self.mesh)), self.spline_y(np.linspace(0, self.parameter[-1], self.mesh)))
         # plt.scatter(self.spline_x(self.equidistant_params), self.spline_y(self.equidistant_params))
 
+        counter = 0
         for gate in self.gates:
             point = gate.bounds(self.car_track)
             plt.scatter(point[0][0], point[0][1], c = 'r')
             plt.scatter(point[1][0], point[1][1], c = 'r')
+            counter += 1
 
         optimal_points = []
         for i in range(len(self.gates)):
@@ -121,8 +143,8 @@ class Track:
 
         optimal_params = [x for x in range(len(optimal_points))]
 
-        optimal_spline_x = CubicSpline(optimal_params, [point[0] for point in optimal_points], bc_type = "natural")
-        optimal_spline_y = CubicSpline(optimal_params, [point[1] for point in optimal_points], bc_type = "natural")
+        optimal_spline_x = CubicSpline(optimal_params, [point[0] for point in optimal_points], bc_type = "periodic")
+        optimal_spline_y = CubicSpline(optimal_params, [point[1] for point in optimal_points], bc_type = "periodic")
 
         plt.plot(optimal_spline_x(np.linspace(0, optimal_params[-1], self.mesh)), optimal_spline_y(np.linspace(0, optimal_params[-1], self.mesh)))
 

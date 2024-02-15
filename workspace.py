@@ -182,7 +182,7 @@ def plot_tire():
 
 
 def track_generation():
-    new_track = Track("./data/tracks/test_track.csv", 1, car.front_track, 100)
+    new_track = Track("./data/tracks/machine_elements_track.csv", 1, car.front_track, 10)
     new_track._optimal_line()
     new_track.plot()
 
@@ -190,9 +190,9 @@ def track_generation():
 # general_GG()
 # general_GGV()
 # general_MMM()
-general_transient_sim()
+# general_transient_sim()
 # floor_it_sim()
 # compare_gg_regen()
 # coeff_solving()
 # plot_tire()
-# track_generation()
+track_generation()
