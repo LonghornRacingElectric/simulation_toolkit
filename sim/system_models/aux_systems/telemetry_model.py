@@ -13,6 +13,7 @@ import numpy as np
 
 from sim.model_parameters.telemetry.telemetry import Telemetry
 from sim.system_models.sensor_models.realistic_sensor import RealisticSensor
+from sim.system_models.sensor_models.wheel_speed_sensor import WheelSpeedSensor
 from sim.system_models.vectors.driver_controls_vector import DriverControlsVector
 from sim.system_models.vectors.observables_vector import ObservablesVector
 from sim.system_models.vectors.sensor_data_vector import SensorDataVector
@@ -29,17 +30,15 @@ class TelemetryModel:
         self.bse1_sensor = RealisticSensor(0.001, 0.003, 0.001, 0.002)
         self.bse2_sensor = RealisticSensor(0.001, 0.003, 0.001, 0.002)
 
-        self.wheel_fl_sensor = RealisticSensor(np.pi / 3.0, 0.003, 0.005, 0.5)
-        self.wheel_fr_sensor = RealisticSensor(np.pi / 3.0, 0.003, 0.005, 0.5)
-        self.wheel_bl_sensor = RealisticSensor(np.pi / 3.0, 0.003, 0.005, 0.5)
-        self.wheel_br_sensor = RealisticSensor(np.pi / 3.0, 0.003, 0.005, 0.5)
+        self.wheel_fl_sensor = WheelSpeedSensor(0.01, 0.003, 0.005, 5)
+        self.wheel_fr_sensor = WheelSpeedSensor(0.01, 0.003, 0.005, 5)
+        self.wheel_bl_sensor = WheelSpeedSensor(0.01, 0.003, 0.005, 5)
+        self.wheel_br_sensor = WheelSpeedSensor(0.01, 0.003, 0.005, 5)
 
     def eval(self, time: float, state: StateVector, state_dot: StateDotVector, observables: ObservablesVector,
              driver_controls: DriverControlsVector) -> SensorDataVector:
 
         sensor_data = SensorDataVector()
-
-        # TODO implement
 
         sensor_data.apps1 = self.apps1_sensor.eval(time, 1.0 + driver_controls.accel_pedal_pct * 3.0)
         sensor_data.apps2 = self.apps2_sensor.eval(time, 0.5 + driver_controls.accel_pedal_pct * 1.5)
@@ -48,7 +47,6 @@ class TelemetryModel:
 
         sensor_data.drive_switch = driver_controls.drive_switch
 
-        # TODO wheelspeeds won't respond instantly
         sensor_data.wheel_displacement_fl = self.wheel_fl_sensor.eval(time, state.wheel_angular_displacements[0])
         sensor_data.wheel_displacement_fr = self.wheel_fr_sensor.eval(time, state.wheel_angular_displacements[1])
         sensor_data.wheel_displacement_bl = self.wheel_bl_sensor.eval(time, state.wheel_angular_displacements[2])

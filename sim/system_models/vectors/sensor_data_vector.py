@@ -15,22 +15,25 @@ class SensorDataVector(Vector):
 
         self.steering_wheel_pot_voltage = 0
 
-        self.wheel_displacement_fl = 0
-        self.wheel_displacement_fr = 0
-        self.wheel_displacement_bl = 0
-        self.wheel_displacement_br = 0
+        self.wheel_magnetic_field_fl = 0  # milliTesla
+        self.wheel_magnetic_field_fr = 0
+        self.wheel_magnetic_field_bl = 0
+        self.wheel_magnetic_field_br = 0
 
         self.motor_temp = 0
         self.inverter_temp = 0
         self.battery_temp = 0
 
-        self.battery_soc = 0
+        self.hv_battery_soc = 0
         self.inverter_ready = 0
 
-        self.drive_switch = False
+        self.hv_battery_voltage = 0
+        self.hv_battery_current = 0
 
-        self.battery_voltage = 0
-        self.battery_current = 0
+        self.lv_battery_voltage = 0
+        self.lv_battery_current = 0
+
+        self.drive_switch = False
 
         self.gps_lat = 0
         self.gps_long = 0

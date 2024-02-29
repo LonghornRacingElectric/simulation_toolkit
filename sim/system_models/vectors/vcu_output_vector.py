@@ -24,7 +24,21 @@ class VcuOutputVector(Vector):
         self.estimated_velocity = np.array([0, 0, 0])
         self.estimated_acceleration = np.array([0, 0, 0])
 
-        self.fault_apps = False
-        self.fault_bse = False
-        self.fault_stompp = False
-        self.fault_steering = False
+        self.estimated_hv_soc = 0
+        self.estimated_lv_soc = 0
+
+        self.dash_speedometer = 0
+
+        self.apps1 = 0
+        self.apps2 = 0
+        self.apps = 0
+        self.bse1 = 0
+        self.bse2 = 0
+        self.bse = 0
+        self.estimated_wheel_speed_fl = 0
+        self.estimated_wheel_speed_fr = 0
+        self.estimated_wheel_speed_bl = 0
+        self.estimated_wheel_speed_br = 0
+        self.estimated_steering_wheel_angle = 0
+
+        self.flags = 0

@@ -63,6 +63,7 @@ def floor_it_sim():
     transient_sim.plot_state("motor_rpm")
     transient_sim.plot_state("speed")
     transient_sim.plot_state("wheel_angular_velocities")
+    transient_sim.plot_vcu_output("dash_speedometer")
 
     transient_sim.plot_map()
 
@@ -190,8 +191,8 @@ def track_generation():
 # general_GG()
 # general_GGV()
 # general_MMM()
-general_transient_sim()
-# floor_it_sim()
+# general_transient_sim()
+floor_it_sim()
 # compare_gg_regen()
 # coeff_solving()
 # plot_tire()

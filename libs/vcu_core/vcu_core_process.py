@@ -6,6 +6,8 @@ import numpy as np
 from sim.system_models.vectors.sensor_data_vector import SensorDataVector
 from sim.system_models.vectors.vcu_output_vector import VcuOutputVector
 
+output_line_count = 33
+
 
 class VcuCoreProcess:
     def __init__(self):
@@ -32,7 +34,7 @@ class VcuCoreProcess:
             self.process.stdin.write(bytes('\n', 'utf-8'))
         self.process.stdin.flush()
 
-        self.output_lines = [self.process.stdout.readline().decode('utf-8').strip() for _ in range(22)]
+        self.output_lines = [self.process.stdout.readline().decode('utf-8').strip() for _ in range(output_line_count)]
 
     def write_all(self, sensor_data: SensorDataVector):
         self.write_float(sensor_data.apps1)
@@ -43,20 +45,23 @@ class VcuCoreProcess:
 
         self.write_float(sensor_data.steering_wheel_pot_voltage)
 
-        self.write_float(sensor_data.wheel_displacement_fl)
-        self.write_float(sensor_data.wheel_displacement_fr)
-        self.write_float(sensor_data.wheel_displacement_bl)
-        self.write_float(sensor_data.wheel_displacement_br)
+        self.write_float(sensor_data.wheel_magnetic_field_fl)
+        self.write_float(sensor_data.wheel_magnetic_field_fr)
+        self.write_float(sensor_data.wheel_magnetic_field_bl)
+        self.write_float(sensor_data.wheel_magnetic_field_br)
 
         self.write_float(sensor_data.motor_temp)
         self.write_float(sensor_data.inverter_temp)
         self.write_float(sensor_data.battery_temp)
 
-        self.write_float(sensor_data.battery_soc)
+        self.write_float(sensor_data.hv_battery_soc)
         self.write_bool(sensor_data.inverter_ready)
 
-        self.write_float(sensor_data.battery_voltage)
-        self.write_float(sensor_data.battery_current)
+        self.write_float(sensor_data.hv_battery_voltage)
+        self.write_float(sensor_data.hv_battery_current)
+
+        self.write_float(sensor_data.lv_battery_voltage)
+        self.write_float(sensor_data.lv_battery_current)
 
         self.write_bool(sensor_data.drive_switch)
 
@@ -92,10 +97,24 @@ class VcuCoreProcess:
         out.estimated_velocity = self.read_vector()
         out.estimated_acceleration = self.read_vector()
 
-        out.fault_apps = self.read_bool()
-        out.fault_bse = self.read_bool()
-        out.fault_stompp = self.read_bool()
-        out.fault_steering = self.read_bool()
+        out.estimated_hv_soc = self.read_float()
+        out.estimated_lv_soc = self.read_float()
+
+        out.dash_speedometer = self.read_float()
+
+        out.apps1 = self.read_float()
+        out.apps2 = self.read_float()
+        out.apps = self.read_float()
+        out.bse1 = self.read_float()
+        out.bse2 = self.read_float()
+        out.bse = self.read_float()
+        out.estimated_wheel_speed_fl = self.read_float()
+        out.estimated_wheel_speed_fr = self.read_float()
+        out.estimated_wheel_speed_bl = self.read_float()
+        out.estimated_wheel_speed_br = self.read_float()
+        out.estimated_steering_wheel_angle = self.read_float()
+
+        out.flags = self.read_int()
 
         return out
 
@@ -120,6 +139,10 @@ class VcuCoreProcess:
     def read_bool(self) -> bool:
         x = float(self.read_line())
         return x != 0
+
+    def read_int(self) -> int:
+        x = int(self.read_line())
+        return x
 
     def read_vector(self) -> np.array:
         x = self.read_float()
