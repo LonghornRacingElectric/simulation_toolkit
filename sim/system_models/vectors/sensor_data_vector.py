@@ -20,6 +20,8 @@ class SensorDataVector(Vector):
         self.wheel_magnetic_field_bl = 0
         self.wheel_magnetic_field_br = 0
 
+        self.motor_rpm = 0
+
         self.motor_temp = 0
         self.inverter_temp = 0
         self.battery_temp = 0

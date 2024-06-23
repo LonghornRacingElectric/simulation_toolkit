@@ -52,6 +52,8 @@ class TelemetryModel:
         sensor_data.wheel_displacement_bl = self.wheel_bl_sensor.eval(time, state.wheel_angular_displacements[2])
         sensor_data.wheel_displacement_br = self.wheel_br_sensor.eval(time, state.wheel_angular_displacements[3])
 
+        sensor_data.motor_rpm = state.motor_rpm
+
         sensor_data.inverter_ready = True
 
         sensor_data.battery_voltage = observables.hv_battery_terminal_voltage

@@ -45,6 +45,8 @@ class VcuCoreProcess:
 
         self.write_float(sensor_data.steering_wheel_pot_voltage)
 
+        self.write_float(sensor_data.motor_rpm)
+
         self.write_float(sensor_data.wheel_magnetic_field_fl)
         self.write_float(sensor_data.wheel_magnetic_field_fr)
         self.write_float(sensor_data.wheel_magnetic_field_bl)
