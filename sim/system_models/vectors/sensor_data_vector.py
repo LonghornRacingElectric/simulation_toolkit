@@ -15,6 +15,8 @@ class SensorDataVector(Vector):
 
         self.steering_wheel_pot_voltage = 0
 
+        self.motor_rpm = 0
+
         self.wheel_displacement_fl = 0
         self.wheel_displacement_fr = 0
         self.wheel_displacement_bl = 0
