@@ -61,10 +61,8 @@ def floor_it_sim():
     transient_sim.plot_driver_control("accel_pedal_pct")
     transient_sim.plot_vcu_output("torque_request")
     transient_sim.plot_state("motor_rpm")
-    transient_sim.plot_state("speed")
     transient_sim.plot_state("wheel_angular_velocities")
     transient_sim.plot_vcu_output("dash_speedometer")
-
     transient_sim.plot_map()
 
     transient_sim.print_key_points()

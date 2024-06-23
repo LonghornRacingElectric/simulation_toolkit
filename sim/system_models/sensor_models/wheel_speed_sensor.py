@@ -16,5 +16,5 @@ class WheelSpeedSensor(RealisticSensor):
         super().__init__(precision, interval, delay, noise)
 
     def eval(self, time: float, angle) -> any:
-        value = np.cos(angle*3)
+        value = np.sin(angle*3) * 1.0
         return super().eval(time, value)
