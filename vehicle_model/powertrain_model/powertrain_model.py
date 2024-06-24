@@ -1,16 +1,6 @@
 import math
 import numpy as np
 
-from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
-
-from sim.model_parameters.cars.car import Car
-from sim.system_models.vectors.controls_vector import ControlsVector
-from sim.system_models.vectors.observables_vector import ObservablesVector
-from sim.system_models.vectors.state_vector import StateVector
-from sim.system_models.vectors.state_dot_vector import StateDotVector
-from sim.util.math.conversions import rpm_to_rads, rads_to_rpm
-
-
 class PowertrainModel(VehicleSystemModel):
     def __init__(self):
         super().__init__()

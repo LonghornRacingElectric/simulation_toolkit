@@ -47,7 +47,7 @@ class SuspensionModel(VehicleSystemModel):
             "FL_RH",
             "FR_RH",
             "RL_RH",
-            "RR, RH",
+            "RR_RH",
 
             "Fr_crank",
             "Rr_crank",
