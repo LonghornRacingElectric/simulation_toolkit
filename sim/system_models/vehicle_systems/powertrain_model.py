@@ -221,9 +221,14 @@ class PowertrainModel(VehicleSystemModel):
         i = (battery_open_circuit_voltage - math.sqrt(discriminant)) / 2 / battery_internal_resistance
         return i
 
-    def _calculate_cooling(self, object_temp: float, coolant_temp: float, coolant_area: float) -> (float, float):
-        # TODO cooling calculations!!
-        return 0, 0
+    def _calculate_battery_cooling(self, cell_temp: float, air_temp: float, convection_coefficient: float, cell_area: float, 
+                                   cell_mass: float, cell_specfic_heat: float, i:float, battery_internal_resistance:float) -> (float):
+        T_increase = ((-convection_coefficient*cell_area*(cell_temp-air_temp))+ ((i)**2)*battery_internal_resistance) / (cell_mass*cell_specfic_heat)
+        return T_increase
+
+    #def _calculate_motor_cooling
+
+    #def
 
     # def _diff_bias_ratio(self, steered_angle, body_slip, diff_torque, wheel_angular_velocities, diff_radius, motor_radius):
     #     if steered_angle == 0 and body_slip == 0 or diff_torque == 0:
