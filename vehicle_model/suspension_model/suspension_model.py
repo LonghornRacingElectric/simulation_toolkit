@@ -3,59 +3,9 @@ import numpy as np
 from numpy import ndarray
 
 # All coords with respect to SAE J670
-class SuspensionModel(VehicleSystemModel):
-    def __init__(self, transient=False):
-        super().__init__()
-
-        self.transient = transient
-
-        # Initialize tire model
-        self.tires = [TireModel(), TireModel(), TireModel(), TireModel()]  # [FL, FR, RL, RR]
-
-        self.controls_in = [
-            "steering_angle"
-        ]
-
-        self.state_in = [
-            "heave",
-            "heave_dot",
-            "heave_dot_dot",
-            
-            "pitch",
-            "pitch_dot",
-            "pitch_dot_dot",
-            
-            "roll",
-            "roll_dot",
-            "roll_dot_dot"
-
-            "yaw_dot",
-            "yaw_dot_dot",
-
-            "long_vel",
-            "long_accel",
-
-            "lat_vel",
-            "lat_accel",
-        ]
-
-        self.state_out = [
-            # TODO: Transient or nah (I wanna say yaw)
-        ]
-
-        self.observables_out = [
-            "FL_RH",
-            "FR_RH",
-            "RL_RH",
-            "RR, RH",
-
-            "Fr_crank",
-            "Rr_crank",
-            
-            "Fr_spring",
-            "Rr_spring"
-        ]
-
+class SuspensionModel:
+    def __init__(self):
+        pass
     def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_vector: StateVector,
              state_dot_vector: StateDotVector, observables_vector: ObservablesVector) -> None:
 

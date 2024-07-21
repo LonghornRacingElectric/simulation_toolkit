@@ -1,0 +1,165 @@
+### GENERAL ###
+Description:
+  
+  Vehicle Name:
+    Description: Name of vehicle
+    Type: string
+    Value: Sample Vehicle
+
+  Version:
+    Description: Internal version number for vehicle
+    Type: string
+    Value: "1.0.0"
+
+
+Constants:
+  G:
+    Description: Acceleration due to gravity (m/s^2)
+    Type: float
+    Value: 9.81
+
+### MASS ###
+Mass Properties:
+
+  Driver Mass:
+    Description: Mass of the driver (kg)
+    Type: float
+    Value: 70
+
+  Front Unsprung Mass:
+    Description: Mass of front wheel assemblies + half the front suspension linkages (kg)
+    Type: float
+    Value: 16.328
+  
+  Rear Unsprung Mass:
+    Description: Mass of rear wheel assemblies + half the rear suspension linkages (kg)
+    Type: float
+    Value: 18.611
+
+  Sprung Mass:
+    Description: Total mass - driver mass - unsprung mass (kg)
+    Type: float
+    Value: 170
+
+  Sprung Intertia:
+    Description: Sprung mass inertia tensor (kg*m^2)
+    Type: list[list[float], list[float], list[float]]
+    Value: [[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]]
+
+  Long CG Bias:
+    Description: CG bias forward (-)
+    Type: float
+    Value: 0.48
+  
+  Lat CG Bias:
+    Description: CG bias leftward (-)
+    Type: float
+    value: 0.50
+
+  CG Height:
+    Description: CG height from ground plane (m)
+    Type: float
+    value: 0.28448
+
+### HIGH-LEVEL GEOMETRY ###
+Geometric Properties:
+  
+  Wheelbase:
+    Description: Longitudinal distance between front and rear axles at the contact patch (m)
+    Type: float
+    value: 1.5494
+
+  Front Track:
+    Description: Lateral distance between front left and front right contact patch (m)
+    Type: float
+    Value: 1.27
+
+  Rear Track:
+    Description: Lateral distance between rear left and rear right contact patch (m)
+    Type: float
+    Value: 1.2192
+
+### SUSPENSION ###
+Suspension:
+  
+  Front Left Spring Rate:
+    Description: Linear rate of the front left suspension spring (N/m)
+    Type: float
+    Value: 70050.733858268
+  
+  Front Right Spring Rate:
+    Description: Linear rate of the front right suspension spring (N/m)
+    Type: float
+    Value: 70050.733858268
+
+  Rear Left Spring Rate:
+    Description: Linear rate of the rear left suspension spring (N/m)
+    Type: float
+    Value: 70050.733858268
+
+  Rear Right Spring Rate:
+    Description: Linear rate of the rear right suspension spring (N/m)
+    Type: float
+    Value: 70050.733858268
+
+  Front Left Motion Ratio:
+    Description: Wheel travel / spring travel of front left suspension assembly (-)
+    Type: float
+    Value: 1
+
+  Front Right Motion Ratio:
+    Description: Wheel travel / spring travel of front right suspension assembly (-)
+    Type: float
+    Value: 1
+
+  Rear Left Motion Ratio:
+    Description: Wheel travel / spring travel of rear left suspension assembly (-)
+    Type: float
+    Value: 1
+
+  Rear Right Motion Ratio:
+    Description: Wheel travel / spring travel of rear right suspension assembly (-)
+    Type: float
+    Value: 1
+
+  Front Stabar Rate:
+    Description: Linear stiffness of front torsion bar from eye to eye (N/m)
+    Type: float
+    Value: 0
+
+  Rear Stabar Rate:
+    Description: Linear stiffness of rear torsion bar from eye to eye (N/m)
+    Type: float
+    Value: 0
+
+  Front Stabar Motion Ratio:
+    Description: Wheel travel / vertical travel of front stabar (-)
+    Type: float
+    Value: 1
+
+  Rear Stabar Motion Ratio:
+    Description: Wheel travel / vertical travel of rear stabar (-)
+    Type: float
+    Value: 1
+
+  Front Left Static Inclination Angle:
+    Description: Angle between the front left tire y-axis and ground plane. y-axis away from the ground is positive (rad)
+    Value: float
+    Value: 0.01745329
+  
+  Front Right Static Inclination Angle:
+    Description: Angle between the front right tire y-axis and ground plane. y-axis away from the ground is positive (rad)
+    Value: float
+    Value: -0.01745329
+
+  Rear Left Static Inclination Angle:
+    Description: Angle between the rear left tire y-axis and ground plane. y-axis away from the ground is positive (rad)
+    Value: float
+    Value: 0.01745329
+
+  Rear Right Static Inclination Angle:
+    Description: Angle between the rear right tire y-axis and ground plane. y-axis away from the ground is positive (rad)
+    Value: float
+    Value: -0.01745329
+
+  
