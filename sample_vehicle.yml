@@ -1,12 +1,12 @@
 ### GENERAL ###
 Description:
   
-  Vehicle Name:
+  VN:
     Description: Name of vehicle
     Type: string
     Value: Sample Vehicle
 
-  Version:
+  V:
     Description: Internal version number for vehicle
     Type: string
     Value: "1.0.0"
@@ -17,46 +17,61 @@ Constants:
     Description: Acceleration due to gravity (m/s^2)
     Type: float
     Value: 9.81
+  
+  AT:
+    Description: Ambient air temperature (K)
+    Type: float
+    Value: 298
+  
+  AP:
+    Description: Ambient pressure (Pa)
+    Type: float
+    Value: 101325
+
+  # Arho:
+  #   Description: Density of ambient air (kg/m^3)
+  #   Type: float
+  #   Value: Deprecated parameter
 
 ### MASS ###
 Mass Properties:
 
-  Driver Mass:
+  DM:
     Description: Mass of the driver (kg)
     Type: float
     Value: 70
 
-  Front Unsprung Mass:
+  FrUM:
     Description: Mass of front wheel assemblies + half the front suspension linkages (kg)
     Type: float
     Value: 16.328
   
-  Rear Unsprung Mass:
+  RrUM:
     Description: Mass of rear wheel assemblies + half the rear suspension linkages (kg)
     Type: float
     Value: 18.611
 
-  Sprung Mass:
+  SM:
     Description: Total mass - driver mass - unsprung mass (kg)
     Type: float
     Value: 170
 
-  Sprung Intertia:
+  SI:
     Description: Sprung mass inertia tensor (kg*m^2)
     Type: list[list[float], list[float], list[float]]
     Value: [[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]]
 
-  Long CG Bias:
+  CGBX:
     Description: CG bias forward (-)
     Type: float
     Value: 0.48
   
-  Lat CG Bias:
+  CGBY:
     Description: CG bias leftward (-)
     Type: float
     value: 0.50
 
-  CG Height:
+  CGZ:
     Description: CG height from ground plane (m)
     Type: float
     value: 0.28448
@@ -64,17 +79,17 @@ Mass Properties:
 ### HIGH-LEVEL GEOMETRY ###
 Geometric Properties:
   
-  Wheelbase:
+  L:
     Description: Longitudinal distance between front and rear axles at the contact patch (m)
     Type: float
     value: 1.5494
 
-  Front Track:
+  FrT:
     Description: Lateral distance between front left and front right contact patch (m)
     Type: float
     Value: 1.27
 
-  Rear Track:
+  RrT:
     Description: Lateral distance between rear left and rear right contact patch (m)
     Type: float
     Value: 1.2192
@@ -82,84 +97,254 @@ Geometric Properties:
 ### SUSPENSION ###
 Suspension:
   
-  Front Left Spring Rate:
+  FLK:
     Description: Linear rate of the front left suspension spring (N/m)
     Type: float
     Value: 70050.733858268
   
-  Front Right Spring Rate:
+  FRK:
     Description: Linear rate of the front right suspension spring (N/m)
     Type: float
     Value: 70050.733858268
 
-  Rear Left Spring Rate:
+  RLK:
     Description: Linear rate of the rear left suspension spring (N/m)
     Type: float
     Value: 70050.733858268
 
-  Rear Right Spring Rate:
+  RRK:
     Description: Linear rate of the rear right suspension spring (N/m)
     Type: float
     Value: 70050.733858268
 
-  Front Left Motion Ratio:
+  FLMR:
     Description: Wheel travel / spring travel of front left suspension assembly (-)
     Type: float
     Value: 1
 
-  Front Right Motion Ratio:
+  FRMR:
     Description: Wheel travel / spring travel of front right suspension assembly (-)
     Type: float
     Value: 1
 
-  Rear Left Motion Ratio:
+  RLMR:
     Description: Wheel travel / spring travel of rear left suspension assembly (-)
     Type: float
     Value: 1
 
-  Rear Right Motion Ratio:
+  RRMR:
     Description: Wheel travel / spring travel of rear right suspension assembly (-)
     Type: float
     Value: 1
 
-  Front Stabar Rate:
+  FrARBK:
     Description: Linear stiffness of front torsion bar from eye to eye (N/m)
     Type: float
     Value: 0
 
-  Rear Stabar Rate:
+  RrARBK:
     Description: Linear stiffness of rear torsion bar from eye to eye (N/m)
     Type: float
     Value: 0
 
-  Front Stabar Motion Ratio:
+  FrARBMR:
     Description: Wheel travel / vertical travel of front stabar (-)
     Type: float
     Value: 1
 
-  Rear Stabar Motion Ratio:
+  RrARBMR:
     Description: Wheel travel / vertical travel of rear stabar (-)
     Type: float
     Value: 1
 
-  Front Left Static Inclination Angle:
+  FLIA:
     Description: Angle between the front left tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Value: float
+    Type: float
     Value: 0.01745329
   
-  Front Right Static Inclination Angle:
+  FRIA:
     Description: Angle between the front right tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Value: float
+    Type: float
     Value: -0.01745329
 
-  Rear Left Static Inclination Angle:
+  RLIA:
     Description: Angle between the rear left tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Value: float
+    Type: float
     Value: 0.01745329
 
-  Rear Right Static Inclination Angle:
+  RRIA:
     Description: Angle between the rear right tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Value: float
+    Type: float
     Value: -0.01745329
+
+  FLT:
+    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
+    Type: Float
+    Value: 0
+
+  FRT:
+    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
+    Type: Float
+    Value: 0
+
+  RLT:
+    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
+    Type: Float
+    Value: 0
+
+  RRT:
+    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
+    Type: Float
+    Value: 0
+
+  # TODO: ICs for force-based calcs (format TBD, but this is probably gonna be polynomial fits)
+
+### BRAKES ###
+Brake Properties:
+
+  FLR:
+    Description: Planar distance from hub center to cetroid of brake caliper (m)
+    Type: float
+    Value: 0.072644
+
+  FRR:
+    Description: Planar distance from hub center to cetroid of brake caliper (m)
+    Type: float
+    Value: 0.072644
+
+  RLR:
+    Description: Planar distance from hub center to cetroid of brake caliper (m)
+    Type: float
+    Value: 0.072644
+
+  RRR:
+    Description: Planar distance from hub center to cetroid of brake caliper (m)
+    Type: float
+    Value: 0.072644
+
+  FrMCSA:
+    Description: Surface area of front master cylinder piston (m^2)
+    Type: float
+    Value: 0.00015393517
+  
+  RrMCSA:
+    Description: Surface area of rear master cylinder piston (m^2)
+    Type: float
+    Value: 0.00015393517
+
+  FLCSA:
+    Description: Surface area of front left caliper piston (m^2)
+    Type: float
+    Value: 0.00181586733
+
+  FRCSA:
+    Description: Surface area of front right caliper piston (m^2)
+    Type: float
+    Value: 0.00181586733
+
+  RLCSA:
+    Description: Surface area of rear left caliper piston (m^2)
+    Type: float
+    Value: 0.00181586733
+
+  RRCSA:
+    Description: Surface area of rear right caliper piston (m^2)
+    Type: float
+    Value: 0.00181586733
+
+  FLMu:
+    Description: Average friction coefficient of front left brake pad (-)
+    Type: float
+    Value: 0.50
+
+  FRMu:
+    Description: Average friction coefficient of front right brake pad (-)
+    Type: float
+    Value: 0.50
+  
+  RLMu:
+    Description: Average friction coefficient of rear left brake pad (-)
+    Type: float
+    Value: 0.50
+
+  RRMu:
+    Description: Average friction coefficient of rear right brake pad (-)
+    Type: float
+    Value: 0.50
+
+### POWERTRAIN ###
+Powertrain Properties:
+
+  HVBV:
+    Description: Nominal HV battery voltage (V)
+    Type: float
+    Value: 350
+
+  LVP:
+    Description: Average LV power draw (W)
+    Type: float
+    Value: 50
+
+  ST:
+    Description: Maximum torque output by motor (Nm)
+    Type: float
+    Value: 230
+
+  # Adding separate input file for motor data sheet (torque vs speed, efficiency map, peak current draw, etc.)
+
+  GR:
+    Description: Gear ratio (-)
+    Type: float
+    Value: 3.38
+  
+  PL:
+    Description: Power limit (W)
+    Type: float
+    Value: 80000
+
+  DiffEff:
+    Description: Drivetrain efficiency (-)
+    Type: float
+    Value: 0.90
+
+### AERODYNAMICS ###
+Aerodynamics Properties:
+
+# Need F(z, theta, phi) and COP(z, theta, phi) for accurate model
+
+  ClTot:
+    Description: Coefficient of lift with all aero elements mounted (-)
+    Type: float
+    Value: 4.384
+
+  CdTot:
+    Description: Coefficient of drag with all aero elements mounted (-)
+    Type: float
+    Value: 1.028
+
+  CsTot:
+    Description: Coefficient of sideforce with all aero elements mounted (-)
+    Type: float
+    Value: 5.673
+
+  Cl0:
+    Description: Coefficient of lift with NO aero elements mounted (-)
+    Type: float
+    Value: 0
+
+  Cd0:
+    Description: Coefficient of drag with NO aero elements mounted (-)
+    Type: float
+    Value: 0.7155
+
+  Cs0:
+    Description: Coefficient of sideforce with NO aero elements mounted (-)
+    Type: float
+    Value: 8.43
+
+  COP:
+    Description: Center of pressure with the origin at center of front track (m, m, m)
+    Type: list[float]
+    Value: [0.5, 0, 0]
 
   
