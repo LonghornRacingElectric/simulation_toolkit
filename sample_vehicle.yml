@@ -1,311 +1,195 @@
 ### GENERAL ###
 Description:
-  
   VN:
     Description: Name of vehicle
     Type: string
+    Unit: N/A
     Value: Sample Vehicle
-
   V:
     Description: Internal version number for vehicle
     Type: string
-    Value: "1.0.0"
+    Unit: N/A
+    Value: 1.0.0
 
-
-Constants:
+Environment:
   G:
-    Description: Acceleration due to gravity (m/s^2)
+    Description: Acceleration due to gravity
     Type: float
+    Unit: m/s^2
     Value: 9.81
-  
   AT:
-    Description: Ambient air temperature (K)
+    Description: Ambient air temperature
     Type: float
+    Unit: K
     Value: 298
-  
   AP:
-    Description: Ambient pressure (Pa)
+    Description: Ambient pressure
     Type: float
+    Unit: Pa
     Value: 101325
-
-  # Arho:
-  #   Description: Density of ambient air (kg/m^3)
-  #   Type: float
-  #   Value: Deprecated parameter
 
 ### MASS ###
 Mass Properties:
-
   DM:
-    Description: Mass of the driver (kg)
+    Description: Mass of the driver
     Type: float
+    Unit: kg
     Value: 70
-
   FrUM:
-    Description: Mass of front wheel assemblies + half the front suspension linkages (kg)
+    Description: Mass of front wheel assemblies + half the front suspension linkages
     Type: float
+    Unit: kg
     Value: 16.328
-  
   RrUM:
-    Description: Mass of rear wheel assemblies + half the rear suspension linkages (kg)
+    Description: Mass of rear wheel assemblies + half the rear suspension linkages
     Type: float
+    Unit: kg
     Value: 18.611
-
   SM:
-    Description: Total mass - driver mass - unsprung mass (kg)
+    Description: Total mass - driver mass - unsprung mass
     Type: float
+    Unit: kg
     Value: 170
-
   SI:
-    Description: Sprung mass inertia tensor (kg*m^2)
+    Description: Sprung mass inertia tensor
     Type: list[list[float], list[float], list[float]]
+    Unit: kg*m^2
     Value: [[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]]
-
   CGBX:
-    Description: CG bias forward (-)
+    Description: CG bias forward
     Type: float
+    Unit: (-)
     Value: 0.48
-  
   CGBY:
-    Description: CG bias leftward (-)
+    Description: CG bias leftward
     Type: float
+    Unit: (-)
     value: 0.50
-
   CGZ:
-    Description: CG height from ground plane (m)
+    Description: CG height from ground plane
     Type: float
+    Unit: m
     value: 0.28448
 
 ### HIGH-LEVEL GEOMETRY ###
 Geometric Properties:
-  
   L:
-    Description: Longitudinal distance between front and rear axles at the contact patch (m)
+    Description: Longitudinal distance between front and rear axles at the contact patch
     Type: float
+    Unit: m
     value: 1.5494
-
   FrT:
-    Description: Lateral distance between front left and front right contact patch (m)
+    Description: Lateral distance between front left and front right contact patch
     Type: float
+    Unit: m
     Value: 1.27
-
   RrT:
-    Description: Lateral distance between rear left and rear right contact patch (m)
+    Description: Lateral distance between rear left and rear right contact patch
     Type: float
+    Unit: m
     Value: 1.2192
 
 ### SUSPENSION ###
 Suspension:
-  
-  FLK:
-    Description: Linear rate of the front left suspension spring (N/m)
+  K:
+    Description: Linear rate of suspension springs [FL, FR, RL, RR]
+    Type: list[float]
+    Unit: N/m
+    Value: [70050.733858268, 70050.733858268, 70050.733858268, 70050.733858268]
+  MR:
+    Description: Wheel travel / spring travel of suspension corners [FL, FR, RL, RR]
     Type: float
-    Value: 70050.733858268
-  
-  FRK:
-    Description: Linear rate of the front right suspension spring (N/m)
+    Unit: (-)
+    Value: [1, 1, 1, 1]
+  ARBK:
+    Description: Linear stiffness of torsion bars from eye to eye [FR, RR]
     Type: float
-    Value: 70050.733858268
-
-  RLK:
-    Description: Linear rate of the rear left suspension spring (N/m)
+    Unit: N/m
+    Value: [0, 0]
+  ARBMR:
+    Description: Wheel travel / vertical travel of stabars [FR, RR]
     Type: float
-    Value: 70050.733858268
-
-  RRK:
-    Description: Linear rate of the rear right suspension spring (N/m)
+    Unit: (-)
+    Value: [1, 1]
+  IA:
+    Description: Inclination angle of tires [FL, FR, RL, RR]
     Type: float
-    Value: 70050.733858268
-
-  FLMR:
-    Description: Wheel travel / spring travel of front left suspension assembly (-)
-    Type: float
-    Value: 1
-
-  FRMR:
-    Description: Wheel travel / spring travel of front right suspension assembly (-)
-    Type: float
-    Value: 1
-
-  RLMR:
-    Description: Wheel travel / spring travel of rear left suspension assembly (-)
-    Type: float
-    Value: 1
-
-  RRMR:
-    Description: Wheel travel / spring travel of rear right suspension assembly (-)
-    Type: float
-    Value: 1
-
-  FrARBK:
-    Description: Linear stiffness of front torsion bar from eye to eye (N/m)
-    Type: float
-    Value: 0
-
-  RrARBK:
-    Description: Linear stiffness of rear torsion bar from eye to eye (N/m)
-    Type: float
-    Value: 0
-
-  FrARBMR:
-    Description: Wheel travel / vertical travel of front stabar (-)
-    Type: float
-    Value: 1
-
-  RrARBMR:
-    Description: Wheel travel / vertical travel of rear stabar (-)
-    Type: float
-    Value: 1
-
-  FLIA:
-    Description: Angle between the front left tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Type: float
-    Value: 0.01745329
-  
-  FRIA:
-    Description: Angle between the front right tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Type: float
-    Value: -0.01745329
-
-  RLIA:
-    Description: Angle between the rear left tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Type: float
-    Value: 0.01745329
-
-  RRIA:
-    Description: Angle between the rear right tire y-axis and ground plane. y-axis away from the ground is positive (rad)
-    Type: float
-    Value: -0.01745329
-
-  FLT:
-    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
+    Unit: rad
+    Value: [0.01745329, -0.01745329, 0.01745329, -0.01745329]
+  Toe:
+    Description: Toe angle of tires [FL, FR, RL, RR]
     Type: Float
-    Value: 0
-
-  FRT:
-    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
-    Type: Float
-    Value: 0
-
-  RLT:
-    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
-    Type: Float
-    Value: 0
-
-  RRT:
-    Description: Angle between the tire x-axis and the vehicle x-axis. Tire axis toward vehicle axis is positive (rad)
-    Type: Float
-    Value: 0
-
+    Unit: rad
+    Value: [0, 0, 0, 0]
   # TODO: ICs for force-based calcs (format TBD, but this is probably gonna be polynomial fits)
 
 ### BRAKES ###
 Brake Properties:
-
-  FLR:
-    Description: Planar distance from hub center to cetroid of brake caliper (m)
+  EffR:
+    Description: Planar distance from hub center to cetroid of brake caliper [FL, FR, RL, RR]
     Type: float
-    Value: 0.072644
-
-  FRR:
-    Description: Planar distance from hub center to cetroid of brake caliper (m)
+    Unit: m
+    Value: [0.072644, 0.072644, 0.072644, 0.072644]
+  MCSA:
+    Description: Surface area of master cylinder pistons [FR, RR]
     Type: float
-    Value: 0.072644
-
-  RLR:
-    Description: Planar distance from hub center to cetroid of brake caliper (m)
+    Unit: m^2
+    Value: [0.00015393517, 0.00015393517]
+  CSA:
+    Description: Surface area of caliper pistons [FL, FR, RL, RR]
     Type: float
-    Value: 0.072644
-
-  RRR:
-    Description: Planar distance from hub center to cetroid of brake caliper (m)
+    Unit: m^2
+    Value: [0.00181586733, 0.00181586733, 0.00181586733, 0.00181586733]
+  BMu:
+    Description: Average friction coefficient of brake pads [FL, FR, RL, RR]
     Type: float
-    Value: 0.072644
+    Unit: (-)
+    Value: [0.50, 0.50, 0.50, 0.50]
 
-  FrMCSA:
-    Description: Surface area of front master cylinder piston (m^2)
-    Type: float
-    Value: 0.00015393517
+# ### POWERTRAIN ###
+# Powertrain Properties:
+
+#   HVBV:
+#     Description: Nominal HV battery voltage (V)
+#     Type: float
+#     Value: 350
+
+#   LVP:
+#     Description: Average LV power draw (W)
+#     Type: float
+#     Value: 50
+
+#   ST:
+#     Description: Maximum torque output by motor (Nm)
+#     Type: float
+#     Value: 230
+
+#   # Adding separate input file for motor data sheet (torque vs speed, efficiency map, peak current draw, etc.)
+
+#   GR:
+#     Description: Gear ratio (-)
+#     Type: float
+#     Value: 3.38
   
-  RrMCSA:
-    Description: Surface area of rear master cylinder piston (m^2)
-    Type: float
-    Value: 0.00015393517
-
-  FLCSA:
-    Description: Surface area of front left caliper piston (m^2)
-    Type: float
-    Value: 0.00181586733
-
-  FRCSA:
-    Description: Surface area of front right caliper piston (m^2)
-    Type: float
-    Value: 0.00181586733
-
-  RLCSA:
-    Description: Surface area of rear left caliper piston (m^2)
-    Type: float
-    Value: 0.00181586733
-
-  RRCSA:
-    Description: Surface area of rear right caliper piston (m^2)
-    Type: float
-    Value: 0.00181586733
-
-  FLMu:
-    Description: Average friction coefficient of front left brake pad (-)
-    Type: float
-    Value: 0.50
-
-  FRMu:
-    Description: Average friction coefficient of front right brake pad (-)
-    Type: float
-    Value: 0.50
+#   PL:
+#     Description: Power limit (W)
+#     Type: float
+#     Value: 80000
   
-  RLMu:
-    Description: Average friction coefficient of rear left brake pad (-)
-    Type: float
-    Value: 0.50
-
-  RRMu:
-    Description: Average friction coefficient of rear right brake pad (-)
-    Type: float
-    Value: 0.50
-
-### POWERTRAIN ###
-Powertrain Properties:
-
-  HVBV:
-    Description: Nominal HV battery voltage (V)
-    Type: float
-    Value: 350
-
-  LVP:
-    Description: Average LV power draw (W)
-    Type: float
-    Value: 50
-
-  ST:
-    Description: Maximum torque output by motor (Nm)
-    Type: float
-    Value: 230
-
-  # Adding separate input file for motor data sheet (torque vs speed, efficiency map, peak current draw, etc.)
-
-  GR:
-    Description: Gear ratio (-)
-    Type: float
-    Value: 3.38
+#   DiffMB:
+#     Description: Differential mechanical bias (-)
+#     Type: float
+#     Value: 0.607
   
-  PL:
-    Description: Power limit (W)
-    Type: float
-    Value: 80000
+#   DiffPL:
+#     Description: Preload on differential (Nm)
+#     Type: float
+#     Value: 
 
-  DiffEff:
-    Description: Drivetrain efficiency (-)
-    Type: float
-    Value: 0.90
+#   DTEff:
+#     Description: Drivetrain efficiency (-)
+#     Type: float
+#     Value: 0.90
 
 ### AERODYNAMICS ###
 Aerodynamics Properties:
@@ -347,4 +231,3 @@ Aerodynamics Properties:
     Type: list[float]
     Value: [0.5, 0, 0]
 
-  
