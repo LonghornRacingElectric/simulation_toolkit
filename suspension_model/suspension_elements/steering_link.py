@@ -1,8 +1,6 @@
 from suspension_model.assets.misc_linalg import rotation_matrix
 from suspension_model.suspension_elements.link import Link
 from suspension_model.suspension_elements.node import Node
-from suspension_model.assets.misc_linalg import unit_vec
-from typing import Sequence
 import numpy as np
 
 

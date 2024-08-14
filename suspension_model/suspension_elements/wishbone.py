@@ -14,6 +14,12 @@ class Wishbone:
         self.direction = self.direction_vec
         self.angle = 0
 
+        self.elements = [self.fore_link, self.aft_link]
+
+    def plot_elements(self, plotter):
+        for element in self.elements:
+            element.plot_elements(plotter=plotter)
+
     def rotate(self, angle: float):
         self._set_initial_position()
         
@@ -28,6 +34,17 @@ class Wishbone:
         outboard_point = self.fore_link.outboard_node.position - self.fore_link.inboard_node.position
 
         self.fore_link.outboard_node.position = np.matmul(self.rot_mat, outboard_point) + self.fore_link.inboard_node.position
+
+    @property
+    def plane(self):
+        # General equation: a(x - x_{0}) + b(y - y_{0}) + c(z - z_{0}) = 0
+        PQ = self.fore_link.outboard_node.position - self.fore_link.inboard_node.position
+        PR = self.aft_link.outboard_node.position - self.aft_link.inboard_node.position
+
+        a, b, c = np.cross(PQ, PR)
+        x_0, y_0, z_0 = self.fore_link.outboard_node.position
+
+        return [a, b, c, x_0, y_0, z_0]
 
     @property
     def direction_vec(self):

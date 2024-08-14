@@ -1,4 +1,4 @@
-from suspension_model.double_wishbone import DoubleWishbone
+from suspension_model.suspension_elements.double_wishbone import DoubleWishbone
 import time as time
 import numpy as np
 
@@ -6,7 +6,7 @@ inboard_points = [[4.42593860, 10.00000000, 8.45324232],
                   [-5.12500000, 10.00000000, 7.25937500],
                   [4.42593860, 7.75000000, 2.89999228],
                   [-5.12500000, 7.75000000, 2.90000894],
-                  [2.25000000, 15, 4.13100000]]
+                  [2.25000000, 7.75000000, 4.13100000]]
 outboard_points = [[0.00000000, 22.85030209, 11.55504257],
                    [0.00000000, 22.85030209, 11.55504257], 
                    [0.00000000, 23.39566598, 4.20504257], 
@@ -27,13 +27,13 @@ corner = DoubleWishbone(
     tire_radius=tire_radius, 
     tire_width=tire_width)
 
-# corner.jounce(0)
+# corner.steer(1)
 
 # corner.plot_links()
 # corner.plot_cp()
 # corner.plot_tire()
 
-# corner.jounce(0)
+# corner.steer(0)
 
 # corner.plot_links()
 # corner.plot_cp()
@@ -42,20 +42,21 @@ corner = DoubleWishbone(
 # corner.jounce(2)
 # corner.plot_links()
 # corner.plot_cp()
-# corner.plot_tire()
+# corner.plot_tire()    
 
-frame_states = list(np.linspace(0, 3, 10)) + list(np.linspace(3, 0, 10)) + list(np.linspace(0, -3, 10)) + list(np.linspace(-3, 0, 10))
+# frame_states = list(np.linspace(0, 3, 10)) + list(np.linspace(3, 0, 10)) + list(np.linspace(0, -3, 10)) + list(np.linspace(-3, 0, 10))
+frame_states = list(np.linspace(0, 2, 10)) + list(np.linspace(2, 0, 10)) + list(np.linspace(0, -1, 10)) + list(np.linspace(-1, 0, 10))
 corner.start_gif()
 start = time.time()
 for i in frame_states:
-# for i in [0]:
+    corner.steer(i)
     corner.jounce(i)
-    # corner.plot_links()
-    # corner.plot_cp()
-    # corner.plot_tire()
-    # corner.add_frame()
+    corner.plot_links()
+    corner.plot_cp()
+    corner.plot_tire()
+    corner.add_frame()
 end = time.time()
-# corner.end_gif()
+corner.end_gif()
 
 print(end - start)
 
