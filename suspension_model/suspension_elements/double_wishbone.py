@@ -8,7 +8,6 @@ from suspension_model.suspension_elements.node import Node
 from suspension_model.assets.plotter import Plotter
 from scipy.optimize import fsolve
 from typing import Sequence
-from typing import Callable
 import numpy as np
 
 
@@ -80,44 +79,6 @@ class DoubleWishbone:
             self.elements = [self.upper_wishbone, self.lower_wishbone, self.kingpin, self.steering_link, self.tire]
         else:
             self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link]
-
-        # Calculate max travel
-        # self.travel_limits()
-
-    # def travel_limits(self):
-    #     jounce_sweep = np.linspace(0, 10, 100)
-    #     rebound_sweep = np.linspace(0, -10, 100)
-    #     positive_steer_sweep = np.linspace(0, 5, 100)
-    #     negative_steer_sweep = np.linspace(0, -5, 100)
-
-    #     self.max_jounce = self._travel_limit_helper(input_func=self.jounce, sweep=jounce_sweep, percent_err_tol=0.001)
-    #     self.max_rebound = self._travel_limit_helper(input_func=self.jounce, sweep=rebound_sweep, percent_err_tol=0.001)
-
-    #     max_steer = self._travel_limit_helper(input_func=self.steer, sweep=positive_steer_sweep, percent_err_tol=0.001)
-    #     min_steer = self._travel_limit_helper(input_func=self.steer, sweep=negative_steer_sweep, percent_err_tol=0.001)
-    #     print(max_steer)
-    #     print(min_steer)
-    #     self.max_steer = max(np.abs([min_steer, max_steer]))
-
-    #     print(self.max_jounce, self.max_rebound, self.max_steer)
-    
-    # def _travel_limit_helper(self, input_func: Callable, sweep: np.ndarray, percent_err_tol: float):
-    #     limit: float | None = None
-
-    #     run = True
-    #     while run:
-    #         for val in sweep:
-    #             input_func(val)
-
-    #             if (self.kingpin.length - self.kingpin.initial_length) / self.kingpin.initial_length > percent_err_tol:
-    #                 limit = val
-    #                 run = False
-    #                 break
-            
-    #         if limit == None:
-    #             percent_err_tol /= 10
-        
-    #     return limit
 
     def _fixed_unsprung_geom(self):
         # Distance constraints
@@ -258,6 +219,28 @@ class DoubleWishbone:
         z = soln[1][0]
 
         return [x, y, z]
+
+    @property
+    def caster(self):
+        return self.kingpin.normalized_transform()[1]
+
+    @property
+    def kpi(self):
+        return self.kingpin.normalized_transform()[0]
+
+    @property
+    def toe(self):
+        return self.tire.induced_steer * 180 / np.pi
+
+    @property
+    def inclination_angle(self):
+        vec_a = np.array(self.tire.direction)
+
+        gamma = (np.arccos(vec_a) * np.sign(self.tire.direction[1] * self.tire.direction[2]))[2] + np.pi / 2
+        if gamma > np.pi / 2:
+            gamma = abs(gamma - np.pi)
+
+        return gamma
     
     def plot_elements(self, plotter):
         for element in self.elements:
