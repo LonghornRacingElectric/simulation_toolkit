@@ -234,11 +234,10 @@ class DoubleWishbone:
 
     @property
     def inclination_angle(self):
+        # This only works because of the way I set up the direction vectors
+        # You'll likely run into sign issues if applying this elsewhere
         vec_a = np.array(self.tire.direction)
-
-        gamma = (np.arccos(vec_a) * np.sign(self.tire.direction[1] * self.tire.direction[2]))[2] + np.pi / 2
-        if gamma > np.pi / 2:
-            gamma = abs(gamma - np.pi)
+        gamma = np.arctan(vec_a[2] / (np.sqrt(vec_a[0]**2 + vec_a[1]**2)))
 
         return gamma
     
