@@ -3,6 +3,9 @@ from suspension_model.suspension_model import SuspensionModel
 import time as time
 import numpy as np
 
+# CG defn
+cg_location = [-40, 0, 11]
+
 # FL defn
 FL_inboard_points = [[4.42593860, 10.00000000, 8.45324232], 
                   [-5.12500000, 10.00000000, 7.25937500],
@@ -79,6 +82,7 @@ suspension_model = SuspensionModel(FL_inboard_points=FL_inboard_points,
                                    tire_radius=tire_radius,
                                    tire_width=tire_width,
 
+                                   cg_location=cg_location,
                                    show_ICs=False,
                                    
                                    plotter=plotter)
@@ -86,7 +90,7 @@ suspension_model = SuspensionModel(FL_inboard_points=FL_inboard_points,
 jounce_vals = list(np.linspace(0, 3, 10)) + list(np.linspace(3, 0, 10)) + list(np.linspace(0, -3, 10)) + list(np.linspace(-3, 0, 10))
 steer_vals = list(np.linspace(0, 1, 10)) + list(np.linspace(1, 0, 10)) + list(np.linspace(0, -1, 10)) + list(np.linspace(-1, 0, 10))
 
-suspension_model.plot_elements(plotter=plotter, verbose=False)
+suspension_model.plot_elements(plotter=plotter, verbose=True)
 
 # suspension_model.plot_links()
 # suspension_model.plot_cp()

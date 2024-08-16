@@ -1,6 +1,7 @@
-from suspension_model.suspension_elements.double_wishbone import DoubleWishbone
-from suspension_model.suspension_elements.link import Link
-from suspension_model.suspension_elements.node import Node
+from suspension_model.suspension_elements.tertiary_elements.double_wishbone import DoubleWishbone
+from suspension_model.suspension_elements.quinary_elements.full_suspension import FullSuspension
+from suspension_model.suspension_elements.quaternary_elements.axle import Axle
+from suspension_model.suspension_elements.secondary_elements.cg import CG
 from suspension_model.assets.plotter import Plotter
 from typing import Callable
 from typing import Sequence
@@ -39,6 +40,7 @@ class SuspensionModel:
             tire_radius: float,
             tire_width: float,
 
+            cg_location: Sequence[float],
             show_ICs: bool,
             
             plotter: pv.Plotter) -> None:
@@ -84,45 +86,32 @@ class SuspensionModel:
                                                                 tire_width=tire_width,
                                                                 show_ICs=show_ICs)
         
-        # Kin RC shit as a proof of concept
-        self.Fr_KinRC: Node = Node(position=self.calc_Fr_KinRC())
-        self.Rr_KinRC: Node = Node(position=self.calc_Rr_KinRC())
-        self.roll_axis: Link = Link(inboard=self.Fr_KinRC, outboard=self.Rr_KinRC)
-        
-        self.elements = [self.FL_double_wishbone, self.FR_double_wishbone, self.RL_double_wishbone, self.RR_double_wishbone]
-        self.hidden_elements = [self.Fr_KinRC, self.Rr_KinRC, self.roll_axis]
+        # Initialize each axle
+        self.Fr_axle: Axle = Axle(left_assy=self.FL_double_wishbone, right_assy=self.FR_double_wishbone)
+        self.Rr_axle: Axle = Axle(left_assy=self.RL_double_wishbone, right_assy=self.RR_double_wishbone)
 
-    def calc_Fr_KinRC(self):
-        return self.FL_double_wishbone.FVIC_link.yz_intersection(link=self.FR_double_wishbone.FVIC_link)
-    
-    def calc_Rr_KinRC(self):
-        return self.RL_double_wishbone.FVIC_link.yz_intersection(link=self.RR_double_wishbone.FVIC_link)
+        # CG location
+        self.cg: CG = CG(position=cg_location)
+        
+        # Initialize front and rear axles together
+        self.full_suspension: FullSuspension = FullSuspension(Fr_axle=self.Fr_axle, Rr_axle=self.Rr_axle, cg=self.cg)
+
+        # Elements for plotting
+        self.elements = [self.full_suspension]
     
     def steer(self, rack_displacement: float):
-        self.FL_double_wishbone.steer(rack_displacement)
-        self.FR_double_wishbone.steer(rack_displacement)
-        
-        self.Fr_KinRC.position = self.calc_Fr_KinRC()
-        self.Rr_KinRC.position = self.calc_Rr_KinRC()
+        self.Fr_axle.steer(rack_displacement=rack_displacement)
     
     def jounce(self, jounce: float):
-        self.FL_double_wishbone.jounce(jounce)
-        self.FR_double_wishbone.jounce(-1 * jounce)
-        self.RL_double_wishbone.jounce(jounce)
-        self.RR_double_wishbone.jounce(-1 * jounce)
-
-        self.Fr_KinRC.position = self.calc_Fr_KinRC()
-        self.Rr_KinRC.position = self.calc_Rr_KinRC()
+        self.Fr_axle.jounce(jounce=jounce)
+        self.Rr_axle.jounce(jounce=jounce)
 
     def plot_elements(self, plotter, verbose):
         self.verbose = verbose
         plotter.clear()
-        for corner in self.elements:
-            corner.plot_elements(plotter=plotter)
-        
-        if verbose:
-            for element in self.hidden_elements:
-                element.plot_elements(plotter=plotter)
+        plotter.add_ground(FL_cp=self.FL_double_wishbone.contact_patch, RL_cp=self.RL_double_wishbone.contact_patch, tire=self.FL_double_wishbone.tire)
+        for element in self.elements:
+            element.plot_elements(plotter=plotter, verbose=self.verbose)
 
     def add_slider(self, func: Callable, title: str, bounds: Tuple[float, float], pos: Tuple[Tuple[float, float], Tuple[float, float]]):
         self.plotter.add_slider(func, title, bounds, pos)

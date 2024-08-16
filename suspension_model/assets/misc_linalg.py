@@ -1,4 +1,4 @@
-from suspension_model.suspension_elements.node import Node
+from suspension_model.suspension_elements.primary_elements.node import Node
 import numpy as np
 
 

@@ -1,4 +1,4 @@
-from suspension_model.suspension_elements.node import Node
+from suspension_model.suspension_elements.primary_elements.node import Node
 from suspension_model.assets.misc_linalg import unit_vec
 from typing import Sequence
 import numpy as np

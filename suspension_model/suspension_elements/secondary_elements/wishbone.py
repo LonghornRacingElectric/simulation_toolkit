@@ -1,6 +1,6 @@
 from suspension_model.assets.misc_linalg import rotation_matrix
 from suspension_model.assets.misc_linalg import unit_vec
-from suspension_model.suspension_elements.link import Link
+from suspension_model.suspension_elements.primary_elements.link import Link
 from suspension_model.assets.plotter import Plotter
 import matplotlib.pyplot as plt
 import numpy as np

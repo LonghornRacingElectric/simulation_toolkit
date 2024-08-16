@@ -1,6 +1,6 @@
 from suspension_model.assets.misc_linalg import rotation_matrix
-from suspension_model.suspension_elements.kingpin import Kingpin
-from suspension_model.suspension_elements.node import Node
+from suspension_model.suspension_elements.secondary_elements.kingpin import Kingpin
+from suspension_model.suspension_elements.primary_elements.node import Node
 import numpy as np
 
 

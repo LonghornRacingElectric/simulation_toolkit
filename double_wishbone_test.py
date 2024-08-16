@@ -1,4 +1,4 @@
-from suspension_model.suspension_elements.double_wishbone import DoubleWishbone
+from suspension_model.suspension_elements.tertiary_elements.double_wishbone import DoubleWishbone
 import time as time
 import numpy as np
 
