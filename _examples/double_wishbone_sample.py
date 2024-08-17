@@ -31,7 +31,7 @@ corner = DoubleWishbone(
 
 plotter = Plotter()
 
-corner.steer(0)
-corner.jounce(0)
+corner.steer(steer=0)
+corner.jounce(jounce=0)
 corner.plot_elements(plotter=plotter)
 plotter.show()
