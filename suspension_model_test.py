@@ -1,5 +1,5 @@
-from suspension_model.assets.plotter import Plotter
-from suspension_model.suspension_model import SuspensionModel
+from vehicle_model.suspension_model.assets.plotter import Plotter
+from vehicle_model.suspension_model.suspension_model import SuspensionModel
 import time as time
 import numpy as np
 
@@ -18,15 +18,15 @@ FL_outboard_points = [[0.00000000, 22.85030209, 11.55504257],
                    [0.00000000, 23.39566598, 4.20504257],
                    [2.18237215, 22.75465155, 6.10552788]]
 FL_contact_patch = [0.00000000, 24.93900000, 0.00000000]
-FL_inclination_angle = 1 * np.pi / 180
-FL_toe = 0 * np.pi / 180
+FL_inclination_angle = 1
+FL_toe = 0
 
 # FR defn
 FR_inboard_points = [[p[0], -1 * p[1], p[2]] for p in FL_inboard_points]
 FR_outboard_points = [[p[0], -1 * p[1], p[2]] for p in FL_outboard_points]
 FR_contact_patch = [FL_contact_patch[0], -1 * FL_contact_patch[1], FL_contact_patch[2]]
-FR_inclination_angle = -1 * np.pi / 180
-FR_toe = 0 * np.pi / 180
+FR_inclination_angle = -1
+FR_toe = 0
 
 # RL defn
 RL_inboard_points = [[-55.875, 11.800, 8.580], 
@@ -40,15 +40,15 @@ RL_outboard_points = [[-61.131, 21.421, 11.653],
                    [-60.861, 22.846, 4.053],
                    [-57.502, 21.983, 8.077]]
 RL_contact_patch = [-61.000, 24.000, 0.000]
-RL_inclination_angle = 1 * np.pi / 180
-RL_toe = 0 * np.pi / 180
+RL_inclination_angle = 1
+RL_toe = 0
 
 # RR defn
 RR_inboard_points = [[p[0], -1 * p[1], p[2]] for p in RL_inboard_points]
 RR_outboard_points = [[p[0], -1 * p[1], p[2]] for p in RL_outboard_points]
 RR_contact_patch = [RL_contact_patch[0], -1 * RL_contact_patch[1], RL_contact_patch[2]]
-RR_inclination_angle = -1 * np.pi / 180
-RR_toe = 0 * np.pi / 180
+RR_inclination_angle = -1
+RR_toe = 0
 
 tire_radius = 8
 tire_width = 7

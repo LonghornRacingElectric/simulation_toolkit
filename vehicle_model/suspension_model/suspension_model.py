@@ -1,290 +1,389 @@
-import numpy
+from vehicle_model.suspension_model.suspension_elements.tertiary_elements.double_wishbone import DoubleWishbone
+from vehicle_model.suspension_model.suspension_elements.quinary_elements.full_suspension import FullSuspension
+from vehicle_model.suspension_model.suspension_elements.quaternary_elements.axle import Axle
+from vehicle_model.suspension_model.suspension_elements.secondary_elements.cg import CG
+from typing import Callable, Sequence, Tuple
+import pyvista as pv
 import numpy as np
-from numpy import ndarray
 
-# All coords with respect to SAE J670
+
 class SuspensionModel:
-    def __init__(self):
-        pass
+    """
+    ## Suspension Model
+
+    Designed to model kinematics and force-based properties
+
+    ###### Note, all conventions comply with SAE-J670 Z-up
+
+    Parameters
+    ----------
+    FL_inboard_points : Sequence[Sequence[float]]
+        Array containing all inboard coordinates of the front-left suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    FL_outboard_points : Sequence[Sequence[float]]
+        Array containing all outboard coordinates of the front-left suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    FL_contact_patch : Sequence[float]
+        Coordinates of the front-left contact patch
+    FL_inclination_angle : float
+        Inclination angle of the front-left tire in degrees
+    FL_toe : float
+        Static toe angle of the front-left tire in degrees
+        - Uses same sign convention as slip angle, NOT symmetric
+
+    ---
+
+    FR_inboard_points : Sequence[Sequence[float]]
+        Array containing all inboard coordinates of the front-right suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    FR_outboard_points : Sequence[Sequence[float]]
+        Array containing all outboard coordinates of the front-right suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    FR_contact_patch : Sequence[float]
+        Coordinates of the front-right contact patch
+    FR_inclination_angle : float
+        Inclination angle of the front-right tire in degrees
+    FR_toe : float
+        Static toe angle of the front-right tire in degrees
+        - Uses same sign convention as slip angle, NOT symmetric
     
-    def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_vector: StateVector,
-             state_dot_vector: StateDotVector, observables_vector: ObservablesVector) -> None:
+    ---
 
-        # Initialize heave, pitch, roll, long accel, lat accel, yaw accel, steered angle, body slip, velocity
-        chassis_heave = state_vector.heave
-        chassis_pitch = state_vector.pitch
-        chassis_roll = state_vector.roll
-        steered_angle = controls_vector.steering_angle
-        body_slip = state_vector.body_slip
-        velocity = state_vector.speed
+    RL_inboard_points : Sequence[Sequence[float]]
+        Array containing all inboard coordinates of the rear-left suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    RL_outboard_points : Sequence[Sequence[float]]
+        Array containing all outboard coordinates of the rear-left suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    RL_contact_patch : Sequence[float]
+        Coordinates of the rear-left contact patch
+    RL_inclination_angle : float
+        Inclination angle of the rear-left tire in degrees
+    RL_toe : float
+        Static toe angle of the rear-left tire in degrees
+        - Uses same sign convention as slip angle, NOT symmetric
+    
+    --- 
 
-        # Initialize additional slip angle params
-        toe_angles = vehicle_parameters.toe_angles
-        tire_positions = vehicle_parameters.tire_positions
+    RR_inboard_points : Sequence[Sequence[float]]
+        Array containing all inboard coordinates of the rear-right suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    RR_outboard_points : Sequence[Sequence[float]]
+        Array containing all outboard coordinates of the rear-right suspension assembly
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    RR_contact_patch : Sequence[float]
+        Coordinates of the rear-right contact patch
+    RR_inclination_angle : float
+        Inclination angle of the rear-right tire in degrees
+    RR_toe : float
+        Static toe angle of the rear-right tire in degrees
+        - Uses same sign convention as slip angle, NOT symmetric
+    
+    ---
 
-        # Secondary slip angle calculations
-        steered_angles = self._get_steered_angles(vehicle_parameters=vehicle_parameters,
-                                                  steered_angle=steered_angle)
-        adjusted_steering_angles = np.array(steered_angles) + np.array(toe_angles)
-        IMF_velocity = self._get_IMF_vel(velocity=velocity,
-                                         body_slip=body_slip)
+    tire_radius : float
+        Radius of tire
+        - Must use same units as suspension coordinates above
+    tire_width : float
+        Width of tire
+        - Must use same units as suspension coordinates above
+    cg_location : Sequence[float]
+        Coordinates of the center of gravity
+        - Must use same units as suspension coordinates above
+    show_ICs : bool
+        Toggle visibility of double wishbones vs swing arms
+    plotter : pv.Plotter
+        Plotting object
+        - Import using ```from vehicle_model.suspension_model.assets.plotter import Plotter```
+        - Define plotter object using ```plotter = Plotter()```
+    """
+    def __init__(
+            self,
 
-        if self.transient:
-            yaw_rate = state_vector.yaw_rate
-        else:
-            translational_accelerations_IMF = np.array([observables_vector.long_accel, observables_vector.lateral_accel, 0])
-            translational_accelerations_NTB = np.matmul(coords.rotation_z(body_slip), translational_accelerations_IMF)
-            yaw_rate = self._get_yaw_vel(lateral_accel=float(translational_accelerations_NTB[1]),
-                                         vehicle_velocity=IMF_velocity)
+            FL_inboard_points: Sequence[Sequence[float]],
+            FL_outboard_points: Sequence[Sequence[float]],
+            FL_contact_patch: Sequence[float],
+            FL_inclination_angle: float,
+            FL_toe: float,
 
-        # Initialize inclination angle params
-        static_IAs = vehicle_parameters.static_IAs
+            FR_inboard_points: Sequence[Sequence[float]],
+            FR_outboard_points: Sequence[Sequence[float]],
+            FR_contact_patch: Sequence[float],
+            FR_inclination_angle: float,
+            FR_toe: float,
 
-        FL_IA_gain = vehicle_parameters.FL_IA_gain
-        FR_IA_gain = vehicle_parameters.FR_IA_gain
-        RL_IA_gain = vehicle_parameters.RL_IA_gain
-        RR_IA_gain = vehicle_parameters.RR_IA_gain
+            RL_inboard_points: Sequence[Sequence[float]],
+            RL_outboard_points: Sequence[Sequence[float]],
+            RL_contact_patch: Sequence[float],
+            RL_inclination_angle: float,
+            RL_toe: float,
 
-        IA_response_surfaces = [FL_IA_gain, FR_IA_gain, RL_IA_gain, RR_IA_gain]
+            RR_inboard_points: Sequence[Sequence[float]],
+            RR_outboard_points: Sequence[Sequence[float]],
+            RR_contact_patch: Sequence[float],
+            RR_inclination_angle: float,
+            RR_toe: float,
 
-        # Calculate normal loads, slip angles, and inclination angles for each tire [Fl, FR, RL, RR]
-        normal_loads = self._get_FZ_decoupled(vehicle_parameters=vehicle_parameters,
-                                              heave=chassis_heave,
-                                              pitch=chassis_pitch,
-                                              roll=chassis_roll)
+            tire_radius: float,
+            tire_width: float,
 
-        slip_angles, tire_IMF_velocities = self._get_SA(vehicle_velocity=IMF_velocity,
-                                                        steering_angles=steered_angles,
-                                                        toe_angles=toe_angles,
-                                                        tire_position=tire_positions,
-                                                        yaw_rate=yaw_rate)
+            cg_location: Sequence[float],
+            show_ICs: bool,
+            
+            plotter: pv.Plotter) -> None:
+        
+        # Initialize plotter
+        self.plotter = plotter
+        self.verbose: bool = False
 
-        slip_ratios = state_vector.wheel_slip_ratios
+        # Initialize each corner assembly
+        self.FL_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=FL_inboard_points,
+                                                                outboard_points=FL_outboard_points,
+                                                                contact_patch=FL_contact_patch,
+                                                                inclination_angle=FL_inclination_angle * np.pi / 180,
+                                                                toe=FL_toe * np.pi / 180,
+                                                                tire_radius=tire_radius,
+                                                                tire_width=tire_width,
+                                                                show_ICs=show_ICs)
+            
+        self.FR_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=FR_inboard_points,
+                                                                outboard_points=FR_outboard_points,
+                                                                contact_patch=FR_contact_patch,
+                                                                inclination_angle=FR_inclination_angle * np.pi / 180,
+                                                                toe=FR_toe * np.pi / 180,
+                                                                tire_radius=tire_radius,
+                                                                tire_width=tire_width,
+                                                                show_ICs=show_ICs)
+            
+        self.RL_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=RL_inboard_points,
+                                                                outboard_points=RL_outboard_points,
+                                                                contact_patch=RL_contact_patch,
+                                                                inclination_angle=RL_inclination_angle * np.pi / 180,
+                                                                toe=RL_toe * np.pi / 180,
+                                                                tire_radius=tire_radius,
+                                                                tire_width=tire_width,
+                                                                show_ICs=show_ICs)
+            
+        self.RR_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=RR_inboard_points,
+                                                                outboard_points=RR_outboard_points,
+                                                                contact_patch=RR_contact_patch,
+                                                                inclination_angle=RR_inclination_angle * np.pi / 180,
+                                                                toe=RR_toe * np.pi / 180,
+                                                                tire_radius=tire_radius,
+                                                                tire_width=tire_width,
+                                                                show_ICs=show_ICs)
+        
+        # CG location
+        self.cg: CG = CG(position=cg_location)
 
-        inclination_angles = self._get_IA(vehicle_parameters=vehicle_parameters,
-                                          IA_response=IA_response_surfaces,
-                                          adj_steering=steered_angles,
-                                          heave=chassis_heave,
-                                          pitch=chassis_pitch,
-                                          roll=chassis_roll,
-                                          static_IA=static_IAs)
+        # Initialize each axle
+        self.Fr_axle: Axle = Axle(left_assy=self.FL_double_wishbone, right_assy=self.FR_double_wishbone, cg=self.cg)
+        self.Rr_axle: Axle = Axle(left_assy=self.RL_double_wishbone, right_assy=self.RR_double_wishbone, cg=self.cg)
+        
+        # Initialize front and rear axles together
+        self.full_suspension: FullSuspension = FullSuspension(Fr_axle=self.Fr_axle, Rr_axle=self.Rr_axle, cg=self.cg)
 
-        # Initialize tire coefficients
-        front_FY_coeffs = vehicle_parameters.front_tire_coeff_Fy
-        front_FX_coeffs = vehicle_parameters.front_tire_coeff_Fx
-        rear_FY_coeffs = vehicle_parameters.rear_tire_coeff_Fy
-        rear_FX_coeffs = vehicle_parameters.rear_tire_coeff_Fx
+        # Elements for plotting
+        self.elements = [self.full_suspension]
+    
+    def steer(self, rack_displacement: float) -> None:
+        """
+        ## Steer
 
-        coeff_array = [(front_FX_coeffs, front_FY_coeffs), (front_FX_coeffs, front_FY_coeffs),
-                       (rear_FX_coeffs, rear_FY_coeffs), (rear_FX_coeffs, rear_FY_coeffs)]
+        Steer front suspension axle (capable of supporting rear steer as well)
 
-        # Set tire coefficients
-        for i in range(len(coeff_array)):
-            self.tires[i].long_coeffs = coeff_array[i][0]
-            self.tires[i].lat_coeffs = coeff_array[i][1]
+        Parameters
+        ----------
+        rack_displacement : float
+            Lateral translation of steering rack
+            - Must use same units as suspension coordinates
 
-        # Get tire output
-        tire_outputs = []
-        tire_torques = [0, 0, 0, 0]
-        for i in range(len(self.tires)):
-            # Calculate tire rotational velocities
-            tire_heading_vector = np.array(
-                [np.cos(adjusted_steering_angles[i]), np.sin(adjusted_steering_angles[i]), 0])
-            tire_heading_unit_vector = tire_heading_vector / np.linalg.norm(tire_heading_vector)
-            tire_heading_velocity = np.dot(tire_IMF_velocities[i], tire_heading_unit_vector)
-            # wheel_speed = (slip_ratios[i] + 1) * tire_heading_velocity / vehicle_parameters.tire_radii[i]
+        Returns
+        ----------
+        None
+        """
+        self.full_suspension.steer(rack_displacement=rack_displacement)
+    
+    def heave(self, heave: float) -> None:
+        """
+        ## Heave
 
-            max_force = None
+        Heave front and rear suspension axles
 
-            if self.transient:
-                if state_vector.wheel_angular_velocities[i] == 0:
-                    max_force = state_dot_vector.powertrain_torques[i] / vehicle_parameters.tire_radii[i]
-                if tire_heading_velocity < 0.1:
-                    slip_angles[i] = 0
+        Parameters
+        ----------
+        heave : float
+            Vertical translation of sprung mass
+            - Must use same units as suspension coordinates above
+            - Down is positive
 
-            tire_forces = self.tires[i].get_comstock_forces(SR=slip_ratios[i],
-                                                            SA=slip_angles[i],
-                                                            FZ=normal_loads[i],
-                                                            IA=inclination_angles[i],
-                                                            max_force=max_force)
-            try:
-                tire_outputs.append([round(x) for x in tire_forces])
-            except:
-                break
+        Returns
+        ----------
+        None
+        """
+        self.full_suspension.heave(heave=heave)
+    
+    def pitch(self, pitch: float) -> None:
+        """
+        ## Pitch
 
-            # Rotate tire forces to correspond with true steered angle (now in terms of force on the vehicle)
-            vehicle_centric_forces = np.matmul(coords.rotation_z(adjusted_steering_angles[i]), tire_forces)
+        Pitch front and rear suspension axles
 
-            # Calculate vehicle moments due to tire forces
-            vehicle_centric_moments = np.cross(tire_positions[i], vehicle_centric_forces)
+        Parameters
+        ----------
+        pitch : float
+            Vehicle pitch in degrees
+        
+        Returns
+        ----------
+        None
+        """
+        self.full_suspension.pitch(angle=pitch * np.pi / 180)
+    
+    def roll(self, roll: float) -> None:
+        """
+        ## Roll
 
-            # Calculate tire torques
-            tire_torque = vehicle_centric_forces[0] * vehicle_parameters.tire_radii[i]
+        Roll front and rear suspension axles
 
-            tire_torques[i] = tire_torque
+        Parameters
+        ----------
+        roll : float
+            Vehicle roll in degrees
+        
+        Returns
+        ----------
+        None
+        """
+        self.full_suspension.roll(angle=roll * np.pi / 180)
 
-            # Log force and moment calculations from above
-            observables_vector.tire_heading_velocities[i] = tire_heading_velocity
-            observables_vector.tire_forces_IMF[i] = vehicle_centric_forces
-            observables_vector.tire_moments_IMF[i] = vehicle_centric_moments
-            # observables_vector.wheel_angular_velocities[i] = wheel_speed
+    def plot_elements(self, plotter: pv.Plotter, verbose: bool = False, show_grid: bool = False) -> None:
+        """
+        ## Plot Elements
 
-        # Log additional desired parameters
-        observables_vector.average_steered_angle = (steered_angles[0] + steered_angles[1]) / 2
-        observables_vector.normal_loads = normal_loads
-        observables_vector.slip_angles = slip_angles
-        observables_vector.inclination_angles = inclination_angles
-        observables_vector.tire_model_force_outputs = tire_outputs
+        Plots all children of full suspension model
 
-        # sum forces & moments
-        state_dot_vector.sus_forces = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_forces_IMF)])
-        state_dot_vector.sus_moments = np.array([x + y + z + w for x, y, z, w in zip(*observables_vector.tire_moments_IMF)])
-        state_dot_vector.tire_torques = tire_torques
+        Parameters
+        ----------
+        plotter : py.Plotter
+            Plotting object
+        verbose : bool, optional
+            Toggles visibility of roll/pitch center and cg, by default False
+        show_grid : bool, optional
+            Toggles grid visibility, by default False
+        
+        Returns
+        ----------
+        None
+        """
+        self.verbose = verbose
+        plotter.clear()
 
-        # print()
-        # for i in range(4):
-        #     print(f"tire {i} F", observables_vector.tire_forces_IMF[i])
-        #     print(f"tire {i} M", observables_vector.tire_moments_IMF[i])
-        # print()
-        # print("SR", slip_ratios)
-        # print("SA", slip_angles)
-        # print("FX", state_dot_vector.sus_forces[0])
-        # print("FY", state_dot_vector.sus_forces[1])
-        # print()
+        if show_grid:
+            plotter.show_grid()
 
-    def _get_FZ_decoupled(self, vehicle_parameters: Car, heave: float, pitch: float, roll: float) -> list[float]:
+        plotter.add_ground(FL_cp=self.FL_double_wishbone.contact_patch, RL_cp=self.RL_double_wishbone.contact_patch, tire=self.FL_double_wishbone.tire)
+        for element in self.elements:
+            element.plot_elements(plotter=plotter, verbose=self.verbose)
 
-        # Heave contribution
-        F_heave_rate_spring = vehicle_parameters.front_heave_springrate / vehicle_parameters.front_heave_MR ** 2
-        F_heave_rate_tire = vehicle_parameters.front_tire_vertical_rate
-        F_heave_rate = F_heave_rate_spring * (2 * F_heave_rate_tire) / (F_heave_rate_spring + (2 * F_heave_rate_tire))
+    def add_slider(self, func: Callable, title: str, bounds: Tuple[float, float], pos: Tuple[Tuple[float, float], Tuple[float, float]]) -> None:
+        """
+        ## Add Slider
 
-        R_heave_rate_spring = vehicle_parameters.rear_heave_springrate / vehicle_parameters.rear_heave_MR ** 2
-        R_heave_rate_tire = vehicle_parameters.rear_tire_vertical_rate
-        R_heave_rate = R_heave_rate_spring * (2 * R_heave_rate_tire) / (R_heave_rate_spring + (2 * R_heave_rate_tire))
+        Adds slider to Plotter window
 
-        front_heave = heave
-        rear_heave = heave
+        Parameters
+        ----------
+        func : Callable
+            Function to execute slider values on
+        title : str
+            Title of slider
+        bounds : Tuple[float, float]
+            Limits of slider value
+        pos : Tuple[Tuple[float, float], Tuple[float, float]]
+            Position of slider (origin at lower left corner of window)
+            - Start coordinate [Ratio X, Ratio Y]
+            - End Coordinate [Ratio X, Ratio Y]
+            - Max coordinate: [1, 1]
+            - Min coordinate: [0, 0]
+        
+        Returns
+        ----------
+        None
+        """
+        self.plotter.add_slider(func, title, bounds, pos)
 
-        # Pitch contribution
-        front_track_to_CG = vehicle_parameters.wheelbase * vehicle_parameters.cg_bias
-        rear_track_to_CG = vehicle_parameters.wheelbase * (1 - vehicle_parameters.cg_bias)
+    def steer_slider(self, steer: float) -> None:
+        """
+        ## Steer Slider
 
-        front_pitch_displacement = front_track_to_CG * np.tan(abs(pitch)) * (1 if pitch > 0 else -1)
-        rear_pitch_displacement = rear_track_to_CG * np.tan(abs(pitch)) * (1 if pitch < 0 else -1)
+        Steer slider function call
 
-        F_adjusted_heave = front_heave + front_pitch_displacement
-        R_adjusted_heave = rear_heave + rear_pitch_displacement
+        Parameters
+        ----------
+        steer : float
+            Rack displacement
+            - Must use same units as suspension coordinates above
 
-        F_force_heave = (F_heave_rate * F_adjusted_heave) / (1 - vehicle_parameters.front_anti)
-        R_force_heave = (R_heave_rate * R_adjusted_heave) / (1 - vehicle_parameters.rear_anti)
+        Returns
+        ----------
+        None
+        """
+        self.steer(rack_displacement=steer)
+        self.plot_elements(plotter=self.plotter, verbose=self.verbose)
+    
+    def heave_slider(self, heave: float) -> None:
+        """
+        ## Heave Slider
 
-        # Roll contribution
-        F_roll_rate_spring = 1 / 2 * vehicle_parameters.front_track ** 2 * (
-                (vehicle_parameters.front_roll_springrate / vehicle_parameters.front_roll_MR ** 2) / 2)
-        F_roll_rate_tire = 1 / 2 * vehicle_parameters.front_track ** 2 * vehicle_parameters.front_tire_vertical_rate
-        F_roll_rate = F_roll_rate_spring * F_roll_rate_tire / (F_roll_rate_spring + F_roll_rate_tire)
+        Heave slider function call
 
-        R_roll_rate_spring = 1 / 2 * vehicle_parameters.rear_track ** 2 * (
-                (vehicle_parameters.rear_roll_springrate / vehicle_parameters.rear_roll_MR ** 2) / 2)
-        R_roll_rate_tire = 1 / 2 * vehicle_parameters.rear_track ** 2 * vehicle_parameters.rear_tire_vertical_rate
-        R_roll_rate = R_roll_rate_spring * R_roll_rate_tire / (R_roll_rate_spring + R_roll_rate_tire)
+        Parameters
+        ----------
+        heave : float
+            Vertical translation of sprung mass
+            - Must use same units as suspension coordinates above
+            - Down is positive
 
-        # roll_moment = tire_force * track_width -> tire_force = roll_moment / track_width
-        F_roll_moment = F_roll_rate * abs(roll)
-        R_roll_moment = R_roll_rate * abs(roll)
+        Returns
+        ----------
+        None
+        """
+        self.heave(heave=heave)
+        self.plot_elements(plotter=self.plotter, verbose=self.verbose)
 
-        F_roll_tire_force = F_roll_moment / vehicle_parameters.front_track
-        R_roll_tire_force = R_roll_moment / vehicle_parameters.rear_track
+    def pitch_slider(self, pitch: float) -> None:
+        """
+        ## Pitch Slider
 
-        # Load transfers
-        FL_delta = F_roll_tire_force * (1 if roll < 0 else -1) + F_force_heave / 2
-        FR_delta = F_roll_tire_force * (1 if roll > 0 else -1) + F_force_heave / 2
-        RL_delta = R_roll_tire_force * (1 if roll < 0 else -1) + R_force_heave / 2
-        RR_delta = R_roll_tire_force * (1 if roll > 0 else -1) + R_force_heave / 2
+        Pitch slider function call
 
-        # Static weights
-        FL_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * (
-                1 - vehicle_parameters.cg_bias) / 2
-        FR_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * (
-                1 - vehicle_parameters.cg_bias) / 2
-        RL_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * vehicle_parameters.cg_bias / 2
-        RR_static = vehicle_parameters.total_mass * vehicle_parameters.accel_gravity * vehicle_parameters.cg_bias / 2
+        Parameters
+        ----------
+        pitch : float
+            Vehicle pitch in degrees
 
-        FL = FL_static + FL_delta
-        FR = FR_static + FR_delta
-        RL = RL_static + RL_delta
-        RR = RR_static + RR_delta
+        Returns
+        ----------
+        None
+        """
+        self.pitch(pitch=pitch)
+        self.plot_elements(plotter=self.plotter, verbose=self.verbose)
 
-        adjusted_FZ = [0 if x < 0 else x for x in [FL, FR, RL, RR]]
+    def roll_slider(self, roll: float) -> None:
+        """
+        ## Roll Slider
 
-        return adjusted_FZ
+        Roll slider function call
 
-    def _get_FZ_coupled(self, heave: float, pitch: float, roll: float) -> list[float]:
-        return []
+        Parameters
+        ----------
+        roll : float
+            Vehicle roll in degrees
 
-    def _get_steered_angles(self, vehicle_parameters: Car, steered_angle: float) -> list[float]:
-        inner_angle_response = vehicle_parameters.FI_steering_response
-        outer_angle_response = vehicle_parameters.FO_steering_response
-
-        inner_angle = inner_angle_response(abs(steered_angle))
-        outer_angle = outer_angle_response(abs(steered_angle))
-
-        if steered_angle > 0:
-            return [inner_angle, outer_angle, 0, 0]
-        else:
-            return [-outer_angle, -inner_angle, 0, 0]
-
-    def _get_SA(self, vehicle_velocity: ndarray[float], steering_angles: list[float], toe_angles: list[float],
-                tire_position: list[float], yaw_rate: float) -> list[list[float]]:
-
-        tire_IMF_velocities = []
-        for i in range(len(tire_position)):
-            tire_velocity_IMF = vehicle_velocity + np.cross(np.array([0, 0, yaw_rate]), np.array(tire_position[i]))
-            tire_IMF_velocities.append(tire_velocity_IMF)
-
-        slip_angles = []
-        for i in range(len(steering_angles)):
-            slip_angle = (steering_angles[i] + toe_angles[i]) - np.arctan2(tire_IMF_velocities[i][1],
-                                                                           tire_IMF_velocities[i][0])
-            slip_angles.append(slip_angle)
-
-        return [slip_angles, tire_IMF_velocities]
-
-    def _get_IA(self, vehicle_parameters: Car, IA_response: list[Callable], adj_steering: list[float], heave: float,
-                pitch: float, roll: float, static_IA: list[float]) -> list[float]:
-
-        front_track_to_CG = vehicle_parameters.wheelbase * vehicle_parameters.cg_bias
-        rear_track_to_CG = vehicle_parameters.wheelbase * (1 - vehicle_parameters.cg_bias)
-
-        front_pitch_displacement = front_track_to_CG * np.tan(abs(pitch))
-        rear_pitch_displacement = rear_track_to_CG * np.tan(abs(pitch))
-
-        F_heave = heave + front_pitch_displacement
-        R_heave = heave + rear_pitch_displacement
-
-        heave_lst = [F_heave, F_heave, R_heave, R_heave]
-
-        adjusted_IA = []
-        for i in range(len(static_IA)):
-            IA_gain = IA_response[i](heave_lst[i], roll)
-            adjusted_IA.append(static_IA[i] + IA_gain)
-
-        return adjusted_IA
-
-    def _get_yaw_vel(self, lateral_accel: float, vehicle_velocity: ndarray[float]) -> float:
-        # a_c = v^2 / r
-        # omega = v / r -> r = v / omega
-        # a_c = omega * v -> omega = a_c / v
-        # omega = a_c / v
-        if lateral_accel == 0:
-            yaw_vel = 0
-
-        else:
-            yaw_vel = lateral_accel / np.linalg.norm(vehicle_velocity)
-
-        return yaw_vel
-
-    def _get_IMF_vel(self, velocity: float, body_slip: float) -> ndarray[float]:
-        IMF_velocity = velocity * np.array([np.cos(body_slip), np.sin(body_slip), 0])
-        return IMF_velocity
+        Returns
+        ----------
+        None
+        """
+        self.roll(roll=roll)
+        self.plot_elements(plotter=self.plotter, verbose=self.verbose)
