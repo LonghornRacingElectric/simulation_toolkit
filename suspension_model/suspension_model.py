@@ -7,6 +7,8 @@ from typing import Callable
 from typing import Sequence
 from typing import Tuple
 import pyvista as pv
+import numpy as np
+import time
 
 
 class SuspensionModel:
@@ -86,12 +88,12 @@ class SuspensionModel:
                                                                 tire_width=tire_width,
                                                                 show_ICs=show_ICs)
         
-        # Initialize each axle
-        self.Fr_axle: Axle = Axle(left_assy=self.FL_double_wishbone, right_assy=self.FR_double_wishbone)
-        self.Rr_axle: Axle = Axle(left_assy=self.RL_double_wishbone, right_assy=self.RR_double_wishbone)
-
         # CG location
         self.cg: CG = CG(position=cg_location)
+
+        # Initialize each axle
+        self.Fr_axle: Axle = Axle(left_assy=self.FL_double_wishbone, right_assy=self.FR_double_wishbone, cg=self.cg)
+        self.Rr_axle: Axle = Axle(left_assy=self.RL_double_wishbone, right_assy=self.RR_double_wishbone, cg=self.cg)
         
         # Initialize front and rear axles together
         self.full_suspension: FullSuspension = FullSuspension(Fr_axle=self.Fr_axle, Rr_axle=self.Rr_axle, cg=self.cg)
@@ -103,8 +105,16 @@ class SuspensionModel:
         self.Fr_axle.steer(rack_displacement=rack_displacement)
     
     def jounce(self, jounce: float):
-        self.Fr_axle.jounce(jounce=jounce)
-        self.Rr_axle.jounce(jounce=jounce)
+        self.Fr_axle.axle_jounce(jounce=jounce)
+        self.Rr_axle.axle_jounce(jounce=jounce)
+    
+    def roll(self, roll: float):
+        start = time.time()
+        self.Fr_axle.roll(angle=roll)
+        self.Rr_axle.roll(angle=roll)
+        end = time.time()
+
+        print(end - start)
 
     def plot_elements(self, plotter, verbose):
         self.verbose = verbose
@@ -122,4 +132,8 @@ class SuspensionModel:
 
     def jounce_slider(self, jounce: float):
         self.jounce(jounce=jounce)
+        self.plot_elements(plotter=self.plotter, verbose=self.verbose)
+
+    def roll_slider(self, roll: float):
+        self.roll(roll=roll * np.pi / 180)
         self.plot_elements(plotter=self.plotter, verbose=self.verbose)
