@@ -1,10 +1,10 @@
 from suspension_model.suspension_elements.secondary_elements.steering_link import SteeringLink
 from suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
-from suspension_model.assets.misc_linalg import rotation_matrix
 from suspension_model.suspension_elements.secondary_elements.kingpin import Kingpin
-from suspension_model.suspension_elements.primary_elements.link import Link
 from suspension_model.suspension_elements.tertiary_elements.tire import Tire
+from suspension_model.suspension_elements.primary_elements.link import Link
 from suspension_model.suspension_elements.primary_elements.node import Node
+from suspension_model.assets.misc_linalg import rotation_matrix
 from suspension_model.assets.plotter import Plotter
 from scipy.optimize import fsolve
 from typing import Sequence
@@ -85,6 +85,12 @@ class DoubleWishbone:
             self.elements = [self.upper_wishbone, self.lower_wishbone, self.kingpin, self.steering_link, self.tire]
         else:
             self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link]
+        
+        if max(np.abs(self.SVIC.position)) < 1000:
+            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.steering_link, self.tire, self.FVIC, self.SVIC]
+        else:
+            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.steering_link, self.tire, self.FVIC]
+        # self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.steering_link, self.tire]
 
     def _fixed_unsprung_geom(self):
         # Distance constraints
@@ -190,6 +196,14 @@ class DoubleWishbone:
         self.tire.induced_steer = angle[0] + self.induced_steer
 
         self.steered_angle = steer
+    
+    def translate(self, translation: Sequence[float]):
+        for element in self.all_elements:
+            element.translate(translation=translation)
+    
+    def flatten_rotate(self, angle: Sequence[float]):
+        for element in self.all_elements:
+            element.flatten_rotate(angle=angle)
     
     @property
     def FVIC_position(self):

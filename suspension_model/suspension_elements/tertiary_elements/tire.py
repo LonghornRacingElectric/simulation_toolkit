@@ -1,6 +1,7 @@
 from suspension_model.assets.misc_linalg import rotation_matrix
 from suspension_model.suspension_elements.secondary_elements.kingpin import Kingpin
 from suspension_model.suspension_elements.primary_elements.node import Node
+from typing import Sequence
 import numpy as np
 
 
@@ -52,6 +53,15 @@ class Tire:
         self.tire_direction = np.matmul(y_rot, np.matmul(x_rot, self.initial_direction))
 
         self.elements = [self.cp]
+        self.all_elements = [self.cp]
+    
+    def translate(self, translation: Sequence[float]):
+        for element in self.all_elements:
+            element.translate(translation=translation)
+    
+    def flatten_rotate(self, angle: Sequence[float]):
+        for element in self.all_elements:
+            element.flatten_rotate(angle=angle)
     
     def plot_elements(self, plotter):
         plotter.add_tire(center=self.center, direction=self.direction, radius=self.radius, height=self.height)

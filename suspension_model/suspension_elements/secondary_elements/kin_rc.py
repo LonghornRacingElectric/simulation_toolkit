@@ -1,7 +1,7 @@
 from suspension_model.suspension_elements.primary_elements.link import Link
 from suspension_model.suspension_elements.primary_elements.node import Node
 from suspension_model.suspension_elements.secondary_elements.cg import CG
-import numpy as np
+from typing import Sequence
 
 
 class KinRC:
@@ -16,7 +16,10 @@ class KinRC:
 
         self.cg_axis_KinRC = Node(position=self.cg_axis_KinRC_pos)
         
-        self.elements = [self.true_KinRC, self.cg_axis_KinRC]
+        # self.elements = [self.true_KinRC, self.cg_axis_KinRC]
+        self.elements = [self.true_KinRC]
+        # self.all_elements = [self.true_KinRC, self.cg_axis_KinRC]
+        self.all_elements = [self.true_KinRC]
 
     def update(self):
         self.true_KinRC.position = self.true_KinRC_pos
@@ -31,6 +34,14 @@ class KinRC:
     @property
     def true_KinRC_pos(self):
         return self.left_swing_arm.yz_intersection(link=self.right_swing_arm)
+    
+    def translate(self, translation: Sequence[float]):
+        for element in self.all_elements:
+            element.translate(translation=translation)
+    
+    def flatten_rotate(self, angle: Sequence[float]):
+        for element in self.all_elements:
+            element.flatten_rotate(angle=angle)
 
     def plot_elements(self, plotter):
         for element in self.elements:

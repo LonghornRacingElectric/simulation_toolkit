@@ -55,6 +55,9 @@ class Plotter:
     def end_gif(self):
         self.pl.close()
 
+    def show_grid(self):
+        self.pl.show_grid()
+
     def show(self):
         self.pl.show_axes()
         self.pl.show()

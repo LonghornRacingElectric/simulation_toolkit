@@ -11,6 +11,7 @@ class Link:
         self.outboard_node: Node = outboard
 
         self.elements = [self.inboard_node, self.outboard_node]
+        self.all_elements = [self.inboard_node, self.outboard_node]
         self.plotted = False
 
     def normalized_transform(self) -> Sequence[float]:
@@ -21,7 +22,7 @@ class Link:
         return [ang_x, ang_y]
 
     def plot_elements(self, plotter):
-        if 1e9 not in np.abs(self.inboard_node.position):
+        if max(np.abs(self.inboard_node.position)) < 100:
             plotter.add_link(center=self.center, direction=self.direction, radius=self.radius, height=self.height)
         else:
             plotter.add_link(center=self.center, direction=self.direction, radius=self.radius, height=10, color="blue")
@@ -57,6 +58,43 @@ class Link:
         x = np.average([l_1o[0], l_2o[0]])
 
         return np.array([x, y[0], z[0]])
+
+    def xz_intersection(self, link: "Link"):
+        l_1i = self.inboard_node.position
+        l_1o = self.outboard_node.position
+        m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0])
+        x_1, z_1 = l_1o[0], l_1o[2]
+
+        l_2i = link.inboard_node.position
+        l_2o = link.outboard_node.position
+        m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0])
+        x_2, z_2 = l_2o[0], l_2o[2]
+
+        a = np.array([
+            [-1 * m_1, 1],
+            [-1 * m_2, 1]
+        ])
+
+        b = np.array([
+            [-1 * m_1 * x_1 + z_1],
+            [-1 * m_2 * x_2 + z_2]
+        ])
+
+        x, z = np.linalg.solve(a=a, b=b)
+
+        # Calculate y-value
+        # I'll average between front and rear halves for KinRC
+        y = np.average([l_1o[1], l_2o[1]])
+
+        return np.array([x[0], y, z[0]])
+
+    def translate(self, translation: Sequence[float]):
+        for element in self.all_elements:
+            element.translate(translation=translation)
+
+    def flatten_rotate(self, angle: Sequence[float]):
+        for element in self.all_elements:
+            element.flatten_rotate(angle=angle)
     
     @property
     def direction(self) -> np.ndarray:

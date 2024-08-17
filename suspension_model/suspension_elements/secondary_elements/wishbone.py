@@ -2,7 +2,7 @@ from suspension_model.assets.misc_linalg import rotation_matrix
 from suspension_model.assets.misc_linalg import unit_vec
 from suspension_model.suspension_elements.primary_elements.link import Link
 from suspension_model.assets.plotter import Plotter
-import matplotlib.pyplot as plt
+from typing import Sequence
 import numpy as np
 
 
@@ -15,6 +15,7 @@ class Wishbone:
         self.angle = 0
 
         self.elements = [self.fore_link, self.aft_link]
+        self.all_elements = [self.fore_link.inboard_node, self.fore_link.outboard_node, self.aft_link.inboard_node]
 
     def plot_elements(self, plotter):
         for element in self.elements:
@@ -29,11 +30,19 @@ class Wishbone:
 
         self.angle = angle
     
+    def flatten_rotate(self, angle: Sequence[float]):
+        for element in self.all_elements:
+            element.flatten_rotate(angle=angle)
+    
     def _set_initial_position(self):
         self.rot_mat = rotation_matrix(self.direction, -1 * self.angle)
         outboard_point = self.fore_link.outboard_node.position - self.fore_link.inboard_node.position
 
         self.fore_link.outboard_node.position = np.matmul(self.rot_mat, outboard_point) + self.fore_link.inboard_node.position
+    
+    def translate(self, translation: Sequence[float]):
+        for element in self.all_elements:
+            element.translate(translation=translation)
 
     @property
     def plane(self):

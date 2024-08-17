@@ -1,8 +1,8 @@
 from suspension_model.suspension_elements.tertiary_elements.double_wishbone import DoubleWishbone
 from suspension_model.suspension_elements.secondary_elements.kin_rc import KinRC
 from suspension_model.suspension_elements.secondary_elements.cg import CG
-from suspension_model.assets.misc_linalg import rotation_matrix
 from scipy.optimize import fsolve
+from typing import Sequence
 import numpy as np
 
 
@@ -15,10 +15,9 @@ class Axle:
         self.kin_RC: KinRC = KinRC(left_swing_arm=self.left.FVIC_link, right_swing_arm=self.right.FVIC_link, cg=self.cg)
 
         self.elements = [self.left, self.right]
-    
-    def roll(self, angle: float):
-        # self.reset_roll()
+        self.all_elements = [self.left, self.right, self.kin_RC]
 
+    def roll(self, angle: float):
         if angle == 0:
             return
         
@@ -39,10 +38,12 @@ class Axle:
         self.left.jounce(roll_jounce=-1 * jounce_soln[0])
         self.right.jounce(roll_jounce=jounce_soln[0] / LR_ratio)
 
+        self.kin_RC.update()
+
     def _roll_resid_func(self, x, args):
         angle: float = args[0]
         LR_ratio: float = args[1]
-        
+
         left_jounce_guess = x[0]
         right_jounce_guess = x[0] / LR_ratio
 
@@ -70,12 +71,28 @@ class Axle:
     def axle_heave(self, heave: float):
         self.left.jounce(heave_jounce=heave)
         self.right.jounce(heave_jounce=heave)
+
+        self.kin_RC.update()
+    
+    def axle_pitch(self, heave: float):
+        self.left.jounce(pitch_jounce=heave)
+        self.right.jounce(pitch_jounce=heave)
+
+        self.kin_RC.update()
     
     def axle_jounce(self, jounce: float):
         self.left.jounce(jounce=jounce)
         self.right.jounce(jounce=jounce)
         
         self.kin_RC.update()
+    
+    def translate(self, translation: Sequence[float]):
+        for element in self.all_elements:
+            element.translate(translation=translation)
+    
+    def flatten_rotate(self, angle: Sequence[float]):
+        for element in self.all_elements:
+            element.flatten_rotate(angle=angle)
 
     def plot_elements(self, plotter, verbose):
         if verbose:

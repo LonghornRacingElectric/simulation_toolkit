@@ -90,7 +90,7 @@ suspension_model = SuspensionModel(FL_inboard_points=FL_inboard_points,
 jounce_vals = list(np.linspace(0, 3, 10)) + list(np.linspace(3, 0, 10)) + list(np.linspace(0, -3, 10)) + list(np.linspace(-3, 0, 10))
 steer_vals = list(np.linspace(0, 1, 10)) + list(np.linspace(1, 0, 10)) + list(np.linspace(0, -1, 10)) + list(np.linspace(-1, 0, 10))
 
-suspension_model.plot_elements(plotter=plotter, verbose=True)
+suspension_model.plot_elements(plotter=plotter, verbose=True, show_grid=False)
 
 # suspension_model.plot_links()
 # suspension_model.plot_cp()
