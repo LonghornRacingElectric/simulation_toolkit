@@ -3,6 +3,7 @@ from suspension_model.suspension_elements.quinary_elements.full_suspension impor
 from suspension_model.suspension_elements.quaternary_elements.axle import Axle
 from suspension_model.suspension_elements.secondary_elements.cg import CG
 from suspension_model.assets.plotter import Plotter
+from scipy.optimize import fsolve
 from typing import Callable
 from typing import Sequence
 from typing import Tuple
@@ -108,13 +109,54 @@ class SuspensionModel:
         self.Fr_axle.axle_jounce(jounce=jounce)
         self.Rr_axle.axle_jounce(jounce=jounce)
     
+    def heave(self, heave: float):
+        self.Fr_axle.axle_heave(heave=heave)
+        self.Rr_axle.axle_heave(heave=heave)
+    
     def roll(self, roll: float):
-        start = time.time()
         self.Fr_axle.roll(angle=roll)
         self.Rr_axle.roll(angle=roll)
-        end = time.time()
+    
+    def pitch(self, pitch: float):
+        angle = pitch * np.pi / 180
 
-        print(end - start)
+        if angle == 0:
+            return
+        
+        FL_cp = self.FL_double_wishbone.contact_patch
+        RL_cp = self.RL_double_wishbone.contact_patch
+
+        cg_long_pos = self.cg.position[0] - RL_cp.position[0]
+        front_cp_pos = FL_cp.position[0] - RL_cp.position[0]
+
+        front_arm = abs(front_cp_pos - cg_long_pos)
+        rear_arm = abs(front_cp_pos - front_arm)
+
+        FR_ratio = front_arm / rear_arm
+
+        front_heave_guess = front_arm * np.tan(angle)
+        heave_soln = fsolve(self._pitch_resid_func, [front_heave_guess], args=[angle, FR_ratio])
+
+        self.Fr_axle.axle_heave(heave=heave_soln[0])
+        self.Rr_axle.axle_heave(heave=-1 * heave_soln[0] / FR_ratio)
+
+    def _pitch_resid_func(self, x, args):
+        angle: float = args[0]
+        FR_ratio: float = args[1]
+        
+        front_heave_guess = x[0]
+        rear_heave_guess = x[0] / FR_ratio
+
+        FL_cp = self.FL_double_wishbone.contact_patch
+        RL_cp = self.RL_double_wishbone.contact_patch
+
+        self.Fr_axle.axle_heave(heave=front_heave_guess)
+        self.Rr_axle.axle_heave(heave=-1 * front_heave_guess / FR_ratio)
+
+        calculated_wheelbase = abs(FL_cp.position[0] - RL_cp.position[0])
+        calculated_pitch = np.arctan((front_heave_guess + rear_heave_guess) / calculated_wheelbase)
+
+        return [calculated_pitch - angle]
 
     def plot_elements(self, plotter, verbose):
         self.verbose = verbose
@@ -128,6 +170,14 @@ class SuspensionModel:
 
     def steer_slider(self, steer: float):
         self.steer(rack_displacement=steer)
+        self.plot_elements(plotter=self.plotter, verbose=self.verbose)
+    
+    def heave_slider(self, heave: float):
+        self.heave(heave=heave)
+        self.plot_elements(plotter=self.plotter, verbose=self.verbose)
+
+    def pitch_slider(self, pitch: float):
+        self.pitch(pitch=pitch)
         self.plot_elements(plotter=self.plotter, verbose=self.verbose)
 
     def jounce_slider(self, jounce: float):

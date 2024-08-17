@@ -29,10 +29,15 @@ class DoubleWishbone:
         self.max_steer: float | None = None
         
         # Initialize state and plotter
-        self.current_jounce = 0
-        self.current_jounce_step = 0
+        self.total_jounce:float = 0
+
+        self.heave_jounce: float = 0
+        self.roll_jounce: float = 0
+        self.pitch_jounce: float = 0
+
         self.steered_angle = 0
         self.induced_steer = 0
+
         self.sus_plotter = Plotter()
     
         # Define all points
@@ -128,26 +133,17 @@ class DoubleWishbone:
 
         return residual_length
 
-    def jounce(self, jounce: float):
-        wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(jounce))
+    def jounce(self, jounce: float = 0, heave_jounce: float = 0, roll_jounce: float = 0, pitch_jounce: float = 0):
+        if heave_jounce:
+            self.heave_jounce = heave_jounce
+        if roll_jounce:
+            self.roll_jounce = roll_jounce
+        if pitch_jounce:
+            self.pitch_jounce = pitch_jounce
 
-        self.upper_wishbone.rotate(wishbone_angles[0])
-        self.lower_wishbone.rotate(wishbone_angles[1])
+        self.total_jounce = jounce + self.heave_jounce + self.roll_jounce + self.pitch_jounce
 
-        induced_steer = fsolve(self._jounce_induced_steer_resid_func, [0])
-        self.steering_link.rotate(induced_steer[0])
-        
-        # Set jounce-induced steer in tire
-        self.tire.induced_steer = induced_steer[0]
-
-        self.current_jounce = jounce
-        self.induced_steer = induced_steer[0]
-        self.FVIC.position = self.FVIC_position
-        self.SVIC.position = self.SVIC_position
-    
-    def jounce_step(self, step: float):
-        self.current_jounce_step += step
-        wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(self.current_jounce_step))
+        wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(self.total_jounce))
 
         self.upper_wishbone.rotate(wishbone_angles[0])
         self.lower_wishbone.rotate(wishbone_angles[1])
@@ -161,6 +157,22 @@ class DoubleWishbone:
         self.induced_steer = induced_steer[0]
         self.FVIC.position = self.FVIC_position
         self.SVIC.position = self.SVIC_position
+    
+    # def jounce_step(self, step: float):
+    #     wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(self.current_jounce))
+
+    #     self.upper_wishbone.rotate(wishbone_angles[0])
+    #     self.lower_wishbone.rotate(wishbone_angles[1])
+
+    #     induced_steer = fsolve(self._jounce_induced_steer_resid_func, [0])
+    #     self.steering_link.rotate(induced_steer[0])
+        
+    #     # Set jounce-induced steer in tire
+    #     self.tire.induced_steer = induced_steer[0]
+
+    #     self.induced_steer = induced_steer[0]
+    #     self.FVIC.position = self.FVIC_position
+    #     self.SVIC.position = self.SVIC_position
 
     def _steer_resid_func(self, x):
         steer_angle = x[0]

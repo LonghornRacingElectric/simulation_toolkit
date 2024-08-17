@@ -83,7 +83,7 @@ suspension_model = SuspensionModel(FL_inboard_points=FL_inboard_points,
                                    tire_width=tire_width,
 
                                    cg_location=cg_location,
-                                   show_ICs=True,
+                                   show_ICs=False,
                                    
                                    plotter=plotter)
 
@@ -117,8 +117,9 @@ suspension_model.plot_elements(plotter=plotter, verbose=True)
 
 # print(end - start)
 
-plotter.add_slider(func=suspension_model.jounce_slider, title="Jounce", bounds=[-2, 2], pos=[[0.67, 0.1], [0.98, 0.1]])
-plotter.add_slider(func=suspension_model.steer_slider, title="Steer", bounds=[-2, 2], pos=[[0.67, 0.225], [0.98, 0.225]])
-plotter.add_slider(func=suspension_model.roll_slider, title="Roll", bounds=[-10, 10], pos=[[0.67, 0.350], [0.98, 0.350]])
+plotter.add_slider(func=suspension_model.roll_slider, title="Roll", bounds=[-10, 10], pos=[[0.75, 0.1], [0.98, 0.1]])
+plotter.add_slider(func=suspension_model.pitch_slider, title="Pitch", bounds=[-10, 10], pos=[[0.75, 0.225], [0.98, 0.225]])
+plotter.add_slider(func=suspension_model.heave_slider, title="Heave", bounds=[-10, 10], pos=[[0.75, 0.350], [0.98, 0.350]])
+plotter.add_slider(func=suspension_model.steer_slider, title="Steer", bounds=[-2, 2], pos=[[0.75, 0.475], [0.98, 0.475]])
 
 plotter.show()
