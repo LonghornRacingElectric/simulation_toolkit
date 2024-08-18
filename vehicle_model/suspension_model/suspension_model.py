@@ -23,6 +23,11 @@ class SuspensionModel:
     FL_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the front-left suspension assembly
         - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    FL_bellcrank_params : Sequence[Sequence[float]]
+        Relevant bellcrank to shock parameters for front-left suspension assembly
+        - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    FL_upper : bool
+        True if push/pull rod mounts to upper wishbone
     FL_contact_patch : Sequence[float]
         Coordinates of the front-left contact patch
     FL_inclination_angle : float
@@ -39,6 +44,11 @@ class SuspensionModel:
     FR_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the front-right suspension assembly
         - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    FR_bellcrank_params : Sequence[Sequence[float]]
+        Relevant bellcrank to shock parameters for front-right suspension assembly
+        - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    FR_upper : bool
+        True if push/pull rod mounts to upper wishbone
     FR_contact_patch : Sequence[float]
         Coordinates of the front-right contact patch
     FR_inclination_angle : float
@@ -55,6 +65,11 @@ class SuspensionModel:
     RL_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the rear-left suspension assembly
         - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    RL_bellcrank_params : Sequence[Sequence[float]]
+        Relevant bellcrank to shock parameters for rear-left suspension assembly
+        - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    RL_upper : bool
+        True if push/pull rod mounts to upper wishbone
     RL_contact_patch : Sequence[float]
         Coordinates of the rear-left contact patch
     RL_inclination_angle : float
@@ -71,6 +86,11 @@ class SuspensionModel:
     RR_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the rear-right suspension assembly
         - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    RR_bellcrank_params : Sequence[Sequence[float]]
+        Relevant bellcrank to shock parameters for rear-right suspension assembly
+        - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    RR_upper : bool
+        True if push/pull rod mounts to upper wishbone
     RR_contact_patch : Sequence[float]
         Coordinates of the rear-right contact patch
     RR_inclination_angle : float
@@ -102,6 +122,8 @@ class SuspensionModel:
 
             FL_inboard_points: Sequence[Sequence[float]],
             FL_outboard_points: Sequence[Sequence[float]],
+            FL_bellcrank_params: Sequence[Sequence[float]],
+            FL_upper: bool,
             FL_contact_patch: Sequence[float],
             FL_inclination_angle: float,
             FL_toe: float,
@@ -110,6 +132,8 @@ class SuspensionModel:
 
             FR_inboard_points: Sequence[Sequence[float]],
             FR_outboard_points: Sequence[Sequence[float]],
+            FR_bellcrank_params: Sequence[Sequence[float]],
+            FR_upper: bool,
             FR_contact_patch: Sequence[float],
             FR_inclination_angle: float,
             FR_toe: float,
@@ -121,6 +145,8 @@ class SuspensionModel:
 
             RL_inboard_points: Sequence[Sequence[float]],
             RL_outboard_points: Sequence[Sequence[float]],
+            RL_bellcrank_params: Sequence[Sequence[float]],
+            RL_upper: bool,
             RL_contact_patch: Sequence[float],
             RL_inclination_angle: float,
             RL_toe: float,
@@ -129,6 +155,8 @@ class SuspensionModel:
 
             RR_inboard_points: Sequence[Sequence[float]],
             RR_outboard_points: Sequence[Sequence[float]],
+            RR_bellcrank_params: Sequence[Sequence[float]],
+            RR_upper: bool,
             RR_contact_patch: Sequence[float],
             RR_inclination_angle: float,
             RR_toe: float,
@@ -153,6 +181,8 @@ class SuspensionModel:
         # Initialize each corner assembly
         self.FL_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=FL_inboard_points,
                                                                 outboard_points=FL_outboard_points,
+                                                                bellcrank_params=FL_bellcrank_params,
+                                                                upper=FL_upper,
                                                                 contact_patch=FL_contact_patch,
                                                                 inclination_angle=FL_inclination_angle * np.pi / 180,
                                                                 toe=FL_toe * np.pi / 180,
@@ -162,6 +192,8 @@ class SuspensionModel:
             
         self.FR_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=FR_inboard_points,
                                                                 outboard_points=FR_outboard_points,
+                                                                bellcrank_params=FR_bellcrank_params,
+                                                                upper=FR_upper,
                                                                 contact_patch=FR_contact_patch,
                                                                 inclination_angle=FR_inclination_angle * np.pi / 180,
                                                                 toe=FR_toe * np.pi / 180,
@@ -171,6 +203,8 @@ class SuspensionModel:
             
         self.RL_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=RL_inboard_points,
                                                                 outboard_points=RL_outboard_points,
+                                                                bellcrank_params=RL_bellcrank_params,
+                                                                upper=RL_upper,
                                                                 contact_patch=RL_contact_patch,
                                                                 inclination_angle=RL_inclination_angle * np.pi / 180,
                                                                 toe=RL_toe * np.pi / 180,
@@ -180,6 +214,8 @@ class SuspensionModel:
             
         self.RR_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=RR_inboard_points,
                                                                 outboard_points=RR_outboard_points,
+                                                                bellcrank_params=RR_bellcrank_params,
+                                                                upper=RR_upper,
                                                                 contact_patch=RR_contact_patch,
                                                                 inclination_angle=RR_inclination_angle * np.pi / 180,
                                                                 toe=RR_toe * np.pi / 180,

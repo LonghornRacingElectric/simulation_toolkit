@@ -75,7 +75,7 @@ Mass Properties:
 # Assuming vehicle symmetry about x-z to keep this shorter
 Geometric Properties:
   FLIP:
-    Description: Front left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Description: Front left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
@@ -83,9 +83,10 @@ Geometric Properties:
       [-0.130175, 0.254, 0.184388125],
       [0.11241884044, 0.19685, 0.073659803912],
       [-0.130175, 0.19685, 0.073660227076],
-      [0.05715, 0.19685, 0.1049274]]
+      [0.05715, 0.19685, 0.1049274],
+      [0, 0.17455011, 0.60024808]]
   FLOP:
-    Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
@@ -93,14 +94,29 @@ Geometric Properties:
       [0.00000000, 0.580397673086, 0.293498081278], 
       [0.00000000, 0.594249915892, 0.106808081278], 
       [0.00000000, 0.594249915892, 0.106808081278],
-      [0.05543225261, 0.57796814937, 0.155080408152]]
+      [0.05543225261, 0.57796814937, 0.155080408152],
+      [-0.00029789, 0.52446617, 0.29975658]]
+  FL_Up:
+    Description: True if push/pull rod mounts to upper wishbone
+    Type: bool
+    Unit: N/A
+    Value: True
+  FLBC:
+    Description: Front left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [0, 0.14622107, 0.5],
+      [1, 0, 0],
+      [0, 0.12633099, 0.60412633],
+      [0, 0, 0.5]]
   FLCP:
     Description: Front left contact patch location
     Type: list[float]
     Unit: m
     Value: [0.00000000, 0.6334506, 0.00000000]
   RLIP:
-    Description: Rear left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Description: Rear left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
@@ -108,9 +124,10 @@ Geometric Properties:
       [-1.75641, 0.29972, 0.217932],
       [-1.419225, 0.2667, 0.07366],
       [-1.70815, 0.2667, 0.07366],
-      [-1.4101318, 0.2851404, 0.1451864]]
+      [-1.4101318, 0.2851404, 0.1451864],
+      [-1.51873910, 0.16939136, 0.36537894]]
   RLOP:
-    Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
@@ -118,7 +135,22 @@ Geometric Properties:
       [-1.5527274, 0.5440934, 0.2959862], 
       [-1.5458694, 0.5802884, 0.1029462], 
       [-1.5458694, 0.5802884, 0.1029462],
-      [-1.4605508, 0.5583682, 0.2051558]]
+      [-1.4605508, 0.5583682, 0.2051558],
+      [-1.54363607, 0.50623679, 0.12517329]]
+  RL_Up:
+    Description: True if push/pull rod mounts to upper wishbone
+    Type: bool
+    Unit: N/A
+    Value: False
+  RLBC:
+    Description: Rear left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.52284977, 0.14607186, 0.32626856],
+      [1, 0, 0],
+      [-1.51745422, 0.12603079, 0.37760375],
+      [-1.51745422, 0, 0.3]]
   RLCP:
     Description: Rear left contact patch location
     Type: list[float]
