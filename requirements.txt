@@ -2,6 +2,5 @@ pyvista
 imageio
 numpy
 scipy
-
-# pandas
-# git+https://github.com/LonghornRacingElectric/tire_analysis@LHR_tire_toolkit_package
+pandas
+git+https://github.com/LonghornRacingElectric/tire_analysis@LHR_tire_toolkit_package

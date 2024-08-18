@@ -71,23 +71,69 @@ Mass Properties:
     Unit: m
     value: 0.28448
 
-### HIGH-LEVEL GEOMETRY ###
+### Hardpoints ###
+# Assuming vehicle symmetry about x-z to keep this shorter
 Geometric Properties:
-  L:
-    Description: Longitudinal distance between front and rear axles at the contact patch
-    Type: float
+  FLIP:
+    Description: Front left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Type: list[list[float]]
     Unit: m
-    value: 1.5494
-  FrT:
-    Description: Lateral distance between front left and front right contact patch
-    Type: float
+    Value: [
+      [0.11241884044, 0.254, 0.214712354928], 
+      [-0.130175, 0.254, 0.184388125],
+      [0.11241884044, 0.19685, 0.073659803912],
+      [-0.130175, 0.19685, 0.073660227076],
+      [0.05715, 0.19685, 0.1049274]]
+  FLOP:
+    Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Type: list[list[float]]
     Unit: m
-    Value: 1.27
-  RrT:
-    Description: Lateral distance between rear left and rear right contact patch
-    Type: float
+    Value: [
+      [0.00000000, 0.580397673086, 0.293498081278],
+      [0.00000000, 0.580397673086, 0.293498081278], 
+      [0.00000000, 0.594249915892, 0.106808081278], 
+      [0.00000000, 0.594249915892, 0.106808081278],
+      [0.05543225261, 0.57796814937, 0.155080408152]]
+  FLCP:
+    Description: Front left contact patch location
+    Type: list[float]
     Unit: m
-    Value: 1.2192
+    Value: [0.00000000, 0.6334506, 0.00000000]
+  RLIP:
+    Description: Rear left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.419225, 0.29972, 0.217932], 
+      [-1.75641, 0.29972, 0.217932],
+      [-1.419225, 0.2667, 0.07366],
+      [-1.70815, 0.2667, 0.07366],
+      [-1.4101318, 0.2851404, 0.1451864]]
+  RLOP:
+    Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.5527274, 0.5440934, 0.2959862],
+      [-1.5527274, 0.5440934, 0.2959862], 
+      [-1.5458694, 0.5802884, 0.1029462], 
+      [-1.5458694, 0.5802884, 0.1029462],
+      [-1.4605508, 0.5583682, 0.2051558]]
+  RLCP:
+    Description: Rear left contact patch location
+    Type: list[float]
+    Unit: m
+    Value: [-1.5494, 0.6096, 0.000]
+  IA:
+    Description: Inclination angle of tires [FL, RL]
+    Type: float
+    Unit: deg
+    Value: [1, 1]
+  Toe:
+    Description: Toe angle of tires [FL, RL]
+    Type: Float
+    Unit: deg
+    Value: [0, 0]
 
 ### SUSPENSION ###
 Suspension:
@@ -111,17 +157,6 @@ Suspension:
     Type: float
     Unit: (-)
     Value: [1, 1]
-  IA:
-    Description: Inclination angle of tires [FL, FR, RL, RR]
-    Type: float
-    Unit: rad
-    Value: [0.01745329, -0.01745329, 0.01745329, -0.01745329]
-  Toe:
-    Description: Toe angle of tires [FL, FR, RL, RR]
-    Type: Float
-    Unit: rad
-    Value: [0, 0, 0, 0]
-  # TODO: ICs for force-based calcs (format TBD, but this is probably gonna be polynomial fits)
 
 ### BRAKES ###
 Brake Properties:

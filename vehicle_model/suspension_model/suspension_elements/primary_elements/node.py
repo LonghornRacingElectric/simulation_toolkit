@@ -69,7 +69,7 @@ class Node:
         z_rot = linalg.rotation_matrix(unit_vec=[0, 0, 1], theta=angle[2])
         self.position = np.matmul(x_rot, np.matmul(y_rot, np.matmul(z_rot, self.position)))
 
-    def plot_elements(self, plotter, radius: float = 0.875 / 2) -> None:
+    def plot_elements(self, plotter, radius: float = 0.022225 / 2) -> None:
         """
         ## Plot Elements
 

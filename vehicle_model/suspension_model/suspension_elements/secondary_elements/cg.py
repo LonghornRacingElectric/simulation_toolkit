@@ -29,4 +29,4 @@ class CG(Node):
             Plotter object
         """
         if verbose:
-            plotter.add_node(center=self.position, radius=1, color="black")
+            plotter.add_node(center=self.position, radius=0.0254, color="black")

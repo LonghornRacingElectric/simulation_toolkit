@@ -105,24 +105,38 @@ class SuspensionModel:
             FL_contact_patch: Sequence[float],
             FL_inclination_angle: float,
             FL_toe: float,
+            FL_rate: float,
+            FL_MR: float,
 
             FR_inboard_points: Sequence[Sequence[float]],
             FR_outboard_points: Sequence[Sequence[float]],
             FR_contact_patch: Sequence[float],
             FR_inclination_angle: float,
             FR_toe: float,
+            FR_rate: float,
+            FR_MR: float,
+
+            Fr_ARBK: float,
+            Fr_ARBMR: float,
 
             RL_inboard_points: Sequence[Sequence[float]],
             RL_outboard_points: Sequence[Sequence[float]],
             RL_contact_patch: Sequence[float],
             RL_inclination_angle: float,
             RL_toe: float,
+            RL_rate: float,
+            RL_MR: float,
 
             RR_inboard_points: Sequence[Sequence[float]],
             RR_outboard_points: Sequence[Sequence[float]],
             RR_contact_patch: Sequence[float],
             RR_inclination_angle: float,
             RR_toe: float,
+            RR_rate: float,
+            RR_MR: float,
+
+            Rr_ARBK: float,
+            Rr_ARBMR: float,
 
             tire_radius: float,
             tire_width: float,
@@ -185,6 +199,16 @@ class SuspensionModel:
 
         # Elements for plotting
         self.elements = [self.full_suspension]
+
+        # Rate params
+        self.FL_rate = FL_rate
+        self.FL_MR = FL_MR
+        self.FR_rate = FR_rate
+        self.FR_MR = FR_MR
+        self.RL_rate = RL_rate
+        self.RL_MR = RL_MR
+        self.RR_rate = RR_rate
+        self.RR_MR = RR_MR
     
     def steer(self, rack_displacement: float) -> None:
         """

@@ -68,7 +68,7 @@ class Plotter:
         ----------
         None
         """
-        self.pl.add_mesh(pv.CylinderStructured(radius=[5, radius], height=height, center=center, direction=direction), color="#504050", opacity=0.5)
+        self.pl.add_mesh(pv.CylinderStructured(radius=[0.127, radius], height=height, center=center, direction=direction), color="#504050", opacity=0.5)
     
     def add_link(self, center: Sequence[float], direction: Sequence[float], radius: float, height: float, color: str = "gray") -> None:
         """
@@ -95,7 +95,7 @@ class Plotter:
         """
         self.pl.add_mesh(pv.Cylinder(center=center, direction=direction, radius=radius, height=height), color=color)
     
-    def add_node(self, center: Sequence[float], radius: float = 0.875 / 2, color: str = "red") -> None:
+    def add_node(self, center: Sequence[float], radius: float = 0.022225 / 2, color: str = "red") -> None:
         """
         ## Add Node
 

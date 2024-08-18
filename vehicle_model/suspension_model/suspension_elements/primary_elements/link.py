@@ -227,7 +227,7 @@ class Link:
         float
             Radius of link
         """
-        return 0.625 / 2
+        return 0.015875 / 2
 
     @property
     def height(self) -> float:
