@@ -1,4 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.steering_link import SteeringLink
+from vehicle_model.suspension_model.suspension_elements.secondary_elements.push_pull_rod import PushPullRod
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.kingpin import Kingpin
 from vehicle_model.suspension_model.suspension_elements.tertiary_elements.tire import Tire
@@ -21,10 +22,23 @@ class DoubleWishbone:
     ----------
     inboard_points : Sequence[Sequence[float]]
         Array containing all inboard coordinates of the double wishbone
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the double wishbone
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    bellcrank_params : Sequence[Sequence[float]]
+        Relevant bellcrank to shock parameters
+        - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    upper : bool
+        True if push/pull rod mounts to upper wishbone
+    bellcrank_pivot : Sequence[float]
+        Position of bellcrank pivot
+    bellcrank_direction: Sequence[float]
+        Vector bellcrank rotates about
+    shock_outboard : Sequence[float]
+        Point where shock linkage meets bellcrank
+    shock_outboard : Sequence[float]
+        Point where shock linkage meets frame
     contact_patch : Sequence[float]
         Coordinates of contact patch
     inclination_angle : float
@@ -45,6 +59,8 @@ class DoubleWishbone:
             self,
             inboard_points: Sequence[Sequence[float]],
             outboard_points: Sequence[Sequence[float]],
+            bellcrank_params: Sequence[Sequence[float]],
+            upper: bool,
             contact_patch: Sequence[float],
             inclination_angle: float,
             toe: float,
@@ -99,7 +115,12 @@ class DoubleWishbone:
         self.lower_outboard: Node = lower_fore_outboard
         self.tie_outboard: Node = tie_outboard
         self.contact_patch: Node = Node(position=contact_patch)
-        self.tire: Tire = Tire(contact_patch=self.contact_patch, kingpin=self.kingpin, static_gamma=inclination_angle, static_toe=toe, radius=tire_radius, width=tire_width)
+        self.tire: Tire = Tire(contact_patch=self.contact_patch, 
+                               kingpin=self.kingpin, 
+                               static_gamma=inclination_angle, 
+                               static_toe=toe, 
+                               radius=tire_radius, 
+                               width=tire_width)
 
         # Define instant centers
         self.FVIC = Node(position=self.FVIC_position)
@@ -107,18 +128,38 @@ class DoubleWishbone:
         self.SVIC = Node(position=self.SVIC_position)
         self.SVIC_link = Link(inboard=self.SVIC, outboard=self.contact_patch)
 
+        # Define push/pull rod
+        rod_inboard = Node(position=inboard_points[5])
+        rod_outboard = Node(position=outboard_points[5])
+        bellcrank_pivot = Node(position=bellcrank_params[0])
+        bellcrank_direction = bellcrank_params[1]
+        shock_outboard = Node(position=bellcrank_params[2])
+        shock_inboard = Node(position=bellcrank_params[3])
+        
+        self.rod = PushPullRod(inboard=rod_inboard, 
+                               outboard=rod_outboard,
+                               upper=upper,
+                               bellcrank=True,
+                               bellcrank_pivot=bellcrank_pivot,
+                               bellcrank_direction=bellcrank_direction,
+                               shock_outboard=shock_outboard,
+                               shock_inboard=shock_inboard)
+
+        # Track pushrod location for transformations later
+        self.upper = upper
+
         # Cache unsprung geometry
         self._fixed_unsprung_geom()
 
         if not show_ICs:
-            self.elements = [self.upper_wishbone, self.lower_wishbone, self.kingpin, self.steering_link, self.tire]
+            self.elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.kingpin, self.steering_link, self.tire]
         else:
-            self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link]
+            self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link]
         
         if max(np.abs(self.SVIC.position)) < 1000:
-            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.steering_link, self.tire, self.FVIC, self.SVIC]
+            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.steering_link, self.tire, self.FVIC, self.SVIC]
         else:
-            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.steering_link, self.tire, self.FVIC]
+            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.steering_link, self.tire, self.FVIC]
         # self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.steering_link, self.tire]
 
     def _fixed_unsprung_geom(self) -> None:
@@ -253,6 +294,13 @@ class DoubleWishbone:
         
         # Set jounce-induced steer in tire
         self.tire.induced_steer = induced_steer[0]
+
+        # Apply transformation to push/pull rod
+        if self.upper:
+            self.rod.rotate_rod(axis=self.upper_wishbone.direction, origin=self.upper_wishbone.fore_link.inboard_node, angle=wishbone_angles[0])
+        else:
+            self.rod.rotate_rod(axis=self.lower_wishbone.direction, origin=self.lower_wishbone.fore_link.inboard_node, angle=wishbone_angles[1])
+        self.rod.update()
 
         self.induced_steer = induced_steer[0]
         self.FVIC.position = self.FVIC_position

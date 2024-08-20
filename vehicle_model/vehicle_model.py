@@ -50,6 +50,8 @@ class VehicleModel:
         self.suspension = SuspensionModel(
             FL_inboard_points=hdpts["FLIP"],
             FL_outboard_points=hdpts["FLOP"],
+            FL_bellcrank_params=hdpts["FLBC"],
+            FL_upper=hdpts["FL_Up"],
             FL_contact_patch=hdpts["FLCP"],
             FL_inclination_angle=hdpts["IA"][0],
             FL_toe=hdpts["Toe"][0],
@@ -58,6 +60,8 @@ class VehicleModel:
             
             FR_inboard_points=[[p[0], -1 * p[1], p[2]] for p in hdpts["FLIP"]],
             FR_outboard_points=[[p[0], -1 * p[1], p[2]] for p in hdpts["FLOP"]],
+            FR_bellcrank_params=[[p[0], -1 * p[1], p[2]] for p in hdpts["FLBC"]],
+            FR_upper=hdpts["FL_Up"],
             FR_contact_patch=[hdpts["FLCP"][0], -1 * hdpts["FLCP"][1], hdpts["FLCP"][2]],
             FR_inclination_angle=hdpts["IA"][0] * -1,
             FR_toe=hdpts["Toe"][0] * -1,
@@ -69,6 +73,8 @@ class VehicleModel:
             
             RL_inboard_points=hdpts["RLIP"],
             RL_outboard_points=hdpts["RLOP"],
+            RL_bellcrank_params=hdpts["RLBC"],
+            RL_upper=hdpts["RL_Up"],
             RL_contact_patch=hdpts["RLCP"],
             RL_inclination_angle=hdpts["IA"][1],
             RL_toe=hdpts["Toe"][1],
@@ -77,6 +83,8 @@ class VehicleModel:
             
             RR_inboard_points=[[p[0], -1 * p[1], p[2]] for p in hdpts["RLIP"]],
             RR_outboard_points=[[p[0], -1 * p[1], p[2]] for p in hdpts["RLOP"]],
+            RR_bellcrank_params=[[p[0], -1 * p[1], p[2]] for p in hdpts["RLBC"]],
+            RR_upper=hdpts["RL_Up"],
             RR_contact_patch=[hdpts["RLCP"][0], -1 * hdpts["RLCP"][1], hdpts["RLCP"][2]],
             RR_inclination_angle=hdpts["IA"][1] * -1,
             RR_toe=hdpts["Toe"][1] * -1,
@@ -93,4 +101,10 @@ class VehicleModel:
             plotter=self.suspension_plotter)
 
         self.suspension.plot_elements(plotter=self.suspension_plotter, verbose=False, show_grid=False)
+        
+        self.suspension_plotter.add_slider(func=self.suspension.roll_slider, title="Roll", bounds=[-10, 10], pos=[[0.75, 0.1], [0.98, 0.1]])
+        self.suspension_plotter.add_slider(func=self.suspension.pitch_slider, title="Pitch", bounds=[-10, 10], pos=[[0.75, 0.225], [0.98, 0.225]])
+        self.suspension_plotter.add_slider(func=self.suspension.heave_slider, title="Heave", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.350], [0.98, 0.350]])
+        self.suspension_plotter.add_slider(func=self.suspension.steer_slider, title="Steer", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.475], [0.98, 0.475]])
+
         self.suspension_plotter.show()
