@@ -1,188 +1,207 @@
 from matplotlib.backends.backend_pdf import PdfPages
 from LHR_tire_toolkit.MF52 import MF52
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
+from typing import Sequence
 import numpy as np
 
-test = MF52(tire_name='test', file_path='model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir')
 
-fig = plt.figure(figsize=[11, 8.5])
+class TirePlotting:
+    def __init__(self, tire: MF52) -> None:
+        self.tire = tire
+    
+    def get_mesh_fig(self, Fz_nomin: float, gamma: float, Fz_sweep: Sequence[float] | float, kappa_sweep: Sequence[float] | None = None, 
+                      alpha_sweep: Sequence[float] | None = None) -> Sequence[Figure]:
+        
+        # Create figure
+        fig = plt.figure(figsize=[11, 8.5])
+        fig.suptitle("Tire Fit Plots", fontsize=20)
+        
+        ### Create subplots ###
 
-fig.suptitle(t="General Tire Fits", fontsize='20')
+        # Pure slip Fx
+        ax = fig.add_subplot(2, 3, 1, projection='3d')
+        Fz, kappa = np.meshgrid(Fz_sweep, kappa_sweep)
+        Fx = np.array(self.tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa, gamma=gamma)[0])
+        
+        ax.plot_surface(Fz, kappa, Fx)
 
+        self.format_fig(ax=ax,
+                        title=f"Fx(Fz, alpha=0, kappa, gamma={round(gamma, 3)})",
+                        xlabel="Fz (N)",
+                        ylabel="Kappa (-)",
+                        zlabel="Fx (N)",
+                        title_size=8,
+                        label_size=6)
+
+        # Pure slip Fy
+        ax = fig.add_subplot(2, 3, 2, projection='3d')
+        Fz, alpha = np.meshgrid(Fz_sweep, alpha_sweep)
+        Fy = np.array(self.tire.tire_eval(FZ=Fz, alpha=alpha, kappa=0, gamma=gamma)[1])
+        Mz = np.array(self.tire.tire_eval(FZ=Fz, alpha=alpha, kappa=0, gamma=gamma)[5])
+
+        ax.plot_surface(Fz, alpha, Fy)
+
+        self.format_fig(ax=ax,
+                        title=f"Fy(Fz, alpha, kappa=0, gamma={round(gamma, 3)})",
+                        xlabel="Fz (N)",
+                        ylabel="Alpha (rad)",
+                        zlabel="Fy (N)",
+                        title_size=8,
+                        label_size=6)
+        
+        # Pure slip Mz
+        ax = fig.add_subplot(2, 3, 3, projection='3d')
+        ax.plot_surface(Fz, alpha, Mz)
+
+        self.format_fig(ax=ax,
+                        title=f"Mz(Fz, alpha, kappa=0, gamma={round(gamma, 3)})",
+                        xlabel="Fz (N)",
+                        ylabel="Alpha (rad)",
+                        zlabel="Mz (Nm)",
+                        title_size=8,
+                        label_size=6)
+        
+        # Combined slip initialization
+        alpha, kappa = np.meshgrid(alpha_sweep, kappa_sweep)
+
+        Fx = self.tire.tire_eval(FZ=Fz, alpha=alpha, kappa=kappa, gamma=gamma)[0]
+        Fy = self.tire.tire_eval(FZ=Fz, alpha=alpha, kappa=kappa, gamma=gamma)[1]
+        Mz = self.tire.tire_eval(FZ=Fz, alpha=alpha, kappa=kappa, gamma=gamma)[5]
+
+        # Combined slip Fx
+        ax = fig.add_subplot(2, 3, 4, projection='3d')
+        ax.plot_surface(alpha, kappa, Fx)
+
+        self.format_fig(ax=ax,
+                        title=f"Fx(Fz={Fz_nomin}, alpha, kappa, gamma={round(gamma, 3)})",
+                        xlabel="Alpha (rad)",
+                        ylabel="Kappa (-)",
+                        zlabel="Fx (N)",
+                        title_size=8,
+                        label_size=6)
+
+        # Combined slip Fy
+        ax = fig.add_subplot(2, 3, 5, projection='3d')
+        ax.plot_surface(alpha, kappa, Fy)
+
+        self.format_fig(ax=ax,
+                        title=f"Fy(Fz={Fz_nomin}, alpha, kappa, gamma={round(gamma, 3)})",
+                        xlabel="Alpha (rad)",
+                        ylabel="Kappa (-)",
+                        zlabel="Fy (N)",
+                        title_size=8,
+                        label_size=6)
+        
+        # Combined slip Mz
+        ax = fig.add_subplot(2, 3, 6, projection='3d')
+        ax.plot_surface(alpha, kappa, Fx)
+
+        self.format_fig(ax=ax,
+                        title=f"Mz(Fz={Fz_nomin}, alpha, kappa, gamma={round(gamma, 3)})",
+                        xlabel="Alpha (rad)",
+                        ylabel="Kappa (-)",
+                        zlabel="Mz (Nm)",
+                        title_size=8,
+                        label_size=6)
+        
+        return fig
+            
+    def get_friction_ellipse_fig(self, Fz_nomin: float | int, gamma: float, kappa_sweep: Sequence[float], alpha_sweep: Sequence[float]) -> Sequence[Figure]:
+        # Plot setup
+        fig = plt.figure(figsize=[11, 8.5])
+        ax = fig.gca()
+        ax.set_aspect('equal')
+        ax.set_xticks(np.arange(-4, 4, 0.5), minor=True)
+        ax.set_yticks(np.arange(-4, 4, 0.5), minor=True)
+        ax.grid(which='minor', alpha=0.5)
+        ax.grid(which='major', alpha=0.5)
+
+        # Set up sweep tracking
+        sweeps = {"kappa_total": [],
+                  "kappa_single": [],
+                  "kappa_mu_y_total": [],
+                  "kappa_mu_y_single": [],
+                  "alpha_total": [],
+                  "alpha_single": [],
+                  "alpha_mu_x_total": [],
+                  "alpha_mu_x_single": []}
+        
+        # Combined Fx sweep
+        for kappa in kappa_sweep:
+            sweeps["kappa_single"] = []
+            sweeps["kappa_mu_y_single"] = []
+            for alpha in alpha_sweep:
+                FX_comb = self.tire.tire_eval(FZ=Fz_nomin, alpha=alpha, kappa=kappa, gamma=gamma)[0]
+                FY_comb = self.tire.tire_eval(FZ=Fz_nomin, alpha=alpha, kappa=kappa, gamma=gamma)[1]
+                sweeps["kappa_single"].append(FX_comb/Fz_nomin)
+                sweeps["kappa_mu_y_single"].append(FY_comb/Fz_nomin)
+
+            sweeps["kappa_total"].append(sweeps["kappa_single"])
+            sweeps["kappa_mu_y_total"].append(sweeps["kappa_mu_y_single"])
+
+        # Combined Fy sweep
+        for alpha in alpha_sweep:
+            sweeps["alpha_single"] = []
+            sweeps["alpha_mu_x_single"] = []
+            for kappa in kappa_sweep:
+                FX_comb = self.tire.tire_eval(FZ=Fz_nomin, alpha=alpha, kappa=kappa, gamma=gamma)[0]
+                FY_comb = self.tire.tire_eval(FZ=Fz_nomin, alpha=alpha, kappa=kappa, gamma=gamma)[1]
+                sweeps["alpha_single"].append(FY_comb/Fz_nomin)
+                sweeps["alpha_mu_x_single"].append(FX_comb/Fz_nomin)
+
+            sweeps["alpha_total"].append(sweeps["alpha_single"])
+            sweeps["alpha_mu_x_total"].append(sweeps["alpha_mu_x_single"])
+        
+        # Plot isolines
+        for i, isoline in enumerate(sweeps["kappa_total"]):
+            plt.plot(sweeps["kappa_mu_y_total"][i], isoline, c='b')
+
+        for i, isoline in enumerate(sweeps["alpha_total"]):
+            plt.plot(isoline, sweeps["alpha_mu_x_total"][i], c='r')
+
+        ax.set_title(f"Friction Ellipse(Fz={Fz_nomin} N)")
+        ax.set_xlabel("Fy/Fz")
+        ax.set_ylabel("Fx/Fz")
+        leg = ax.legend(["SA Isolines", "SR Isolines"], loc='upper right')
+        leg.legend_handles[0].set_color('red')
+        leg.legend_handles[1].set_color('blue')
+    
+        return fig
+
+    def save_pdf(self, figs: Sequence[Figure], save_path: str) -> None:
+        p = PdfPages(save_path)
+
+        for page in figs:
+            page.savefig(p, format="pdf")
+
+        p.close()
+
+    def format_fig(self, ax: Axes, title: str, xlabel: str, ylabel: str, zlabel: str, title_size: int, label_size: int) -> Figure:
+
+        ax.set_title(title, fontsize=title_size)
+        ax.set_xlabel(xlabel, fontsize=label_size)
+        ax.set_ylabel(ylabel, fontsize=label_size)
+        ax.set_zlabel(zlabel, fontsize=label_size)
+        ax.tick_params(axis='both', labelsize=label_size)
+
+### This is dumb, but the script is located in the same file as the class
+### I'll eventually move this to the tire analysis package
+
+tire = MF52(tire_name='test', file_path='model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir')
+tire_plotter = TirePlotting(tire=tire)
+
+# Fit plot parameters
 FZ_sweep = np.linspace(10, 1000, 50)
-kappa_sweep = np.linspace(-1/8, 1/8, 50)
-FZ, kappa = np.meshgrid(FZ_sweep, kappa_sweep)
-FX = np.array(test.tire_eval(FZ=FZ, alpha=0, kappa=kappa, gamma=0 * np.pi / 180)[0])
+kappa_sweep_mesh = np.linspace(-0.25, 0.25, 50)
+alpha_sweep_mesh = np.linspace(-25 * np.pi / 180, 25 * np.pi / 180, 50)
 
-# Fx
-ax_1 = fig.add_subplot(2, 3, 1, projection='3d')
-fig.add_axes(ax_1)
+# Friction ellipse parameters
+kappa_sweep = np.linspace(-0.10, 0.10, 30)
+alpha_sweep = np.linspace(-10 * np.pi / 180, 10 * np.pi / 180, 30)
 
-ax_1.plot_surface(FZ, kappa, FX)
+mesh_plots = tire_plotter.get_mesh_fig(Fz_nomin=654, gamma=0 * np.pi / 180, Fz_sweep=FZ_sweep, kappa_sweep=kappa_sweep_mesh, alpha_sweep=alpha_sweep_mesh)
+ellipse_plot = tire_plotter.get_friction_ellipse_fig(Fz_nomin=654, gamma=0, kappa_sweep=kappa_sweep, alpha_sweep=alpha_sweep)
 
-ax_1.set_xlabel('Fz (N)', fontsize='8')
-ax_1.set_ylabel('Kappa (-)', fontsize='8')
-ax_1.set_zlabel('Fx (N)', fontsize='8')
-ax_1.set_title('Fx(Fz, alpha=0, kappa, gamma=0)', fontsize='10')
-
-ax_1.tick_params(axis='both', labelsize=8)
-
-##########
-
-FZ_sweep = np.linspace(10, 1000, 50)
-alpha_sweep = np.linspace(-np.pi/8, np.pi/8, 50)
-FZ, alpha = np.meshgrid(FZ_sweep, alpha_sweep)
-FY_1 = np.array(test.tire_eval(FZ=FZ, alpha=alpha, kappa=0, gamma=0 * np.pi / 180)[1])
-FY_2 = np.array(test.tire_eval(FZ=FZ, alpha=alpha, kappa=0, gamma=-5 * np.pi / 180)[1])
-
-# Fy
-ax_2 = fig.add_subplot(2, 3, 2, projection='3d')
-fig.add_axes(ax_1)
-
-ax_2.plot_surface(FZ, alpha, FY_1)
-ax_2.plot_surface(FZ, alpha, FY_2)
-ax_2.legend(["gamma=0 deg", "gamma=-5 deg"])
-
-ax_2.set_xlabel('Fz (N)', fontsize='8')
-ax_2.set_ylabel('Alpha (rad)', fontsize='8')
-ax_2.set_zlabel('Fy (N)', fontsize='8')
-ax_2.set_title('Fy(Fz, alpha, kappa=0, gamma=[0,-5])', fontsize='10')
-
-ax_2.tick_params(axis='both', labelsize=8)
-
-##########
-
-FZ_sweep = np.linspace(10, 1000, 50)
-alpha_sweep = np.linspace(-np.pi/8, np.pi/8, 50)
-FZ, alpha = np.meshgrid(FZ_sweep, alpha_sweep)
-MZ_1 = np.array(test.tire_eval(FZ=FZ, alpha=alpha, kappa=0, gamma=0 * np.pi / 180)[5])
-MZ_2 = np.array(test.tire_eval(FZ=FZ, alpha=alpha, kappa=0, gamma=-5 * np.pi / 180)[5])
-
-# Mz
-ax_3 = fig.add_subplot(2, 3, 3, projection='3d')
-fig.add_axes(ax_3)
-
-ax_3.plot_surface(FZ, alpha, MZ_1)
-ax_3.plot_surface(FZ, alpha, MZ_2)
-
-ax_3.set_xlabel('Fz (N)', fontsize='8')
-ax_3.set_ylabel('Alpha (rad)', fontsize='8')
-ax_3.set_zlabel('Mz (Nm)', fontsize='8')
-ax_3.set_title('Mz(Fz, alpha, kappa=0, gamma=[0, -5])', fontsize='10')
-ax_3.legend(["gamma=0 deg", "gamma=-5 deg"])
-
-ax_3.tick_params(axis='both', labelsize=8)
-
-#########
-
-model_SA_data = np.linspace(-20 * np.pi / 180, 20 * np.pi / 180, 1000)
-model_SR_data = np.linspace(-0.5, 0.5, 1000)
-
-SA, SR = np.meshgrid(model_SA_data, model_SR_data)
-
-FX_comb = test.tire_eval(FZ=1000, alpha=SA, kappa=SR, gamma=0 * np.pi / 180)[0]
-FY_comb = test.tire_eval(FZ=1000, alpha=SA, kappa=SR, gamma=0 * np.pi / 180)[1]
-MZ_comb = test.tire_eval(FZ=1000, alpha=SA, kappa=SR, gamma=0 * np.pi / 180)[5]
-
-# Combined Fx
-ax_4 = fig.add_subplot(2, 3, 4, projection='3d')
-fig.add_axes(ax_4)
-
-ax_4.plot_surface(SA, SR, FX_comb)
-ax_4.set_xlabel('Alpha (rad)', fontsize='8')
-ax_4.set_ylabel('Kappa (-)', fontsize='8')
-ax_4.set_zlabel('Fx (N)', fontsize='8')
-ax_4.set_title('Fx(Fz=1000, alpha, kappa, gamma=0)', fontsize='10')
-
-ax_4.tick_params(axis='both', labelsize=8)
-
-# Combined Fy
-ax_5 = fig.add_subplot(2, 3, 5, projection='3d')
-fig.add_axes(ax_5)
-
-ax_5.plot_surface(SA, SR, FY_comb)
-ax_5.set_xlabel('Alpha (rad)', fontsize='8')
-ax_5.set_ylabel('Kappa (-)', fontsize='8')
-ax_5.set_zlabel('Fy (N)', fontsize='8')
-ax_5.set_title('Fy(Fz=1000, alpha, kappa, gamma=0)', fontsize='10')
-
-ax_5.tick_params(axis='both', labelsize=8)
-
-##########
-
-# Combined Mz
-ax_6 = fig.add_subplot(2, 3, 6, projection='3d')
-fig.add_axes(ax_6)
-
-ax_6.plot_surface(SA, SR, MZ_comb)
-ax_6.set_xlabel('Alpha (rad)', fontsize='8')
-ax_6.set_ylabel('Kappa (-)', fontsize='8')
-ax_6.set_zlabel('Mz (Nm)', fontsize='8')
-ax_6.set_title('Mz(Fz=1000, alpha, kappa, gamma=0)', fontsize='10')
-
-ax_6.tick_params(axis='both', labelsize=8)
-
-##########
-
-# Friction Ellipse
-
-fig_2 = plt.figure(figsize=[11, 8.5])
-
-FZ = 654
-model_SA_data = np.linspace(-10 * np.pi / 180, 10 * np.pi / 180, 30)
-model_SR_data = np.linspace(-0.10, 0.10, 30)
-
-SA_isoline_sweep = []
-SA_isoline = []
-SR_mu_vals_sweep = []
-SR_mu_vals = []
-
-for SA in model_SA_data:
-    SA_isoline = []
-    SR_mu_vals = []
-    for SR in model_SR_data:
-        FX_comb = test.tire_eval(FZ=FZ, alpha=SA, kappa=SR, gamma=0 * np.pi / 180)[0]
-        FY_comb = test.tire_eval(FZ=FZ, alpha=SA, kappa=SR, gamma=0 * np.pi / 180)[1]
-        SR_mu_vals.append(FX_comb/FZ)
-        SA_isoline.append(FY_comb/FZ)
-
-    SR_mu_vals_sweep.append(SR_mu_vals)
-    SA_isoline_sweep.append(SA_isoline)
-
-SR_isoline_sweep = []
-SR_isoline = []
-SA_mu_vals_sweep = []
-SA_mu_vals = []
-
-for SR in model_SR_data:
-    SR_isoline = []
-    SA_mu_vals = []
-    for SA in model_SA_data:
-        FX_comb = test.tire_eval(FZ=FZ, alpha=SA, kappa=SR, gamma=0 * np.pi / 180)[0]
-        FY_comb = test.tire_eval(FZ=FZ, alpha=SA, kappa=SR, gamma=0 * np.pi / 180)[1]
-        SA_mu_vals.append(FY_comb/FZ)
-        SR_isoline.append(FX_comb/FZ)
-
-    SA_mu_vals_sweep.append(SA_mu_vals)
-    SR_isoline_sweep.append(SR_isoline)
-
-for i, isoline in enumerate(SA_isoline_sweep):
-    plt.plot(SR_mu_vals_sweep[i], isoline, c='r')
-
-for i, isoline in enumerate(SR_isoline_sweep):
-    plt.plot(isoline, SA_mu_vals_sweep[i], c='b')
-
-plt.title("Friction Ellipse")
-plt.xlabel("Fx/Fz")
-plt.ylabel("Fy/Fz")
-leg = plt.legend(["SA Isolines", "SR Isolines"], loc='upper right')
-leg.legend_handles[0].set_color('red')
-leg.legend_handles[1].set_color('blue')
-
-# Save as pdf
-p = PdfPages(f"./outputs/General_Tire_Plots.pdf")
-
-for fig in [fig, fig_2]:
-    fig.savefig(p, format = "pdf")
-
-p.close()
+tire_plotter.save_pdf(figs=[mesh_plots, ellipse_plot], save_path="./outputs/Tire_Fit_Plots.pdf")
