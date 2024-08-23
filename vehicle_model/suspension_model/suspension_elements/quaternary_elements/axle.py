@@ -181,6 +181,28 @@ class Axle:
 
         self.kin_RC.update()
     
+    @property
+    def roll_stiffness(self) -> float:
+        """
+        ## Roll Stiffness
+
+        Calculates roll stiffness under current conditions
+
+        Returns
+        -------
+        float
+            Roll stiffness under current conditions
+        """
+        left_wheelrate = self.left.wheelrate
+        right_wheelrate = self.right.wheelrate
+        left_position = self.left.contact_patch.position
+        right_position = self.right.contact_patch.position
+        cg_position = self.cg.position
+
+        roll_stiffness = 1/4 * ((left_position[1] - cg_position[1])**2 * left_wheelrate + (right_position[1] - cg_position[1])**2 * right_wheelrate)
+
+        return roll_stiffness
+    
     def translate(self, translation: Sequence[float]) -> None:
         """
         ## Translate

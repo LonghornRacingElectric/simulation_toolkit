@@ -145,12 +145,16 @@ class Link:
             [-1 * m_1 * x_1 + z_1],
             [-1 * m_2 * x_2 + z_2]
         ])
-
-        x, z = np.linalg.solve(a=a, b=b)
-
+        
         # Calculate y-value
         # I'll average between front and rear halves for KinRC
         y = np.average([l_1o[1], l_2o[1]])
+
+        try:
+            x, z = np.linalg.solve(a=a, b=b)
+        except:
+            y = np.average([l_1o[1], l_2o[1]])
+            return [1e9, y, 0]
 
         return np.array([x[0], y, z[0]])
 

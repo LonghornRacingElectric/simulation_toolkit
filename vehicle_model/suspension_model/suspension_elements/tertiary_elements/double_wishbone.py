@@ -7,6 +7,9 @@ from vehicle_model.suspension_model.suspension_elements.primary_elements.link im
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
 from vehicle_model.suspension_model.assets.misc_linalg import rotation_matrix
 from vehicle_model.suspension_model.assets.plotter import Plotter
+from scipy.interpolate import CubicSpline
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 from typing import Sequence
 import numpy as np
@@ -29,6 +32,10 @@ class DoubleWishbone:
     bellcrank_params : Sequence[Sequence[float]]
         Relevant bellcrank to shock parameters
         - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    spring_rate : float
+        Rate of spring in N/m
+    weight : float
+        Weight of the corner in N
     upper : bool
         True if push/pull rod mounts to upper wishbone
     bellcrank_pivot : Sequence[float]
@@ -60,6 +67,8 @@ class DoubleWishbone:
             inboard_points: Sequence[Sequence[float]],
             outboard_points: Sequence[Sequence[float]],
             bellcrank_params: Sequence[Sequence[float]],
+            spring_rate: float,
+            weight: float,
             upper: bool,
             contact_patch: Sequence[float],
             inclination_angle: float,
@@ -72,6 +81,10 @@ class DoubleWishbone:
         self.max_jounce: float | None = None
         self.max_rebound: float | None = None
         self.max_steer: float | None = None
+
+        # Initialize load parameters
+        self.spring_rate = spring_rate
+        self.weight = weight
         
         # Initialize state and plotter
         self.total_jounce:float = 0
@@ -151,11 +164,44 @@ class DoubleWishbone:
         # Cache unsprung geometry
         self._fixed_unsprung_geom()
 
+        # Create function for motion ratio
+        jounce_sweep = np.linspace(-0.0254 * 5, 0.0254 * 5, 100)
+        jounce_interval = 0.0254 * 2 * 5 / 100
+
+        motion_ratio_lst = []
+        for jounce in jounce_sweep:
+            upper = jounce + jounce_interval
+            self.jounce(jounce=jounce)
+            spring_pos_0 = self.rod.spring_damper_length
+            self.jounce(jounce=upper)
+            spring_pos_1 = self.rod.spring_damper_length
+
+            motion_ratio = jounce_interval / (spring_pos_0 - spring_pos_1)
+            motion_ratio_lst.append(motion_ratio)
+        
+        self.motion_ratio_function = CubicSpline(x=jounce_sweep, y=motion_ratio_lst)
+        
+        # Reset jounce
+        self.jounce(jounce=0)
+
+        # Create function for wheelrate
+        # wheelrate_lst = [self.spring_rate / MR**2 for MR in motion_ratio_lst]
+        wheelrate_lst = [self.spring_rate / MR**2 for MR in [1.3 for x in motion_ratio_lst]]
+        self.wheelrate_function = CubicSpline(x=jounce_sweep, y=wheelrate_lst)
+
+        # plt.plot(jounce_sweep, self.motion_ratio_function(jounce_sweep))
+        # plt.show()
+
+        # plt.plot(jounce_sweep, self.wheelrate_function(jounce_sweep))
+        # plt.show()
+
+        # Plotting
         if not show_ICs:
             self.elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.kingpin, self.steering_link, self.tire]
         else:
             self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link]
         
+        # Rotations
         if max(np.abs(self.SVIC.position)) < 1000:
             self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.steering_link, self.tire, self.FVIC, self.SVIC]
         else:
@@ -367,6 +413,34 @@ class DoubleWishbone:
         self.tire.induced_steer = angle[0] + self.induced_steer
 
         self.steered_angle = steer
+    
+    @property
+    def motion_ratio(self) -> float:
+        """
+        ## Motion Ratio
+
+        Motion Ratio attribute under current jounce condition
+
+        Returns
+        -------
+        float
+            Motion ratio under current jounce condition
+        """
+        return self.motion_ratio_function(self.total_jounce)
+
+    @property
+    def wheelrate(self) -> float:
+        """
+        ## Wheelrate
+
+        Calculates wheelrate under current jounce condition
+
+        Returns
+        -------
+        float
+            Wheelrate under current jounce condition
+        """
+        return self.spring_rate / self.motion_ratio**2
     
     def translate(self, translation: Sequence[float]) -> None:
         """

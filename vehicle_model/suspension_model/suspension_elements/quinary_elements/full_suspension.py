@@ -182,6 +182,64 @@ class FullSuspension:
         calculated_pitch = np.arctan((front_heave_guess + rear_heave_guess) / calculated_wheelbase)
 
         return [calculated_pitch - angle]
+    
+    @property
+    def heave_stiffness(self) -> float:
+        """
+        ## Heave Stiffness
+
+        Calculates heave stiffness under current conditions
+
+        Returns
+        -------
+        float
+            Heave stiffness under current conditions
+        """
+        FL_wheelrate = self.Fr_axle.left.wheelrate
+        FR_wheelrate = self.Fr_axle.right.wheelrate
+        RL_wheelrate = self.Rr_axle.left.wheelrate
+        RR_wheelrate = self.Rr_axle.right.wheelrate
+
+        return FL_wheelrate + FR_wheelrate + RL_wheelrate + RR_wheelrate
+
+    @property
+    def roll_stiffness(self) -> float:
+        """
+        ## Roll Stiffness
+
+        Calculates roll stiffness under current conditions
+
+        Returns
+        -------
+        float
+            Roll stiffness under current conditions
+        """
+        Fr_axle_rate = self.Fr_axle.roll_stiffness
+        Rr_axle_rate = self.Rr_axle.roll_stiffness
+
+        return Fr_axle_rate + Rr_axle_rate
+    
+    @property
+    def pitch_stiffness(self) -> float:
+        """
+        ## Pitch Stiffness
+
+        Calculates pitch stiffness under current conditions
+
+        Returns
+        -------
+        float
+            Pitch stiffness under current conditions
+        """
+        Fr_axle_rate = self.Fr_axle.left.wheelrate + self.Fr_axle.right.wheelrate
+        Rr_axle_rate = self.Rr_axle.left.wheelrate + self.Rr_axle.right.wheelrate
+        Fr_position = self.Fr_axle.left.contact_patch.position[0]
+        Rr_position = self.Rr_axle.left.contact_patch.position[0]
+        cg_position = self.cg.position[0]
+
+        pitch_stiffness = 1/4 * ((Fr_position - cg_position)**2 * Fr_axle_rate + (Rr_position - cg_position)**2 * Rr_axle_rate)
+
+        return pitch_stiffness
 
     def reset_position(self) -> None:
         """
