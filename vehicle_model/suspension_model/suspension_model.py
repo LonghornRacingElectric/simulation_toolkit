@@ -3,6 +3,7 @@ from vehicle_model.suspension_model.suspension_elements.quinary_elements.full_su
 from vehicle_model.suspension_model.suspension_elements.quaternary_elements.axle import Axle
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.cg import CG
 from vehicle_model.suspension_model.assets.interp import interp3d
+from vehicle_model.suspension_model.assets.interp import interp2d
 from vehicle_model._assets.pickle_helpers import pickle_import
 from typing import Callable, Sequence, Tuple
 import pyvista as pv
@@ -276,55 +277,46 @@ class SuspensionModel:
             self.FL_gamma_lookup = lookup_objs[0]
             self.FL_toe_lookup = lookup_objs[1]
             self.FL_caster_lookup = lookup_objs[2]
+            self.FL_FVIC_lookup = lookup_objs[3]
+            self.FL_SVIC_lookup = lookup_objs[4]
 
-            self.FR_gamma_lookup = lookup_objs[3]
-            self.FR_toe_lookup = lookup_objs[4]
-            self.FR_caster_lookup = lookup_objs[5]
+            self.FR_gamma_lookup = lookup_objs[5]
+            self.FR_toe_lookup = lookup_objs[6]
+            self.FR_caster_lookup = lookup_objs[7]
+            self.FR_FVIC_lookup = lookup_objs[8]
+            self.FR_SVIC_lookup = lookup_objs[9]
             
-            self.RL_gamma_lookup = lookup_objs[6]
-            self.RL_toe_lookup = lookup_objs[7]
-            self.RL_caster_lookup = lookup_objs[8]
+            self.RL_gamma_lookup = lookup_objs[10]
+            self.RL_toe_lookup = lookup_objs[11]
+            self.RL_caster_lookup = lookup_objs[12]
+            self.RL_FVIC_lookup = lookup_objs[13]
+            self.RL_SVIC_lookup = lookup_objs[14]
 
-            self.RR_gamma_lookup = lookup_objs[9]
-            self.RR_toe_lookup = lookup_objs[10]
-            self.RR_caster_lookup = lookup_objs[11]
+            self.RR_gamma_lookup = lookup_objs[15]
+            self.RR_toe_lookup = lookup_objs[16]
+            self.RR_caster_lookup = lookup_objs[17]
+            self.RR_FVIC_lookup = lookup_objs[18]
+            self.RR_SVIC_lookup = lookup_objs[19]
 
-            self.Fr_Kr_lookup = lookup_objs[12]
-            self.Fr_RC_lookup = lookup_objs[13]
-            self.Rr_Kr_lookup = lookup_objs[14]
-            self.Rr_RC_lookup = lookup_objs[15]
-            self.Kp_lookup = lookup_objs[16]
-            self.PC_lookup = lookup_objs[17]
+            self.Fr_Kr_lookup = lookup_objs[20]
+            self.Fr_RC_lookup = lookup_objs[21]
+            self.Rr_Kr_lookup = lookup_objs[22]
+            self.Rr_RC_lookup = lookup_objs[23]
+            self.Kp_lookup = lookup_objs[24]
+            self.PC_lookup = lookup_objs[25]
         
         else: 
             print("Kin lookup object NOT found | Generating now:\n")
             corners = [self.Fr_axle.left, self.Fr_axle.right, self.Rr_axle.left, self.Rr_axle.right]
-            refinement = 10
-            steer_sweep = np.linspace(-0.0254 * 2, 0.0254 * 2, refinement)
-            heave_sweep = np.linspace(-0.0254 * 5, 0.0254 * 5, refinement)
-            pitch_sweep = np.linspace(-5, 5, refinement)
-            roll_sweep = np.linspace(-5, 5, refinement)
+            refinement = 20
+            steer_sweep = np.linspace(-0.0254 * 3, 0.0254 * 3, refinement)
+            jounce_sweep = np.linspace(-0.0254 * 5, 0.0254 * 5, refinement)
             
-            gamma_angles = {"FL": {"data": [], "lookup": None}, 
-                            "FR": {"data": [], "lookup": None}, 
-                            "RL": {"data": [], "lookup": None}, 
-                            "RR": {"data": [], "lookup": None}}
-            toe_angles = {"FL": {"data": [], "lookup": None},
-                        "FR": {"data": [], "lookup": None},
-                        "RL": {"data": [], "lookup": None},
-                        "RR": {"data": [], "lookup": None}}
-            caster_angles = {"FL": {"data": [], "lookup": None},
-                            "FR": {"data": [], "lookup": None},
-                            "RL": {"data": [], "lookup": None},
-                            "RR": {"data": [], "lookup": None}}
-            FVIC_pos = {"FL": {"data": [], "lookup": None},
-                        "FR": {"data": [], "lookup": None},
-                        "RL": {"data": [], "lookup": None},
-                        "RR": {"data": [], "lookup": None}}
-            SVIC_pos = {"FL": {"data": [], "lookup": None},
-                        "FR": {"data": [], "lookup": None},
-                        "RL": {"data": [], "lookup": None},
-                        "RR": {"data": [], "lookup": None}}
+            gamma_angles = {"FL": [], "FR": [], "RL": [], "RR": []}
+            toe_angles = {"FL": [], "FR": [], "RL": [], "RR": []}
+            caster_angles = {"FL": [], "FR": [], "RL": [], "RR": []}
+            FVIC_pos = {"FL": [], "FR": [], "RL": [], "RR": []}
+            SVIC_pos = {"FL": [], "FR": [], "RL": [], "RR": []}
             
             roll_stiffness = {"Fr": [], "Rr": []}
             roll_center = {"Fr": [], "Rr": []}
@@ -333,60 +325,50 @@ class SuspensionModel:
             
             labels = ["FL", "FR", "RL", "RR"]
             
-            total_iter = refinement**4
+            total_iter = refinement**2
             counter = 0
             for steer in steer_sweep:
-                try:
-                    self.steer(rack_displacement=steer)
-                except:
-                    continue
-                for heave in heave_sweep:
-                    try:
-                        self.heave(heave=heave)
-                    except:
-                        self.heave(heave=heave-0.254/15)
-                    for pitch in pitch_sweep:
-                        try:
-                            self.pitch(pitch=pitch)
-                        except:
-                            self.pitch(pitch=pitch-10/15)
-                        for roll in roll_sweep:
-                            print(f"Creating Kin Lookup: {round(counter / total_iter * 100, 4)}%", end="\r")
+                self.full_suspension.Fr_axle.left.steer(steer=steer)
+                self.full_suspension.Fr_axle.right.steer(steer=steer)
+                self.full_suspension.Rr_axle.left.steer(steer=steer)
+                self.full_suspension.Rr_axle.right.steer(steer=steer)
+                for jounce in jounce_sweep:
+                    print(f"Creating Kin Lookup: {round(counter / total_iter * 100, 4)}%", end="\r")
 
-                            try:
-                                self.roll(roll=roll)
-                            except:
-                                self.roll(roll=roll-10/15)
+                    self.full_suspension.Fr_axle.left.jounce(jounce=jounce)
+                    self.full_suspension.Fr_axle.right.jounce(jounce=jounce)
+                    self.full_suspension.Rr_axle.left.jounce(jounce=jounce)
+                    self.full_suspension.Rr_axle.right.jounce(jounce=jounce)
 
-                            for i in range(len(corners)):
-                                gamma_angles[labels[i]]["data"].append(corners[i].inclination_angle)
-                                toe_angles[labels[i]]["data"].append(corners[i].toe)
-                                caster_angles[labels[i]]["data"].append(corners[i].caster)
-                            
-                            roll_stiffness["Fr"].append(self.full_suspension.Fr_axle.roll_stiffness)
-                            roll_center["Fr"].append(self.full_suspension.Fr_axle.kin_RC.true_KinRC.position)
-                            roll_stiffness["Rr"].append(self.full_suspension.Rr_axle.roll_stiffness)
-                            roll_center["Rr"].append(self.full_suspension.Rr_axle.kin_RC.true_KinRC.position)
-                            
-                            pitch_stiffness["tot"].append(self.full_suspension.pitch_stiffness)
-                            pitch_center["tot"].append(self.full_suspension.right_kin_PC.true_KinPC.position)
+                    for i in range(len(corners)):
+                        gamma_angles[labels[i]].append(corners[i].inclination_angle)
+                        toe_angles[labels[i]].append(corners[i].toe)
+                        caster_angles[labels[i]].append(corners[i].caster)
+                    
+                    roll_stiffness["Fr"].append(self.full_suspension.Fr_axle.roll_stiffness)
+                    roll_center["Fr"].append(self.full_suspension.Fr_axle.kin_RC.true_KinRC.position)
+                    roll_stiffness["Rr"].append(self.full_suspension.Rr_axle.roll_stiffness)
+                    roll_center["Rr"].append(self.full_suspension.Rr_axle.kin_RC.true_KinRC.position)
+                    
+                    pitch_stiffness["tot"].append(self.full_suspension.pitch_stiffness)
+                    pitch_center["tot"].append(self.full_suspension.right_kin_PC.true_KinPC.position)
 
-                            counter += 1
-            
+                    counter += 1
+
             lookup_objs = []
             for label in labels:
-                lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=gamma_angles[label]))
-                lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=toe_angles[label]))
-                lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=caster_angles[label]))
-                lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=FVIC_pos[label]))
-                lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=SVIC_pos[label]))
+                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=gamma_angles[label]))
+                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=toe_angles[label]))
+                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=caster_angles[label]))
+                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=FVIC_pos[label]))
+                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=SVIC_pos[label]))
             
-            lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_stiffness["Fr"]))
-            lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_center["Fr"]))
-            lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_stiffness["Rr"]))
-            lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_center["Rr"]))
-            lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=pitch_stiffness["tot"]))
-            lookup_objs.append(interp3d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=pitch_center["tot"]))
+            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_stiffness["Fr"]))
+            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_center["Fr"]))
+            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_stiffness["Rr"]))
+            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_center["Rr"]))
+            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=pitch_stiffness["tot"]))
+            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=pitch_center["tot"]))
 
             with open(f"./outputs/kin_interp/kin_lookup.pkl", 'wb') as outp:
                 pickle.dump(lookup_objs, outp, pickle.HIGHEST_PROTOCOL)
@@ -394,25 +376,33 @@ class SuspensionModel:
             self.FL_gamma_lookup = lookup_objs[0]
             self.FL_toe_lookup = lookup_objs[1]
             self.FL_caster_lookup = lookup_objs[2]
+            self.FL_FVIC_lookup = lookup_objs[3]
+            self.FL_SVIC_lookup = lookup_objs[4]
 
-            self.FR_gamma_lookup = lookup_objs[3]
-            self.FR_toe_lookup = lookup_objs[4]
-            self.FR_caster_lookup = lookup_objs[5]
+            self.FR_gamma_lookup = lookup_objs[5]
+            self.FR_toe_lookup = lookup_objs[6]
+            self.FR_caster_lookup = lookup_objs[7]
+            self.FR_FVIC_lookup = lookup_objs[8]
+            self.FR_SVIC_lookup = lookup_objs[9]
             
-            self.RL_gamma_lookup = lookup_objs[6]
-            self.RL_toe_lookup = lookup_objs[7]
-            self.RL_caster_lookup = lookup_objs[8]
+            self.RL_gamma_lookup = lookup_objs[10]
+            self.RL_toe_lookup = lookup_objs[11]
+            self.RL_caster_lookup = lookup_objs[12]
+            self.RL_FVIC_lookup = lookup_objs[13]
+            self.RL_SVIC_lookup = lookup_objs[14]
 
-            self.RR_gamma_lookup = lookup_objs[9]
-            self.RR_toe_lookup = lookup_objs[10]
-            self.RR_caster_lookup = lookup_objs[11]
+            self.RR_gamma_lookup = lookup_objs[15]
+            self.RR_toe_lookup = lookup_objs[16]
+            self.RR_caster_lookup = lookup_objs[17]
+            self.RR_FVIC_lookup = lookup_objs[18]
+            self.RR_SVIC_lookup = lookup_objs[19]
 
-            self.Fr_Kr_lookup = lookup_objs[12]
-            self.Fr_RC_lookup = lookup_objs[13]
-            self.Rr_Kr_lookup = lookup_objs[14]
-            self.Rr_RC_lookup = lookup_objs[15]
-            self.Kp_lookup = lookup_objs[16]
-            self.PC_lookup = lookup_objs[17]
+            self.Fr_Kr_lookup = lookup_objs[20]
+            self.Fr_RC_lookup = lookup_objs[21]
+            self.Rr_Kr_lookup = lookup_objs[22]
+            self.Rr_RC_lookup = lookup_objs[23]
+            self.Kp_lookup = lookup_objs[24]
+            self.PC_lookup = lookup_objs[25]
 
         # Elements for plotting
         self.elements = [self.full_suspension]
