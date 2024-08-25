@@ -207,4 +207,4 @@ class Tire:
         x_rot = rotation_matrix(unit_vec=[1, 0, 0], theta=-1 * ang_x)
         y_rot = rotation_matrix(unit_vec=[0, 1, 0], theta=ang_y)
         z_rot = rotation_matrix(unit_vec=[0, 0, 1], theta=self._induced_steer)
-        self.cp.position = np.matmul(y_rot, np.matmul(x_rot, np.matmul(z_rot, self.cp_to_kingpin))) + self.kingpin.inboard_node.position
+        self.cp.position = np.matmul(x_rot, np.matmul(y_rot, np.matmul(z_rot, self.cp_to_kingpin))) + self.kingpin.inboard_node.position

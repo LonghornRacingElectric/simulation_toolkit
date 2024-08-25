@@ -46,8 +46,8 @@ class Axle:
         ----------
         None
         """
-        if angle == 0:
-            return
+        # if angle == 0:
+        #     return
         
         left_cp = self.left.contact_patch
         right_cp = self.right.contact_patch

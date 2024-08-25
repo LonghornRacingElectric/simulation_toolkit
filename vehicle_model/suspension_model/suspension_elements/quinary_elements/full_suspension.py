@@ -25,6 +25,7 @@ class FullSuspension:
         self.Fr_axle = Fr_axle
         self.Rr_axle = Rr_axle
         self.cg = cg
+        self.transform_origin = True
 
         self.left_kin_PC: KinPC = KinPC(front_swing_arm=self.Fr_axle.left.SVIC_link, rear_swing_arm=self.Rr_axle.left.SVIC_link, cg=self.cg)
         self.right_kin_PC: KinPC = KinPC(front_swing_arm=self.Fr_axle.right.SVIC_link, rear_swing_arm=self.Rr_axle.right.SVIC_link, cg=self.cg)
@@ -60,7 +61,8 @@ class FullSuspension:
         self.Fr_axle.steer(rack_displacement=rack_displacement)
         self.left_kin_PC.update()
         self.right_kin_PC.update()
-        self.flatten()
+        if self.transform_origin:
+            self.flatten()
 
     def heave(self, heave: float) -> None:
         """
@@ -82,7 +84,8 @@ class FullSuspension:
         self.Rr_axle.axle_heave(heave=heave)
         self.left_kin_PC.update()
         self.right_kin_PC.update()
-        self.flatten()
+        if self.transform_origin:
+            self.flatten()
 
     def pitch(self, angle: float) -> None:
         """
@@ -101,8 +104,8 @@ class FullSuspension:
         """
         self.reset_position()
 
-        if angle == 0:
-            return
+        # if angle == 0:
+        #     return
         
         FL_cp = self.Fr_axle.left.contact_patch
         RL_cp = self.Rr_axle.left.contact_patch
@@ -115,7 +118,7 @@ class FullSuspension:
 
         FR_ratio = front_arm / rear_arm
 
-        front_heave_guess = front_arm * np.tan(angle)
+        front_heave_guess = front_arm * np.sin(angle)
         heave_soln = fsolve(self._pitch_resid_func, [front_heave_guess], args=[angle, FR_ratio])
 
         self.Fr_axle.axle_pitch(heave=heave_soln[0])
@@ -124,7 +127,8 @@ class FullSuspension:
         self.left_kin_PC.update()
         self.right_kin_PC.update()
 
-        self.flatten()
+        if self.transform_origin:
+            self.flatten()
     
     def roll(self, angle: float) -> None:
         """
@@ -146,7 +150,8 @@ class FullSuspension:
         self.Rr_axle.roll(angle=angle)
         self.left_kin_PC.update()
         self.right_kin_PC.update()
-        self.flatten()
+        if self.transform_origin:
+            self.flatten()
 
     def _pitch_resid_func(self, x, args) -> Sequence[float]:
         """
@@ -295,9 +300,10 @@ class FullSuspension:
         plane_eqn = lambda args: ((a * x_0 + b * y_0 + c * z_0) - a * args[0] - b * args[1]) / c
         ang_x = np.arctan(plane_eqn(args=[0, 1]))
         ang_y = np.arctan(plane_eqn(args=[1, 0]))
-        self.ang_x = ang_x
-        self.ang_y = ang_y
-        self.flatten_rotate(angle=[-1 * ang_x, ang_y, 0])
+        if self.transform_origin:
+            self.ang_x = ang_x
+            self.ang_y = ang_y
+            self.flatten_rotate(angle=[-1 * ang_x, ang_y, 0])
 
         # Translate all points back to their initial origin
         updated_average_cp = np.array(list(average_cp)[:2] + [0])

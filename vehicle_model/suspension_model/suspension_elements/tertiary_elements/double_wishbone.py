@@ -321,6 +321,11 @@ class DoubleWishbone:
         -------
         None
         """
+        if jounce:
+            self.heave_jounce = 0
+            self.roll_jounce = 0
+            self.pitch_jounce = 0
+            
         if heave_jounce:
             self.heave_jounce = heave_jounce
         if roll_jounce:

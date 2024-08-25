@@ -40,10 +40,10 @@ class YMD:
                 
                 self.steered_angle_iso_lines[j][0] = delta
                 self.steered_angle_iso_lines[i][1][j] = y_ddot
-                self.steered_angle_iso_lines[i][2][j] = yaw_ddot
+                self.steered_angle_iso_lines[i][2][j] = yaw_ddot / (self.vehicle.total_mass * 9.81 * abs(self.vehicle.suspension.FL_double_wishbone.contact_patch.position[0] - self.vehicle.suspension.RL_double_wishbone.contact_patch.position[0]))
                 self.body_slip_iso_lines[i][0] = beta
                 self.body_slip_iso_lines[j][1][i] = y_ddot
-                self.body_slip_iso_lines[j][2][i] = yaw_ddot
+                self.body_slip_iso_lines[j][2][i] = yaw_ddot / (self.vehicle.total_mass * 9.81 * abs(self.vehicle.suspension.FL_double_wishbone.contact_patch.position[0] - self.vehicle.suspension.RL_double_wishbone.contact_patch.position[0]))
 
                 y_ddot_lst.append(y_ddot)
                 yaw_ddot_lst.append(yaw_ddot)
@@ -132,12 +132,12 @@ class YMD:
         self.RR_Cp_pos = RR_double_wishbone.contact_patch.position
 
         # Calculate jounce
-        cg_pos = suspension.cg.position
+        self.cg_pos = suspension.cg.position
         
-        FL_jounce = heave + abs(self.FL_Cp_pos[0] - cg_pos[0]) * np.tan(pitch) + -1 * abs(self.FL_Cp_pos[1] - cg_pos[1]) * np.tan(roll)
-        FR_jounce = heave + abs(self.FR_Cp_pos[0] - cg_pos[0]) * np.tan(pitch) + abs(self.FR_Cp_pos[1] - cg_pos[1]) * np.tan(roll)
-        RL_jounce = heave + -1 * abs(self.RL_Cp_pos[0] - cg_pos[0]) * np.tan(pitch) + -1 * abs(self.RL_Cp_pos[1] - cg_pos[1]) * np.tan(roll)
-        RR_jounce = heave + -1 * abs(self.RR_Cp_pos[0] - cg_pos[0]) * np.tan(pitch) + abs(self.RR_Cp_pos[1] - cg_pos[1]) * np.tan(roll)
+        FL_jounce = heave + abs(self.FL_Cp_pos[0] - self.cg_pos[0]) * np.tan(pitch) + -1 * abs(self.FL_Cp_pos[1] - self.cg_pos[1]) * np.tan(roll)
+        FR_jounce = heave + abs(self.FR_Cp_pos[0] - self.cg_pos[0]) * np.tan(pitch) + abs(self.FR_Cp_pos[1] - self.cg_pos[1]) * np.tan(roll)
+        RL_jounce = heave + -1 * abs(self.RL_Cp_pos[0] - self.cg_pos[0]) * np.tan(pitch) + -1 * abs(self.RL_Cp_pos[1] - self.cg_pos[1]) * np.tan(roll)
+        RR_jounce = heave + -1 * abs(self.RR_Cp_pos[0] - self.cg_pos[0]) * np.tan(pitch) + abs(self.RR_Cp_pos[1] - self.cg_pos[1]) * np.tan(roll)
         sus_corners_jounce: Sequence[float] = [FL_jounce, FR_jounce, RL_jounce, RR_jounce]
         # print([x / 0.0254 for x in [FL_jounce, FR_jounce, RL_jounce, RR_jounce]])
 
@@ -184,13 +184,33 @@ class YMD:
             if sus_corners_jounce[i] >= 0:
                 Fz_lst.append(sus_corners[i].weight + sus_corners[i].wheelrate_function.integrate(0, sus_corners_jounce[i]))
             else:
-                Fz_lst.append(sus_corners[i].weight - sus_corners[i].wheelrate_function.integrate(sus_corners_jounce[i], 0))
+                Fz_lst.append(sus_corners[i].weight - sus_corners[i].wheelrate_function.integrate(sus_corners_jounce[i], 0)) 
+        
+        # if Fz_lst[0] <= 0:
+        #     if Fz_lst[1] <= 0:
+        #         Fz_lst[2] += Fz_lst[0]
+        #         Fz_lst[3] += Fz_lst[1]
+        #         Fz_lst[0] = 0
+        #         Fz_lst[1] = 0
+            # else:
+            #     Fz_lst[1] += Fz_lst[0]
+            #     Fz_lst[0] = 0
+        # if Fz_lst[1] <= 0:
+        #     Fz_lst[0] += Fz_lst[1]
+        #     Fz_lst[1] = 0
 
-        if Fz_lst[2] == 0 and Fz_lst[3] == 0:
-            Fz_lst[0] += Fz_lst[2]
-            Fz_lst[1] += Fz_lst[3]
-            Fz_lst[2] = 0
-            Fz_lst[3] = 0
+        # if Fz_lst[2] <= 0:
+        #     if Fz_lst[3] <= 0:
+        #         Fz_lst[0] += Fz_lst[2]
+        #         Fz_lst[1] += Fz_lst[3]
+        #         Fz_lst[2] = 0
+        #         Fz_lst[3] = 0
+            # else:
+            #     Fz_lst[3] += Fz_lst[2]
+            #     Fz_lst[2] = 0
+        # if Fz_lst[3] <= 0:
+        #     Fz_lst[2] += Fz_lst[3]
+        #     Fz_lst[3] = 0
 
         FL_Fz, FR_Fz, RL_Fz, RR_Fz = Fz_lst
 
@@ -246,6 +266,21 @@ class YMD:
         # print(f"Complete State: {end_iter - start_iter}")
 
         return [*force_residuals, *moment_residuals]
+
+    def _Fz_resid_function(self, x, args):
+        ax = args[0]
+        ay = args[1]
+        lat_lt_fr = (self.vehicle.FL_weight + self.vehicle.FR_weight) * ay / 9.81 * self.cg_pos[2] / abs(self.FL_Cp_pos[1] - self.FR_Cp_pos[1])
+        lat_lt_rr = (self.vehicle.RL_weight + self.vehicle.RR_weight) * ay / 9.81 * self.cg_pos[2] / abs(self.RL_Cp_pos[1] - self.RR_Cp_pos[1])
+
+        long_lt_left = (self.vehicle.FL_weight + self.vehicle.RL_weight) * ax / 9.81 * self.cg_pos[2] / abs(self.FL_Cp_pos[0] - self.RL_Cp_pos[0])
+        long_lt_right = (self.vehicle.FR_weight + self.vehicle.RR_weight) * ax / 9.81 * self.cg_pos[2] / abs(self.RL_Cp_pos[0] - self.RR_Cp_pos[0])
+
+        FL_Fz = self.vehicle.FL_weight - (self.vehicle.FL_weight + self.vehicle.FR_weight) * lat_lt_fr - (self.vehicle.FL_weight + self.vehicle.RL_weight) * long_lt_left
+        FR_Fz = self.vehicle.FR_weight + (self.vehicle.FL_weight + self.vehicle.FR_weight) * lat_lt_fr - (self.vehicle.FR_weight + self.vehicle.RR_weight) * long_lt_right
+        RL_Fz = self.vehicle.RL_weight - (self.vehicle.RL_weight + self.vehicle.RR_weight) * lat_lt_rr + (self.vehicle.FL_weight + self.vehicle.RL_weight) * long_lt_left
+        RR_Fz = self.vehicle.RR_weight + (self.vehicle.RL_weight + self.vehicle.RR_weight) * lat_lt_rr + (self.vehicle.FR_weight + self.vehicle.RR_weight) * long_lt_right
+
 
     def _IC_residual_function(self, x: Sequence[float], args: Tuple[Tuple[np.ndarray, float], Sequence[MF52], SuspensionModel]) -> Sequence[float]:
         """
