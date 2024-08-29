@@ -3,4 +3,5 @@ imageio
 numpy
 scipy
 pandas
+dash
 git+https://github.com/LonghornRacingElectric/tire_analysis@LHR_tire_toolkit_package

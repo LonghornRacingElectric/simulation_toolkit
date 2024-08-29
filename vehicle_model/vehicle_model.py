@@ -2,7 +2,7 @@ from vehicle_model.suspension_model.suspension_model import SuspensionModel
 from vehicle_model.suspension_model.assets.plotter import Plotter
 from vehicle_model._assets.processor import Processor
 from LHR_tire_toolkit.MF52 import MF52
-
+import numpy as np
 
 class VehicleModel:
     """
@@ -108,6 +108,13 @@ class VehicleModel:
             cg_location=[-1.016, 0, 0.2794],
             show_ICs=False,
             plotter=self.suspension_plotter)
+        
+        # self.suspension.generate_report()
+
+        # self.suspension.generate_kin_plots(steer_sweep=np.linspace(-1.5, 1.5, 25) * 0.0254, 
+        #                                    heave_sweep=np.linspace(-4, 4, 25) * 0.0254,
+        #                                    pitch_sweep=np.linspace(-3, 3, 25),
+        #                                    roll_sweep=np.linspace(-3, 3, 25))
 
         # self.suspension.plot_elements(plotter=self.suspension_plotter, verbose=False, show_grid=False)
         

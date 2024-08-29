@@ -79,84 +79,308 @@ class KinOptimization:
         self.RR_LFO = self.RR_dw.lower_fore_link.outboard_node
         self.RR_SO = self.RR_dw.steering_link.outboard_node
 
-        initial_pos = [self.FL_UFI.position, self.FL_UAI.position, self.FL_LFI.position, self.FL_LAI.position, self.FL_SI.position, self.FL_UFO.position, self.FL_LFO.position, self.FL_SO.position, \
-                       self.RL_UFI.position, self.RL_UAI.position, self.RL_LFI.position, self.RL_LAI.position, self.RL_SI.position, self.RL_UFO.position, self.RL_LFO.position, self.RL_SO.position]
+        FL_gamma_outputs = []
+        FR_gamma_outputs = []
+        RL_gamma_outputs = []
+        RR_gamma_outputs = []
+
+        pitch = 0
+
+        for heave in self.heave_sweep:
+            # for pitch in self.pitch_sweep:
+            for roll in self.roll_sweep:
+                # print(f"Plotting Progress: {round(counter / total_count * 100, 2)}", end="\r")
+                FL_jounce = heave + (self.FL_cg_x * np.sin(pitch * np.pi / 180) + self.FL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                FR_jounce = heave + (self.FR_cg_x * np.sin(pitch * np.pi / 180) + self.FR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                RL_jounce = heave + (self.RL_cg_x * np.sin(pitch * np.pi / 180) + self.RL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                RR_jounce = heave + (self.RR_cg_x * np.sin(pitch * np.pi / 180) + self.RR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+
+                self.FL_dw.jounce(jounce=FL_jounce)
+                self.FR_dw.jounce(jounce=FR_jounce)
+                self.RL_dw.jounce(jounce=RL_jounce)
+                self.RR_dw.jounce(jounce=RR_jounce)
+
+                FL_gamma_outputs.append(self.FL_dw.inclination_angle * 180 / np.pi + roll)
+                FR_gamma_outputs.append(self.FR_dw.inclination_angle * 180 / np.pi + roll)
+                RL_gamma_outputs.append(self.RL_dw.inclination_angle * 180 / np.pi + roll)
+                RR_gamma_outputs.append(self.RR_dw.inclination_angle * 180 / np.pi + roll)
+
+        mu_x = []
+        mu_y = []
+
+        alpha_sweep = np.linspace(0, 90 / 4, 50) * np.pi / 180
+        kappa_sweep = np.linspace(0, 1 / 4, 50)
+        Fz_sweep = np.linspace(100, 1000, 50)
+
+        for i in range(len(FL_gamma_outputs)):
+            for Fz in Fz_sweep:
+                FL_Fx = self.FL_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=FL_gamma_outputs[i])[0]
+                FL_Fy = self.FL_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=FL_gamma_outputs[i])[1]
+                
+                FR_Fx = self.FR_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=FR_gamma_outputs[i])[0]
+                FR_Fy = self.FR_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=FR_gamma_outputs[i])[1]
+
+                RL_Fx = self.RL_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=RL_gamma_outputs[i])[0]
+                RL_Fy = self.RL_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=RL_gamma_outputs[i])[1]
+
+                RR_Fx = self.RR_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=RR_gamma_outputs[i])[0]
+                RR_Fy = self.RR_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=RR_gamma_outputs[i])[1]
+
+                FL_mu_x = max(FL_Fx) / Fz
+                FL_mu_y = max(FL_Fy) / Fz
+
+                FR_mu_x = max(FR_Fx) / Fz
+                FR_mu_y = max(FR_Fy) / Fz
+
+                RL_mu_x = max(RL_Fx) / Fz
+                RL_mu_y = max(RL_Fy) / Fz
+
+                RR_mu_x = max(RR_Fx) / Fz
+                RR_mu_y = max(RR_Fy) / Fz
+
+                mu_x.append(FL_mu_x)
+                mu_x.append(FR_mu_x)
+                mu_x.append(RL_mu_x)
+                mu_x.append(RR_mu_x)
+
+                mu_y.append(FL_mu_y)
+                mu_y.append(FR_mu_y)
+                mu_y.append(RL_mu_y)
+                mu_y.append(RR_mu_y)
         
-        initial_pos = np.array(initial_pos).flatten()
+        self.mu_x_med = np.median(mu_x)
+        self.mu_x_std = np.std(mu_x)
+        self.mu_y_med = np.median(mu_y)
+        self.mu_y_std = np.std(mu_y)
 
-        bounds = []
+        gamma_initial_pos_2d = [self.FL_UFI.position, self.FL_UAI.position, self.FL_LFI.position, self.FL_LAI.position, self.FL_SI.position, self.FL_UFO.position[0:2], self.FL_LFO.position[0:2], self.FL_SO.position, \
+                       self.RL_UFI.position, self.RL_UAI.position, self.RL_LFI.position, self.RL_LAI.position, self.RL_SI.position, self.RL_UFO.position[0:2], self.RL_LFO.position[0:2], self.RL_SO.position]
+        
+        toe_initial_pos = [self.FL_SI.position, self.FL_SO.position,
+                           self.RL_SI.position, self.RL_SO.position]
+        
+        gamma_initial_pos = []
+        
+        for arr in gamma_initial_pos_2d:
+            gamma_initial_pos += list(arr)
 
-        for val in initial_pos:
+        gamma_initial_pos = np.array(gamma_initial_pos)
+
+        print(gamma_initial_pos)
+        toe_initial_pos = np.array(toe_initial_pos).flatten()
+
+        toe_resid_bounds = []
+        gamma_resid_bounds = []
+
+        for val in gamma_initial_pos:
             lower = val - 1 * 0.0254
             upper = val + 1 * 0.0254
-            bounds.append([lower, upper])
+            gamma_resid_bounds.append([lower, upper])
+
+        for val in toe_initial_pos:
+            lower = val - 1 * 0.0254
+            upper = val + 1 * 0.0254
+            toe_resid_bounds.append([lower, upper])
+
+        initial_guess = []
+        counter = -1
+        for val in np.array(gamma_initial_pos).flatten():
+            counter += 1
+            if counter == 1:
+                initial_guess.append(val + 1.5 * 0.0254)
+                counter = -1
+            else:
+                initial_guess.append(val)
 
         self.counter = 0
-        hdpt_locations = minimize(self.resid_func, x0=np.array(initial_pos).flatten(), bounds=bounds).x
-        print(hdpt_locations)
+        self.suspension.full_suspension.reset_position()
+        # hdpt_locations = minimize(self.gamma_resid_func, x0=gamma_initial_pos, bounds=gamma_resid_bounds, method='Nelder-Mead').x
+        hdpt_locations = minimize(self.bump_steer_resid_func, x0=toe_initial_pos, constraints=toe_resid_bounds, method='Nelder-Mead').x
+        print([float(x) for x in list(hdpt_locations)])
+    
+    def bump_steer_resid_func(self, x):
+        # self.suspension.steer(rack_displacement=0.0001)
+        FL_node_lst = [self.FL_SI, self.FL_SO]
+        FR_node_lst = [self.FR_SI, self.FR_SO]
+        RL_node_lst = [self.RL_SI, self.RL_SO]
+        RR_node_lst = [self.RR_SI, self.RR_SO]
 
-    def resid_func(self, x):
+        
+        FL_node_lst[0].position = x[0], x[1], x[2]
+        FL_node_lst[1].position = x[3], x[4], x[5]
+        FR_node_lst[0].position = x[0], -1 * x[1], x[2]
+        FR_node_lst[1].position = x[3], -1 * x[4], x[5]
+
+        print([float(x) for x in list(FL_node_lst[0].position)])
+        print([float(x) for x in list(FL_node_lst[1].position)])
+
+        RL_node_lst[0].position = x[6], x[7], x[8]
+        RL_node_lst[1].position = x[9], x[10], x[11]
+        RR_node_lst[0].position = x[6], -1 * x[7], x[8]
+        RR_node_lst[1].position = x[9], -1 * x[10], x[11]
+
+        print([float(x) for x in list(RL_node_lst[0].position)])
+        print([float(x) for x in list(RL_node_lst[1].position)])
+
+        toe_outputs = []
+
+        for heave in self.heave_sweep:
+            try:
+                self.FL_dw.jounce(jounce=heave)
+                self.FR_dw.jounce(jounce=heave)
+                self.RL_dw.jounce(jounce=heave)
+                self.RR_dw.jounce(jounce=heave)
+            except:
+                return 1e9
+
+            toe_outputs.append(self.FL_dw.toe * 180 / np.pi)
+            toe_outputs.append(self.FR_dw.toe * 180 / np.pi)
+            toe_outputs.append(self.RL_dw.toe * 180 / np.pi)
+            toe_outputs.append(self.RR_dw.toe * 180 / np.pi)
+        
+        self.counter += 1
+        print(f"Iteration Number: {self.counter}")
+        print(f"Residual: {np.linalg.norm(toe_outputs)}")
+
+        return np.linalg.norm(toe_outputs)
+
+    def gamma_resid_func(self, x):
         print(x)
         print(f"Iterations Complete: {self.counter}")
-        FL_node_lst = [self.FL_UFI.position, self.FL_UAI.position, self.FL_LFI.position, self.FL_LAI.position, self.FL_SI.position, self.FL_UFO.position, self.FL_LFO.position, self.FL_SO.position]
-        FR_node_lst = [self.FR_UFI.position, self.FR_UAI.position, self.FR_LFI.position, self.FR_LAI.position, self.FR_SI.position, self.FR_UFO.position, self.FR_LFO.position, self.FR_SO.position]
-        RL_node_lst = [self.RL_UFI.position, self.RL_UAI.position, self.RL_LFI.position, self.RL_LAI.position, self.RL_SI.position, self.RL_UFO.position, self.RL_LFO.position, self.RL_SO.position]
-        RR_node_lst = [self.RR_UFI.position, self.RR_UAI.position, self.RR_LFI.position, self.RR_LAI.position, self.RR_SI.position, self.RR_UFO.position, self.RR_LFO.position, self.RR_SO.position]
+        FL_node_lst = [self.FL_UFI, self.FL_UAI, self.FL_LFI, self.FL_LAI, self.FL_SI, self.FL_UFO, self.FL_LFO, self.FL_SO]
+        FR_node_lst = [self.FR_UFI, self.FR_UAI, self.FR_LFI, self.FR_LAI, self.FR_SI, self.FR_UFO, self.FR_LFO, self.FR_SO]
+        RL_node_lst = [self.RL_UFI, self.RL_UAI, self.RL_LFI, self.RL_LAI, self.RL_SI, self.RL_UFO, self.RL_LFO, self.RL_SO]
+        RR_node_lst = [self.RR_UFI, self.RR_UAI, self.RR_LFI, self.RR_LAI, self.RR_SI, self.RR_UFO, self.RR_LFO, self.RR_SO]
 
-        for i in range(int(len(x) / 6)):
-            FL_node_lst[i] = [x[i * 3], x[i * 3 + 1], x[i * 3 + 2]]
-            FR_node_lst[i] = [x[i * 3], -1 * x[i * 3 + 1], x[i * 3 + 2]]
+        
+        FL_node_lst[0].position = np.array([x[0], x[1], x[2]])
+        FL_node_lst[1].position = np.array([x[3], x[4], x[5]])
+        FL_node_lst[2].position = np.array([x[6], x[7], x[8]])
+        FL_node_lst[3].position = np.array([x[9], x[10], x[11]])
+        FL_node_lst[4].position = np.array([x[12], x[13], x[14]])
+        FL_node_lst[5].position = np.array([x[15], x[16], FL_node_lst[5].position[2]])
+        FL_node_lst[6].position = np.array([x[17], x[18], FL_node_lst[6].position[2]])
+        FL_node_lst[7].position = np.array([x[19], x[20], x[21]])
 
-        for i in range(int(len(x) / 6)):
-            RL_node_lst[i] = [x[i * 3 + 24], x[i * 3 + 1 + 24], x[i * 3 + 2 + 24]]
-            RR_node_lst[i] = [x[i * 3 + 24], -1 * x[i * 3 + 1 + 24], x[i * 3 + 2 + 24]]
+        FR_node_lst[0].position = np.array([x[0], -1 * x[1], x[2]])
+        FR_node_lst[1].position = np.array([x[3], -1 * x[4], x[5]])
+        FR_node_lst[2].position = np.array([x[6], -1 * x[7], x[8]])
+        FR_node_lst[3].position = np.array([x[9], -1 * x[10], x[11]])
+        FR_node_lst[4].position = np.array([x[12], -1 * x[13], x[14]])
+        FR_node_lst[5].position = np.array([x[15], -1 * x[16], FR_node_lst[5].position[2]])
+        FR_node_lst[6].position = np.array([x[17], -1 * x[18], FR_node_lst[6].position[2]])
+        FR_node_lst[7].position = np.array([x[19], -1 * x[20], x[21]])
+
+        RL_node_lst[0].position = np.array([x[0 + 22], x[1 + 22], x[2 + 22]])
+        RL_node_lst[1].position = np.array([x[3 + 22], x[4 + 22], x[5 + 22]])
+        RL_node_lst[2].position = np.array([x[6 + 22], x[7 + 22], x[8 + 22]])
+        RL_node_lst[3].position = np.array([x[9 + 22], x[10 + 22], x[11 + 22]])
+        RL_node_lst[4].position = np.array([x[12 + 22], x[13 + 22], x[14 + 22]])
+        RL_node_lst[5].position = np.array([x[15 + 22], x[16 + 22], RL_node_lst[5].position[2]])
+        RL_node_lst[6].position = np.array([x[17 + 22], x[18 + 22], RL_node_lst[6].position[2]])
+        RL_node_lst[7].position = np.array([x[19 + 22], x[20 + 22], x[21 + 22]])
+
+        RR_node_lst[0].position = np.array([x[0 + 22], -1 * x[1 + 22], x[2 + 22]])
+        RR_node_lst[1].position = np.array([x[3 + 22], -1 * x[4 + 22], x[5 + 22]])
+        RR_node_lst[2].position = np.array([x[6 + 22], -1 * x[7 + 22], x[8 + 22]])
+        RR_node_lst[3].position = np.array([x[9 + 22], -1 * x[10 + 22], x[11 + 22]])
+        RR_node_lst[4].position = np.array([x[12 + 22], -1 * x[13 + 22], x[14 + 22]])
+        RR_node_lst[5].position = np.array([x[15 + 22], -1 * x[16 + 22], RR_node_lst[5].position[2]])
+        RR_node_lst[6].position = np.array([x[17 + 22], -1 * x[18 + 22], RR_node_lst[6].position[2]])
+        RR_node_lst[7].position = np.array([x[19 + 22], -1 * x[20 + 22], x[21 + 22]])
 
         FL_gamma_outputs = []
         FR_gamma_outputs = []
         RL_gamma_outputs = []
         RR_gamma_outputs = []
+
+        FL_toe_outputs = []
+        FR_toe_outputs = []
+        RL_toe_outputs = []
+        RR_toe_outputs = []
         counter = 0
         total_count = len(self.heave_sweep)**3
+        pitch = 0
 
         for heave in self.heave_sweep:
-            for pitch in self.pitch_sweep:
-                for roll in self.roll_sweep:
-                    # print(f"Plotting Progress: {round(counter / total_count * 100, 2)}", end="\r")
-                    FL_jounce = heave + (self.FL_cg_x * np.sin(pitch * np.pi / 180) + self.FL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
-                    FR_jounce = heave + (self.FR_cg_x * np.sin(pitch * np.pi / 180) + self.FR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
-                    RL_jounce = heave + (self.RL_cg_x * np.sin(pitch * np.pi / 180) + self.RL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
-                    RR_jounce = heave + (self.RR_cg_x * np.sin(pitch * np.pi / 180) + self.RR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+            # for pitch in self.pitch_sweep:
+            for roll in self.roll_sweep:
+                # print(f"Plotting Progress: {round(counter / total_count * 100, 2)}", end="\r")
+                FL_jounce = heave + (self.FL_cg_x * np.sin(pitch * np.pi / 180) + self.FL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                FR_jounce = heave + (self.FR_cg_x * np.sin(pitch * np.pi / 180) + self.FR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                RL_jounce = heave + (self.RL_cg_x * np.sin(pitch * np.pi / 180) + self.RL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                RR_jounce = heave + (self.RR_cg_x * np.sin(pitch * np.pi / 180) + self.RR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
 
-                    self.FL_dw.jounce(jounce=FL_jounce)
-                    self.FR_dw.jounce(jounce=FR_jounce)
-                    self.RL_dw.jounce(jounce=RL_jounce)
-                    self.RR_dw.jounce(jounce=RR_jounce)
+                self.FL_dw.jounce(jounce=FL_jounce)
+                self.FR_dw.jounce(jounce=FR_jounce)
+                self.RL_dw.jounce(jounce=RL_jounce)
+                self.RR_dw.jounce(jounce=RR_jounce)
 
-                    FL_gamma_outputs.append(self.FL_dw.inclination_angle * 180 / np.pi)
-                    FR_gamma_outputs.append(self.FR_dw.inclination_angle * 180 / np.pi)
-                    RL_gamma_outputs.append(self.RL_dw.inclination_angle * 180 / np.pi)
-                    RR_gamma_outputs.append(self.RR_dw.inclination_angle * 180 / np.pi)
+                FL_gamma_outputs.append(self.FL_dw.inclination_angle * 180 / np.pi + roll)
+                FR_gamma_outputs.append(self.FR_dw.inclination_angle * 180 / np.pi + roll)
+                RL_gamma_outputs.append(self.RL_dw.inclination_angle * 180 / np.pi + roll)
+                RR_gamma_outputs.append(self.RR_dw.inclination_angle * 180 / np.pi + roll)
 
-        Fy_lst = []
+                FL_toe_outputs.append(self.FL_dw.toe * 180 / np.pi)
+                FR_toe_outputs.append(self.FR_dw.toe * 180 / np.pi)
+                RL_toe_outputs.append(self.RL_dw.toe * 180 / np.pi)
+                RR_toe_outputs.append(self.RR_dw.toe * 180 / np.pi)
 
-        alpha_sweep = np.linspace(-20, 20, 40)
+        mu_x = []
+        mu_y = []
+
+        alpha_sweep = np.linspace(0, 90 / 4, 50) * np.pi / 180
+        kappa_sweep = np.linspace(0, 1 / 4, 50)
+        Fz_sweep = np.linspace(100, 1000, 50)
 
         for i in range(len(FL_gamma_outputs)):
-            FL_max_Fy = max(np.abs(self.FL_tire.tire_eval(FZ=self.FL_tire.get_FNOMIN(), alpha=alpha_sweep * np.pi / 180, kappa=0, gamma=FL_gamma_outputs[i])[1]))
-            FR_max_Fy = max(np.abs(self.FR_tire.tire_eval(FZ=self.FR_tire.get_FNOMIN(), alpha=alpha_sweep * np.pi / 180, kappa=0, gamma=FR_gamma_outputs[i])[1]))
-            RL_max_Fy = max(np.abs(self.RL_tire.tire_eval(FZ=self.RL_tire.get_FNOMIN(), alpha=alpha_sweep * np.pi / 180, kappa=0, gamma=RL_gamma_outputs[i])[1]))
-            RR_max_Fy = max(np.abs(self.RR_tire.tire_eval(FZ=self.RR_tire.get_FNOMIN(), alpha=alpha_sweep * np.pi / 180, kappa=0, gamma=RR_gamma_outputs[i])[1]))
+            for Fz in Fz_sweep:
+                FL_Fx = self.FL_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=FL_gamma_outputs[i])[0]
+                FL_Fy = self.FL_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=FL_gamma_outputs[i])[1]
+                
+                FR_Fx = self.FR_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=FR_gamma_outputs[i])[0]
+                FR_Fy = self.FR_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=FR_gamma_outputs[i])[1]
 
-            Fy_lst.append(FL_max_Fy)
-            Fy_lst.append(FR_max_Fy)
-            Fy_lst.append(RL_max_Fy)
-            Fy_lst.append(RR_max_Fy)
+                RL_Fx = self.RL_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=RL_gamma_outputs[i])[0]
+                RL_Fy = self.RL_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=RL_gamma_outputs[i])[1]
+
+                RR_Fx = self.RR_tire.tire_eval(FZ=Fz, alpha=0, kappa=kappa_sweep, gamma=RR_gamma_outputs[i])[0]
+                RR_Fy = self.RR_tire.tire_eval(FZ=Fz, alpha=alpha_sweep, kappa=0, gamma=RR_gamma_outputs[i])[1]
+
+                FL_mu_x = max(FL_Fx) / Fz
+                FL_mu_y = max(FL_Fy) / Fz
+
+                FR_mu_x = max(FR_Fx) / Fz
+                FR_mu_y = max(FR_Fy) / Fz
+
+                RL_mu_x = max(RL_Fx) / Fz
+                RL_mu_y = max(RL_Fy) / Fz
+
+                RR_mu_x = max(RR_Fx) / Fz
+                RR_mu_y = max(RR_Fy) / Fz
+
+                mu_x.append(FL_mu_x)
+                mu_x.append(FR_mu_x)
+                mu_x.append(RL_mu_x)
+                mu_x.append(RR_mu_x)
+
+                mu_y.append(FL_mu_y)
+                mu_y.append(FR_mu_y)
+                mu_y.append(RL_mu_y)
+                mu_y.append(RR_mu_y)
 
         self.counter += 1
+
+        mu_x_med = np.median(mu_x)
+        mu_x_std = np.std(mu_x)
+        mu_y_med = np.median(mu_y)
+        mu_y_std = np.std(mu_y)
         
-        print(f"Current Residual: {1 / np.linalg.norm(Fy_lst) / 1e-10}")
+        residual = self.mu_x_med / mu_x_med + self.mu_y_med / mu_y_med + mu_x_std / self.mu_x_std + mu_y_std / self.mu_y_std + np.linalg.norm([*FL_toe_outputs, *FR_toe_outputs, *RL_toe_outputs, *RR_toe_outputs])
+
+        print(f"Current Residual: {residual}")
         
-        return 1 / np.linalg.norm(Fy_lst) / 1e-10
+        return residual
     
     def plot(self) -> None:
         # Full version

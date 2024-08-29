@@ -6,7 +6,12 @@ from vehicle_model.suspension_model.assets.interp import interp3d
 from vehicle_model.suspension_model.assets.interp import interp2d
 from vehicle_model._assets.pickle_helpers import pickle_import
 from typing import Callable, Sequence, Tuple
+from matplotlib.figure import Figure
+from collections import OrderedDict
+from dash import Dash, dash_table
+import matplotlib.pyplot as plt
 import pyvista as pv
+import pandas as pd
 import numpy as np
 import pickle
 import os
@@ -611,3 +616,219 @@ class SuspensionModel:
         """
         self.roll(roll=roll)
         self.plot_elements(plotter=self.plotter, verbose=self.verbose)
+    
+    def generate_report(self) -> None:
+        data = OrderedDict(
+            [
+                ("Dimensions", ["Overall Dimensions", 
+                                "Wheelbase and Track", 
+                                "Center of Gravity Design Height", 
+                                "Mass without Driver", 
+                                "Weight Distribution with 68kg Driver"]),
+                ("Units", ["mm",
+                           "mm",
+                           "mm",
+                           "kg",
+                           "-"]),
+                ("  ", ["Length", 
+                      "Wheelbase", 
+                      "CG Height", 
+                      "Front", 
+                      "% Front"]),
+                (" ", [" ",
+                      " ",
+                      " ",
+                      " ",
+                      " "]),
+                ("", ["Width",
+                      "Front Track",
+                      "Confirmed Via",
+                      "Rear",
+                      "% Left"])
+            ]
+        )
+
+        df = pd.DataFrame(data)
+
+        app = Dash(__name__)
+
+        app.layout = dash_table.DataTable(
+            data=df.to_dict('records'),
+            columns=[{'id': c, 'name': c} for c in df.columns],
+            style_header={'border': '1px solid black', 'backgroundColor': '#84a0a8'},
+            style_cell={'textAlign': 'center', 'border': '1px solid grey'},
+            merge_duplicate_headers=True
+        )
+
+        app.run(debug=False)
+
+    def generate_kin_plots(self, steer_sweep: np.ndarray, heave_sweep: np.ndarray, pitch_sweep: np.ndarray, roll_sweep: np.ndarray) -> None:
+        self.steer_sweep = steer_sweep
+        self.heave_sweep = heave_sweep
+        self.pitch_sweep = pitch_sweep
+        self.roll_sweep = roll_sweep
+
+        # Store double wishbones
+        self.FL_dw = self.full_suspension.Fr_axle.left
+        self.FR_dw = self.full_suspension.Fr_axle.right
+        self.RL_dw = self.full_suspension.Rr_axle.left
+        self.RR_dw = self.full_suspension.Rr_axle.right
+
+        # Store geometric properties
+        self.FL_cg_x = abs(self.FL_dw.contact_patch.position[0] - self.cg.position[0])
+        self.FR_cg_x = abs(self.FR_dw.contact_patch.position[0] - self.cg.position[0])
+        self.RL_cg_x = abs(self.RL_dw.contact_patch.position[0] - self.cg.position[0])
+        self.RR_cg_x = abs(self.RR_dw.contact_patch.position[0] - self.cg.position[0])
+        self.FL_cg_y = abs(self.FL_dw.contact_patch.position[1] - self.cg.position[1])
+        self.FR_cg_y = abs(self.FR_dw.contact_patch.position[1] - self.cg.position[1])
+        self.RL_cg_y = abs(self.RL_dw.contact_patch.position[1] - self.cg.position[1])
+        self.RR_cg_y = abs(self.RR_dw.contact_patch.position[1] - self.cg.position[1])
+
+        self.FL_bump_gamma = []
+        self.FR_bump_gamma = []
+        self.RL_bump_gamma = []
+        self.RR_bump_gamma = []
+
+        self.FL_bump_toe = []
+        self.FR_bump_toe = []
+        self.RL_bump_toe = []
+        self.RR_bump_toe = []
+
+        self.FL_roll_gamma = []
+        self.FR_roll_gamma = []
+        self.RL_roll_gamma = []
+        self.RR_roll_gamma = []
+
+        self.FL_2D_bump_jounce = []
+        self.FR_2D_bump_jounce = []
+        self.RL_2D_bump_jounce = []
+        self.RR_2D_bump_jounce = []
+        self.FL_2D_bump_steer = []
+        self.FR_2D_bump_steer = []
+        self.RL_2D_bump_steer = []
+        self.RR_2D_bump_steer = []
+        self.FL_2D_bump_gamma = []
+        self.FR_2D_bump_gamma = []
+        self.RL_2D_bump_gamma = []
+        self.RR_2D_bump_gamma = []
+
+        self.full_suspension.reset_position()
+
+        counter = 0
+        total_count_1D = len(self.steer_sweep)
+        total_count_2D = len(self.steer_sweep)**2
+
+        for heave in self.heave_sweep:
+            counter += 1
+            # self.generate_kin_helper(steer=0, heave=heave, pitch=0, roll=0)
+            self.FL_dw.jounce(jounce=heave)
+            self.FR_dw.jounce(jounce=heave)
+            self.RL_dw.jounce(jounce=heave)
+            self.RR_dw.jounce(jounce=heave)
+            self.FL_bump_gamma.append(self.FL_dw.inclination_angle * 180 / np.pi)
+            self.FR_bump_gamma.append(self.FR_dw.inclination_angle * 180 / np.pi)
+            self.RL_bump_gamma.append(self.RL_dw.inclination_angle * 180 / np.pi)
+            self.RR_bump_gamma.append(self.RR_dw.inclination_angle * 180 / np.pi)
+
+            self.FL_bump_toe.append(self.FL_dw.toe * 180 / np.pi)
+            self.FR_bump_toe.append(self.FR_dw.toe * 180 / np.pi)
+            self.RL_bump_toe.append(self.RL_dw.toe * 180 / np.pi)
+            self.RR_bump_toe.append(self.RR_dw.toe * 180 / np.pi)
+            print(f"Bump Toe/Camber Progress: {round(counter / total_count_1D * 100, 1)}%", end="\r")
+
+        print()
+        counter = 0
+        for steer in self.steer_sweep:
+            for heave in self.heave_sweep:
+                counter += 1
+                self.generate_kin_helper(steer=steer, heave=heave, pitch=0, roll=0)
+                self.FL_2D_bump_jounce.append(heave * 1000)
+                self.FR_2D_bump_jounce.append(heave * 1000)
+                self.RL_2D_bump_jounce.append(heave * 1000)
+                self.RR_2D_bump_jounce.append(heave * 1000)
+
+                self.FL_2D_bump_steer.append(steer * 1000)
+                self.FR_2D_bump_steer.append(steer * 1000)
+                self.RL_2D_bump_steer.append(steer * 1000)
+                self.RR_2D_bump_steer.append(steer * 1000)
+
+                self.FL_2D_bump_gamma.append(self.FL_dw.inclination_angle * 180 / np.pi)
+                self.FR_2D_bump_gamma.append(self.FR_dw.inclination_angle * 180 / np.pi)
+                self.RL_2D_bump_gamma.append(self.RL_dw.inclination_angle * 180 / np.pi)
+                self.RR_2D_bump_gamma.append(self.RR_dw.inclination_angle * 180 / np.pi)
+                print(f"Suspension Map Progress: {round(counter / total_count_2D * 100, 1)}%", end="\r")
+
+        print()
+        counter = 0
+        for roll in self.roll_sweep:
+            counter += 1
+            self.generate_kin_helper(steer=0, heave=0, pitch=0, roll=roll)
+            self.FL_roll_gamma.append(self.FL_dw.inclination_angle * 180 / np.pi + roll)
+            self.FR_roll_gamma.append(self.FR_dw.inclination_angle * 180 / np.pi + roll)
+            self.RL_roll_gamma.append(self.RL_dw.inclination_angle * 180 / np.pi + roll)
+            self.RR_roll_gamma.append(self.RR_dw.inclination_angle * 180 / np.pi + roll)
+            print(f"Roll Camber Progress: {round(counter / total_count_1D * 100, 1)}%", end="\r")
+
+        self.plot()
+    
+    def generate_kin_helper(self, steer: float, heave: float, pitch: float, roll: float):
+        FL_jounce = heave + (self.FL_cg_x * np.sin(pitch * np.pi / 180) + self.FL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+        FR_jounce = heave + (self.FR_cg_x * np.sin(pitch * np.pi / 180) + self.FR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+        RL_jounce = heave + (self.RL_cg_x * np.sin(pitch * np.pi / 180) + self.RL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+        RR_jounce = heave + (self.RR_cg_x * np.sin(pitch * np.pi / 180) + self.RR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+
+        self.FL_dw.steer(steer=steer)
+        self.FR_dw.steer(steer=steer)
+
+        self.FL_dw.jounce(jounce=FL_jounce)
+        self.FR_dw.jounce(jounce=FR_jounce)
+        self.RL_dw.jounce(jounce=RL_jounce)
+        self.RR_dw.jounce(jounce=RR_jounce)
+
+    def plot(self) -> Figure:
+        # Create 1D Figure
+        fig, ax = plt.subplots(nrows=1, ncols=4)
+
+        ax[0].plot(self.heave_sweep * 1000, self.FL_bump_gamma)
+        ax[0].set_xlabel("Jounce (mm)")
+        ax[0].set_ylabel("Inclination Angle (deg)")
+
+        ax[1].plot(self.roll_sweep, self.FL_roll_gamma)
+        ax[1].set_xlabel("Roll (deg)")
+        ax[1].set_ylabel("Inclination Angle (deg)")
+
+        ax[2].plot(self.heave_sweep * 1000, self.FL_bump_toe)
+        ax[2].set_xlabel("FL Jounce (mm)")
+        ax[2].set_ylabel("FL Toe Angle (deg)")
+
+        ax[3].plot(self.heave_sweep * 1000, self.RL_bump_toe)
+        ax[3].set_xlabel("RL Jounce (mm)")
+        ax[3].set_ylabel("RL Toe Angle (deg)")
+        # ax[2].plot()
+        plt.show()
+
+        # Create 2D figure
+        fig = plt.figure(figsize=[11, 8.5])
+        fig.suptitle("Tire Fit Plots", fontsize=20)
+        
+        ### Create subplots ###
+
+        # Pure slip Fx
+        ax = fig.add_subplot(1, 1, 1, projection='3d')
+        
+        steer_sweep, heave_sweep = np.meshgrid(self.steer_sweep * 1000, self.heave_sweep * 1000)
+        gamma = np.array(self.FL_2D_bump_gamma).reshape((len(self.steer_sweep * 1000), len(self.heave_sweep * 1000)))
+        ax.plot_surface(steer_sweep, heave_sweep, gamma)
+        ax.set_xlabel("Rack Displacement (mm)")
+        ax.set_ylabel("Jounce (mm)")
+        ax.set_zlabel("Inclination Angle (deg)")
+
+        # self.format_fig(ax=ax,
+        #                 title=f"Fx(Fz, alpha=0, kappa, gamma={round(gamma, 3)})",
+        #                 xlabel="Fz (N)",
+        #                 ylabel="Kappa (-)",
+        #                 zlabel="Fx (N)",
+        #                 title_size=8,
+        #                 label_size=6)
+
+        plt.show()
