@@ -106,7 +106,7 @@ class VehicleModel:
             tire_radius=self.FL_tire._dimensions["UNLOADED_RADIUS"],
             tire_width=self.FL_tire._dimensions["WIDTH"],
             cg_location=[-1.016, 0, 0.2794],
-            show_ICs=False,
+            show_ICs=True,
             plotter=self.suspension_plotter)
         
         # self.suspension.generate_report()
@@ -116,11 +116,11 @@ class VehicleModel:
         #                                    pitch_sweep=np.linspace(-3, 3, 25),
         #                                    roll_sweep=np.linspace(-3, 3, 25))
 
-        # self.suspension.plot_elements(plotter=self.suspension_plotter, verbose=False, show_grid=False)
+        self.suspension.plot_elements(plotter=self.suspension_plotter, verbose=True, show_grid=False)
         
-        # self.suspension_plotter.add_slider(func=self.suspension.roll_slider, title="Roll", bounds=[-10, 10], pos=[[0.75, 0.1], [0.98, 0.1]])
-        # self.suspension_plotter.add_slider(func=self.suspension.pitch_slider, title="Pitch", bounds=[-10, 10], pos=[[0.75, 0.225], [0.98, 0.225]])
-        # self.suspension_plotter.add_slider(func=self.suspension.heave_slider, title="Heave", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.350], [0.98, 0.350]])
-        # self.suspension_plotter.add_slider(func=self.suspension.steer_slider, title="Steer", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.475], [0.98, 0.475]])
+        self.suspension_plotter.add_slider(func=self.suspension.roll_slider, title="Roll", bounds=[-10, 10], pos=[[0.75, 0.1], [0.98, 0.1]])
+        self.suspension_plotter.add_slider(func=self.suspension.pitch_slider, title="Pitch", bounds=[-10, 10], pos=[[0.75, 0.225], [0.98, 0.225]])
+        self.suspension_plotter.add_slider(func=self.suspension.heave_slider, title="Heave", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.350], [0.98, 0.350]])
+        self.suspension_plotter.add_slider(func=self.suspension.steer_slider, title="Steer", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.475], [0.98, 0.475]])
 
-        # self.suspension_plotter.show()
+        self.suspension_plotter.show()

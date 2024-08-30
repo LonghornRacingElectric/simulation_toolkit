@@ -5,6 +5,7 @@ from vehicle_model.suspension_model.suspension_elements.secondary_elements.kingp
 from vehicle_model.suspension_model.suspension_elements.tertiary_elements.tire import Tire
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.suspension_model.suspension_elements.secondary_elements.cg import CG
 from vehicle_model.suspension_model.assets.misc_linalg import rotation_matrix
 from vehicle_model.suspension_model.assets.plotter import Plotter
 from scipy.interpolate import CubicSpline
@@ -36,6 +37,8 @@ class DoubleWishbone:
         Rate of spring in N/m
     weight : float
         Weight of the corner in N
+    cg : CG
+        CG object defining the center of gravity
     upper : bool
         True if push/pull rod mounts to upper wishbone
     bellcrank_pivot : Sequence[float]
@@ -69,6 +72,7 @@ class DoubleWishbone:
             bellcrank_params: Sequence[Sequence[float]],
             spring_rate: float,
             weight: float,
+            cg: CG,
             upper: bool,
             contact_patch: Sequence[float],
             inclination_angle: float,
@@ -111,6 +115,8 @@ class DoubleWishbone:
         lower_aft_outboard: Node = lower_fore_outboard
         tie_outboard: Node = Node(position=outboard_points[4])
 
+        self.cg = cg
+
         # Define all links
         self.upper_fore_link: Link = Link(inboard=upper_fore_inboard, outboard=upper_fore_outboard)
         self.upper_aft_link: Link = Link(inboard=upper_aft_inboard, outboard=upper_aft_outboard)
@@ -140,6 +146,10 @@ class DoubleWishbone:
         self.FVIC_link = Link(inboard=self.FVIC, outboard=self.contact_patch)
         self.SVIC = Node(position=self.SVIC_position)
         self.SVIC_link = Link(inboard=self.SVIC, outboard=self.contact_patch)
+
+        # Define force application points
+        self.FV_FAP = Node(position=self.FV_FAP_position)
+        self.SV_FAP = Node(position=self.SV_FAP_position)
 
         # Define push/pull rod
         rod_inboard = Node(position=inboard_points[5])
@@ -198,14 +208,17 @@ class DoubleWishbone:
         # Plotting
         if not show_ICs:
             self.elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.kingpin, self.steering_link, self.tire]
+        elif max(np.abs(self.SVIC.position)) < 50:
+            self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link, self.FV_FAP, self.SV_FAP]
         else:
-            self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link]
+            # self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.FVIC_link, self.FV_FAP, self.SV_FAP]
+            self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC_link, self.FV_FAP, self.SV_FAP]
         
         # Rotations
-        if max(np.abs(self.SVIC.position)) < 1000:
-            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.steering_link, self.tire, self.FVIC, self.SVIC]
+        if max(np.abs(self.SVIC.position)) < 50:
+            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.steering_link, self.tire, self.FVIC, self.SVIC, self.FV_FAP, self.SV_FAP]
         else:
-            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.steering_link, self.tire, self.FVIC]
+            self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.steering_link, self.tire, self.FVIC, self.FV_FAP, self.SV_FAP]
         # self.all_elements = [self.upper_wishbone, self.lower_wishbone, self.steering_link, self.tire]
 
     def _fixed_unsprung_geom(self) -> None:
@@ -356,6 +369,9 @@ class DoubleWishbone:
         self.induced_steer = induced_steer[0]
         self.FVIC.position = self.FVIC_position
         self.SVIC.position = self.SVIC_position
+
+        self.FV_FAP.position = self.FV_FAP_position
+        self.SV_FAP.position = self.SV_FAP_position
     
     # def jounce_step(self, step: float):
     #     wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(self.current_jounce))
@@ -476,6 +492,10 @@ class DoubleWishbone:
         """
         for element in self.all_elements:
             element.flatten_rotate(angle=angle)
+
+        # Adjust force application points for rotation
+        self.FV_FAP.position = self.FV_FAP_position
+        self.SV_FAP.position = self.SV_FAP_position
     
     @property
     def FVIC_position(self) -> Sequence[float]:
@@ -554,6 +574,46 @@ class DoubleWishbone:
         x = soln[0][0]
         z = soln[1][0]
 
+        return [x, y, z]
+
+    @property
+    def FV_FAP_position(self) -> float:
+        """
+        ## Front-view force application point height
+
+        Calculates the height of the front-view force application point
+
+        Returns
+        -------
+            Height of the front-view force application point
+        """
+
+        dir_yz = self.FVIC_link.inboard_node.position - self.FVIC_link.outboard_node.position
+        z = (dir_yz[2] / dir_yz[1]) * (self.cg.position[1] - self.FVIC_link.outboard_node.position[1]) + self.FVIC_link.outboard_node.position[2]
+
+        x = self.FVIC_link.outboard_node.position[0]
+        y = self.cg.position[1]
+
+        return [x, y, z]
+    
+    @property
+    def SV_FAP_position(self) -> float:
+        """
+        ## Side-view force application point height
+
+        Calculates the height of the side-view force application point
+
+        Returns
+        -------
+            Height of the side-view force application point
+        """
+
+        dir_xz = self.SVIC_link.inboard_node.position - self.SVIC_link.outboard_node.position
+        z = (dir_xz[2] / dir_xz[0]) * (self.cg.position[0] - self.SVIC_link.outboard_node.position[0]) + self.SVIC_link.outboard_node.position[2]
+
+        x = self.cg.position[0]
+        y = self.SVIC_link.outboard_node.position[1]
+        
         return [x, y, z]
 
     @property

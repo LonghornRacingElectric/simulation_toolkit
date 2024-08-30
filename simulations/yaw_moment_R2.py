@@ -43,18 +43,21 @@ class YMD:
 
                 self.steered_angle_iso_lines[j][0] = delta / (3.50 / 360 * 0.0254)
                 self.steered_angle_iso_lines[i][1][j] = y_ddot
-                self.steered_angle_iso_lines[i][2][j] = yaw_ddot
+                self.steered_angle_iso_lines[i][2][j] = yaw_ddot \
+                # / (self.vehicle.total_mass * 9.81 * abs(self.vehicle.suspension.FL_double_wishbone.contact_patch.position[0] - self.vehicle.suspension.RL_double_wishbone.contact_patch.position[0]))
                 self.body_slip_iso_lines[i][0] = beta
                 self.body_slip_iso_lines[j][1][i] = y_ddot
-                self.body_slip_iso_lines[j][2][i] = yaw_ddot
+                self.body_slip_iso_lines[j][2][i] = yaw_ddot \
+                #  / (self.vehicle.total_mass * 9.81 * abs(self.vehicle.suspension.FL_double_wishbone.contact_patch.position[0] - self.vehicle.suspension.RL_double_wishbone.contact_patch.position[0]))
+
                 y_ddot_lst.append(y_ddot)
                 yaw_ddot_lst.append(yaw_ddot)
                 if beta == 0:
                     delta_lst.append(delta / (3.50 / 360 * 0.0254))
                     Ay_lst.append(y_ddot / 9.81)
 
-        # plt.plot(Ay_lst, delta_lst)
-        # plt.show()
+        plt.plot(Ay_lst, delta_lst)
+        plt.show()
         self.plot()
 
     def _residual_function(self, x: Sequence[float], args: Sequence[float]) -> Sequence[float]:
@@ -126,30 +129,24 @@ class YMD:
         self.FR_Cp_wrt_cg = FR_double_wishbone.contact_patch.position - self.cg_pos
         self.RL_Cp_wrt_cg = RL_double_wishbone.contact_patch.position - self.cg_pos
         self.RR_Cp_wrt_cg = RR_double_wishbone.contact_patch.position - self.cg_pos
+        
+        FL_jounce = heave + abs(self.FL_Cp_wrt_cg[0]) * np.tan(pitch) + -1 * abs(self.FL_Cp_wrt_cg[1]) * np.tan(roll)
+        FR_jounce = heave + abs(self.FR_Cp_wrt_cg[0]) * np.tan(pitch) + abs(self.FR_Cp_wrt_cg[1]) * np.tan(roll)
+        RL_jounce = heave + -1 * abs(self.RL_Cp_wrt_cg[0]) * np.tan(pitch) + -1 * abs(self.RL_Cp_wrt_cg[1]) * np.tan(roll)
+        RR_jounce = heave + -1 * abs(self.RR_Cp_wrt_cg[0]) * np.tan(pitch) + abs(self.RR_Cp_wrt_cg[1]) * np.tan(roll)
+        sus_corners_jounce: Sequence[float] = [FL_jounce, FR_jounce, RL_jounce, RR_jounce]
 
-        # Apply modal displacements
-        suspension.steer(rack_displacement=delta)
-        suspension.heave(heave=heave)
-        suspension.pitch(pitch=pitch)
-        suspension.roll(roll=roll)
+        # Inclination angles
+        FL_gamma = self.vehicle.suspension.FL_gamma_lookup(x=delta, y=FL_jounce)[0] + roll
+        FR_gamma = self.vehicle.suspension.FR_gamma_lookup(x=delta, y=FR_jounce)[0] + roll
+        RL_gamma = self.vehicle.suspension.RL_gamma_lookup(x=delta, y=RL_jounce)[0] + roll
+        RR_gamma = self.vehicle.suspension.RR_gamma_lookup(x=delta, y=RR_jounce)[0] + roll
 
-        # Calculate normal loads
-        FL_inelastic_Fz = FL_double_wishbone.weight / self.vehicle.environment["G"] * ay
-        # FL_elastic_Fz = 
-        FL_total_Fz = FL_double_wishbone.weight
-        FL_Fz = 
-
-        # Store inclination angles
-        FL_gamma = FL_double_wishbone.inclination_angle
-        FR_gamma = FR_double_wishbone.inclination_angle
-        RL_gamma = RL_double_wishbone.inclination_angle
-        RR_gamma = RR_double_wishbone.inclination_angle
-
-        # Store toe angles (static and steered)
-        FL_toe = FL_double_wishbone.toe
-        FR_toe = FR_double_wishbone.toe
-        RL_toe = RL_double_wishbone.toe
-        RR_toe = RR_double_wishbone.toe
+        # Toe angles
+        FL_toe = self.vehicle.suspension.FL_toe_lookup(x=delta, y=FL_jounce)[0]
+        FR_toe = self.vehicle.suspension.FR_toe_lookup(x=delta, y=FR_jounce)[0]
+        RL_toe = self.vehicle.suspension.RL_toe_lookup(x=0, y=RL_jounce)[0]
+        RR_toe = self.vehicle.suspension.RR_toe_lookup(x=0, y=RR_jounce)[0]
 
         # Wheel velocities
         FL_velocity = imf_velocity + np.cross(np.array([0, 0, yaw_rate]), self.FL_Cp_wrt_cg)
@@ -162,39 +159,6 @@ class YMD:
         FR_alpha = FR_toe - np.arctan2(FR_velocity[1], FR_velocity[0])
         RL_alpha = RL_toe - np.arctan2(RL_velocity[1], RL_velocity[0])
         RR_alpha = RR_toe - np.arctan2(RR_velocity[1], RR_velocity[0])
-
-        # Jounce per corner
-        FL_jounce = FL_double_wishbone.total_jounce
-        FR_jounce = FR_double_wishbone.total_jounce
-        RL_jounce = RL_double_wishbone.total_jounce
-        RR_jounce = RR_double_wishbone.total_jounce
-
-        # Calculate force application points
-        FL_center = plane_eval(points= \
-                               [FL_double_wishbone.contact_patch.position, FL_double_wishbone.FVIC.position, FL_double_wishbone.SVIC.position],
-                               x=FL_double_wishbone.SVIC.position[0],
-                               y=FL_double_wishbone.FVIC.position[1])
-        FL_cg_wrt_center = self.cg_pos - FL_center
-
-        FR_center = plane_eval(points= \
-                               [FR_double_wishbone.contact_patch.position, FR_double_wishbone.FVIC.position, FR_double_wishbone.SVIC.position],
-                               x=FR_double_wishbone.SVIC.position[0],
-                               y=FR_double_wishbone.FVIC.position[1])
-        FR_cg_wrt_center = self.cg_pos - FR_center
-
-        RL_center = plane_eval(points= \
-                               [RL_double_wishbone.contact_patch.position, RL_double_wishbone.FVIC.position, RL_double_wishbone.SVIC.position],
-                               x=RL_double_wishbone.SVIC.position[0],
-                               y=RL_double_wishbone.FVIC.position[1])
-        RL_cg_wrt_center = self.cg_pos - RL_center
-
-        RR_center = plane_eval(points= \
-                               [RR_double_wishbone.contact_patch.position, RR_double_wishbone.FVIC.position, RR_double_wishbone.SVIC.position],
-                               x=RR_double_wishbone.SVIC.position[0],
-                               y=RR_double_wishbone.FVIC.position[1])
-        RR_cg_wrt_center = self.cg_pos - RR_center
-        
-        sprung_mass_moments = np.cross(FL_cg_wrt_center,    )
 
         # Normal loads from springs
         Fz_lst = []

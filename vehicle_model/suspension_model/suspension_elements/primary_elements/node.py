@@ -82,5 +82,5 @@ class Node:
         radius: float
             Radius of Node
         """
-        if max(np.abs(self.position)) < 1000:
+        if max(np.abs(self.position)) < 50:
             plotter.add_node(center=self.position, radius=radius)

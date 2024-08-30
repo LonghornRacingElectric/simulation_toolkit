@@ -188,6 +188,28 @@ class FullSuspension:
 
         return [calculated_pitch - angle]
     
+    def _update_FAP(self) -> None:
+        """
+        ## Update force application points
+
+        Updates force application points based on CG transformation
+
+        Returns
+        -------
+        None
+        """
+        self.Fr_axle.left.FV_FAP.position = self.Fr_axle.left.FV_FAP_position
+        self.Fr_axle.left.SV_FAP.position = self.Fr_axle.left.SV_FAP_position
+
+        self.Fr_axle.right.FV_FAP.position = self.Fr_axle.right.FV_FAP_position
+        self.Fr_axle.right.SV_FAP.position = self.Fr_axle.right.SV_FAP_position
+
+        self.Rr_axle.left.FV_FAP.position = self.Rr_axle.left.FV_FAP_position
+        self.Rr_axle.left.SV_FAP.position = self.Rr_axle.left.SV_FAP_position
+
+        self.Rr_axle.right.FV_FAP.position = self.Rr_axle.right.FV_FAP_position
+        self.Rr_axle.right.SV_FAP.position = self.Rr_axle.right.SV_FAP_position
+    
     @property
     def heave_stiffness(self) -> float:
         """

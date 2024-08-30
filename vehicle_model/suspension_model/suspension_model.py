@@ -209,12 +209,16 @@ class SuspensionModel:
         self.current_pitch = 0
         self.current_roll = 0
 
+        # CG location
+        self.cg: CG = CG(position=cg_location)
+
         # Initialize each corner assembly
         self.FL_double_wishbone: DoubleWishbone = DoubleWishbone(inboard_points=FL_inboard_points,
                                                                 outboard_points=FL_outboard_points,
                                                                 bellcrank_params=FL_bellcrank_params,
                                                                 spring_rate=FL_rate,
                                                                 weight=FL_weight,
+                                                                cg=self.cg,
                                                                 upper=FL_upper,
                                                                 contact_patch=FL_contact_patch,
                                                                 inclination_angle=FL_inclination_angle * np.pi / 180,
@@ -228,6 +232,7 @@ class SuspensionModel:
                                                                 bellcrank_params=FR_bellcrank_params,
                                                                 spring_rate=FR_rate,
                                                                 weight=FR_weight,
+                                                                cg=self.cg,
                                                                 upper=FR_upper,
                                                                 contact_patch=FR_contact_patch,
                                                                 inclination_angle=FR_inclination_angle * np.pi / 180,
@@ -241,6 +246,7 @@ class SuspensionModel:
                                                                 bellcrank_params=RL_bellcrank_params,
                                                                 spring_rate=RL_rate,
                                                                 weight=RL_weight,
+                                                                cg=self.cg,
                                                                 upper=RL_upper,
                                                                 contact_patch=RL_contact_patch,
                                                                 inclination_angle=RL_inclination_angle * np.pi / 180,
@@ -254,6 +260,7 @@ class SuspensionModel:
                                                                 bellcrank_params=RR_bellcrank_params,
                                                                 spring_rate=RR_rate,
                                                                 weight=RR_weight,
+                                                                cg=self.cg,
                                                                 upper=RR_upper,
                                                                 contact_patch=RR_contact_patch,
                                                                 inclination_angle=RR_inclination_angle * np.pi / 180,
@@ -261,9 +268,6 @@ class SuspensionModel:
                                                                 tire_radius=tire_radius,
                                                                 tire_width=tire_width,
                                                                 show_ICs=show_ICs)
-        
-        # CG location
-        self.cg: CG = CG(position=cg_location)
 
         # Initialize each axle
         self.Fr_axle: Axle = Axle(left_assy=self.FL_double_wishbone, right_assy=self.FR_double_wishbone, cg=self.cg)
