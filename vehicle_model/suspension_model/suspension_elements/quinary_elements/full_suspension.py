@@ -152,6 +152,41 @@ class FullSuspension:
         self.right_kin_PC.update()
         if self.transform_origin:
             self.flatten()
+        print("###")
+        print(self.Fr_axle.left.inclination_angle)
+        print(self.Fr_axle.right.inclination_angle)
+
+    @property
+    def left_wheelbase(self) -> float:
+        """
+        ## Left Wheelbase
+
+        Calculates and returns left wheelbase attribute
+
+        Returns
+        -------
+        float
+            Left wheelbase
+        """
+        left_wheelbase = abs(self.Fr_axle.left.contact_patch.position[0] - self.Rr_axle.left.contact_patch.position[0])
+
+        return left_wheelbase
+    
+    @property
+    def right_wheelbase(self) -> float:
+        """
+        ## Right Wheelbase
+
+        Calculates and returns right wheelbase attribute
+
+        Returns
+        -------
+        float
+            Right wheelbase
+        """
+        right_wheelbase = abs(self.Fr_axle.right.contact_patch.position[0] - self.Rr_axle.right.contact_patch.position[0])
+
+        return right_wheelbase
 
     def _pitch_resid_func(self, x, args) -> Sequence[float]:
         """

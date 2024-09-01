@@ -496,6 +496,38 @@ class DoubleWishbone:
         # Adjust force application points for rotation
         self.FV_FAP.position = self.FV_FAP_position
         self.SV_FAP.position = self.SV_FAP_position
+
+    @property
+    def lateral_arm(self) -> float:
+        """
+        ## Lateral Arm
+
+        Calculates lateral distance between contact patch and center of gravity (cg)
+
+        Returns
+        -------
+        float
+            Lateral distance between contact patch and cg
+        """
+        lateral_arm = abs(self.contact_patch.position[1] - self.cg.position[1])
+
+        return lateral_arm
+    
+    @property
+    def longitudinal_arm(self) -> float:
+        """
+        ## Longitudinal Arm
+
+        Calculates longitudinal distance between contact patch and center of gravity (cg)
+
+        Returns
+        -------
+        float
+            Longitudinal distance between contact patch and cg
+        """
+        longitudinal_arm = abs(self.contact_patch.position[0] - self.cg.position[0])
+
+        return longitudinal_arm
     
     @property
     def FVIC_position(self) -> Sequence[float]:

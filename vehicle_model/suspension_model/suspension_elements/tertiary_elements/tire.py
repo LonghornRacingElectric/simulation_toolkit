@@ -135,7 +135,7 @@ class Tire:
         x_rot = rotation_matrix(unit_vec=[1, 0, 0], theta=-1 * ang_x)
         y_rot = rotation_matrix(unit_vec=[0, 1, 0], theta=ang_y)
         z_rot = rotation_matrix(unit_vec=[0, 0, 1], theta=self.induced_steer)
-        direction = np.matmul(y_rot, np.matmul(x_rot, np.matmul(z_rot, self.tire_direction)))
+        direction = np.matmul(x_rot, np.matmul(y_rot, np.matmul(z_rot, self.tire_direction)))
 
         return direction
 

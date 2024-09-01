@@ -2,9 +2,9 @@ from vehicle_model.suspension_model.suspension_elements.tertiary_elements.double
 from vehicle_model.suspension_model.suspension_elements.quinary_elements.full_suspension import FullSuspension
 from vehicle_model.suspension_model.suspension_elements.quaternary_elements.axle import Axle
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.cg import CG
+from vehicle_model.suspension_model.assets.interp import interp4d
 from vehicle_model.suspension_model.assets.interp import interp2d
 from vehicle_model._assets.pickle_helpers import pickle_import
-from matplotlib.backends.backend_pdf import PdfPages
 from typing import Callable, Sequence, Tuple
 from matplotlib.figure import Figure
 from collections import OrderedDict
@@ -288,96 +288,139 @@ class SuspensionModel:
             self.FL_caster_lookup = lookup_objs[2]
             self.FL_FVIC_lookup = lookup_objs[3]
             self.FL_SVIC_lookup = lookup_objs[4]
+            self.FL_total_jounce_lookup = lookup_objs[5]
+            self.FL_Cpx_lookup = lookup_objs[6]
+            self.FL_Cpy_lookup = lookup_objs[7]
+            self.FL_Cpz_lookup = lookup_objs[8]
 
-            self.FR_gamma_lookup = lookup_objs[5]
-            self.FR_toe_lookup = lookup_objs[6]
-            self.FR_caster_lookup = lookup_objs[7]
-            self.FR_FVIC_lookup = lookup_objs[8]
-            self.FR_SVIC_lookup = lookup_objs[9]
+            self.FR_gamma_lookup = lookup_objs[9]
+            self.FR_toe_lookup = lookup_objs[10]
+            self.FR_caster_lookup = lookup_objs[11]
+            self.FR_FVIC_lookup = lookup_objs[12]
+            self.FR_SVIC_lookup = lookup_objs[13]
+            self.FR_total_jounce_lookup = lookup_objs[14]
+            self.FR_Cpx_lookup = lookup_objs[15]
+            self.FR_Cpy_lookup = lookup_objs[16]
+            self.FR_Cpz_lookup = lookup_objs[17]
             
-            self.RL_gamma_lookup = lookup_objs[10]
-            self.RL_toe_lookup = lookup_objs[11]
-            self.RL_caster_lookup = lookup_objs[12]
-            self.RL_FVIC_lookup = lookup_objs[13]
-            self.RL_SVIC_lookup = lookup_objs[14]
+            self.RL_gamma_lookup = lookup_objs[18]
+            self.RL_toe_lookup = lookup_objs[19]
+            self.RL_caster_lookup = lookup_objs[20]
+            self.RL_FVIC_lookup = lookup_objs[21]
+            self.RL_SVIC_lookup = lookup_objs[22]
+            self.RL_total_jounce_lookup = lookup_objs[23]
+            self.RL_Cpx_lookup = lookup_objs[24]
+            self.RL_Cpy_lookup = lookup_objs[25]
+            self.RL_Cpz_lookup = lookup_objs[26]
 
-            self.RR_gamma_lookup = lookup_objs[15]
-            self.RR_toe_lookup = lookup_objs[16]
-            self.RR_caster_lookup = lookup_objs[17]
-            self.RR_FVIC_lookup = lookup_objs[18]
-            self.RR_SVIC_lookup = lookup_objs[19]
+            self.RR_gamma_lookup = lookup_objs[27]
+            self.RR_toe_lookup = lookup_objs[28]
+            self.RR_caster_lookup = lookup_objs[29]
+            self.RR_FVIC_lookup = lookup_objs[30]
+            self.RR_SVIC_lookup = lookup_objs[31]
+            self.RR_total_jounce_lookup = lookup_objs[32]
+            self.RR_Cpx_lookup = lookup_objs[33]
+            self.RR_Cpy_lookup = lookup_objs[34]
+            self.RR_Cpz_lookup = lookup_objs[35]
 
-            self.Fr_Kr_lookup = lookup_objs[20]
-            self.Fr_RC_lookup = lookup_objs[21]
-            self.Rr_Kr_lookup = lookup_objs[22]
-            self.Rr_RC_lookup = lookup_objs[23]
-            self.Kp_lookup = lookup_objs[24]
-            self.PC_lookup = lookup_objs[25]
+            self.Fr_Kr_lookup = lookup_objs[36]
+            self.Fr_RC_lookup = lookup_objs[37]
+            self.Rr_Kr_lookup = lookup_objs[38]
+            self.Rr_RC_lookup = lookup_objs[39]
+            self.Kp_lookup = lookup_objs[40]
+            self.PC_lookup = lookup_objs[41]
+            self.cgx_lookup = lookup_objs[42]
+            self.cgy_lookup = lookup_objs[43]
+            self.cgz_lookup = lookup_objs[44]
         
         else: 
             print("Kin lookup object NOT found | Generating now:\n")
             corners = [self.Fr_axle.left, self.Fr_axle.right, self.Rr_axle.left, self.Rr_axle.right]
-            refinement = 20
-            steer_sweep = np.linspace(-0.0254 * 3, 0.0254 * 3, refinement)
-            jounce_sweep = np.linspace(-0.0254 * 5, 0.0254 * 5, refinement)
+            refinement = 5
+            steer_sweep = np.linspace(-3, 3, refinement) * 0.0254
+            heave_sweep = np.linspace(-5, 5, refinement) * 0.0254
+            pitch_sweep = np.linspace(-5, 5, refinement) * np.pi / 180
+            roll_sweep = np.linspace(-5, 5, refinement) * np.pi / 180
             
             gamma_angles = {"FL": [], "FR": [], "RL": [], "RR": []}
             toe_angles = {"FL": [], "FR": [], "RL": [], "RR": []}
             caster_angles = {"FL": [], "FR": [], "RL": [], "RR": []}
             FVIC_pos = {"FL": [], "FR": [], "RL": [], "RR": []}
             SVIC_pos = {"FL": [], "FR": [], "RL": [], "RR": []}
+            total_jounce = {"FL": [], "FR": [], "RL": [], "RR": []}
+            contact_patch = {"FL": {"x": [], "y": [], "z": []},
+                             "FR": {"x": [], "y": [], "z": []},
+                             "RL": {"x": [], "y": [], "z": []},
+                             "RR": {"x": [], "y": [], "z": []}}
             
             roll_stiffness = {"Fr": [], "Rr": []}
             roll_center = {"Fr": [], "Rr": []}
             pitch_stiffness = {"tot": []}
             pitch_center = {"tot": []}
+            cg_location = {"x": [], "y": [], "z": []}
             
             labels = ["FL", "FR", "RL", "RR"]
             
-            total_iter = refinement**2
+            total_iter = refinement**4
             counter = 0
             for steer in steer_sweep:
-                self.full_suspension.Fr_axle.left.steer(steer=steer)
-                self.full_suspension.Fr_axle.right.steer(steer=steer)
-                self.full_suspension.Rr_axle.left.steer(steer=steer)
-                self.full_suspension.Rr_axle.right.steer(steer=steer)
-                for jounce in jounce_sweep:
-                    print(f"Creating Kin Lookup: {round(counter / total_iter * 100, 4)}%", end="\r")
+                for heave in heave_sweep:
+                    for pitch in pitch_sweep:
+                        for roll in roll_sweep:
+                            self.steer(rack_displacement=steer)
+                            self.heave(heave=heave)
+                            self.pitch(pitch=pitch * 180 / np.pi)
+                            self.roll(roll=roll * 180 / np.pi)
+                            print(f"Creating Kin Lookup: {round(counter / total_iter * 100, 4)}%", end="\r")
 
-                    self.full_suspension.Fr_axle.left.jounce(jounce=jounce)
-                    self.full_suspension.Fr_axle.right.jounce(jounce=jounce)
-                    self.full_suspension.Rr_axle.left.jounce(jounce=jounce)
-                    self.full_suspension.Rr_axle.right.jounce(jounce=jounce)
+                            for i in range(len(corners)):
+                                gamma_angles[labels[i]].append(corners[i].inclination_angle)
+                                toe_angles[labels[i]].append(corners[i].toe)
+                                caster_angles[labels[i]].append(corners[i].caster)
+                                FVIC_pos[labels[i]].append(corners[i].FVIC_position)
+                                SVIC_pos[labels[i]].append(corners[i].SVIC_position)
+                                total_jounce[labels[i]].append(corners[i].total_jounce)
+                                contact_patch[labels[i]]["x"].append(corners[i].contact_patch.position[0])
+                                contact_patch[labels[i]]["y"].append(corners[i].contact_patch.position[1])
+                                contact_patch[labels[i]]["z"].append(corners[i].contact_patch.position[2])
+                            
+                            roll_stiffness["Fr"].append(self.full_suspension.Fr_axle.roll_stiffness)
+                            roll_center["Fr"].append(self.full_suspension.Fr_axle.kin_RC.true_KinRC.position)
+                            roll_stiffness["Rr"].append(self.full_suspension.Rr_axle.roll_stiffness)
+                            roll_center["Rr"].append(self.full_suspension.Rr_axle.kin_RC.true_KinRC.position)
+                            
+                            pitch_stiffness["tot"].append(self.full_suspension.pitch_stiffness)
+                            pitch_center["tot"].append(self.full_suspension.right_kin_PC.true_KinPC.position)
+                            
+                            cg_location["x"].append(self.full_suspension.cg.position[0])
+                            cg_location["y"].append(self.full_suspension.cg.position[1])
+                            cg_location["z"].append(self.full_suspension.cg.position[2])
 
-                    for i in range(len(corners)):
-                        gamma_angles[labels[i]].append(corners[i].inclination_angle)
-                        toe_angles[labels[i]].append(corners[i].toe)
-                        caster_angles[labels[i]].append(corners[i].caster)
-                    
-                    roll_stiffness["Fr"].append(self.full_suspension.Fr_axle.roll_stiffness)
-                    roll_center["Fr"].append(self.full_suspension.Fr_axle.kin_RC.true_KinRC.position)
-                    roll_stiffness["Rr"].append(self.full_suspension.Rr_axle.roll_stiffness)
-                    roll_center["Rr"].append(self.full_suspension.Rr_axle.kin_RC.true_KinRC.position)
-                    
-                    pitch_stiffness["tot"].append(self.full_suspension.pitch_stiffness)
-                    pitch_center["tot"].append(self.full_suspension.right_kin_PC.true_KinPC.position)
+                            counter += 1
 
-                    counter += 1
+            print()
 
             lookup_objs = []
             for label in labels:
-                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=gamma_angles[label]))
-                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=toe_angles[label]))
-                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=caster_angles[label]))
-                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=FVIC_pos[label]))
-                lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=SVIC_pos[label]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=gamma_angles[label]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=toe_angles[label]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=caster_angles[label]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=FVIC_pos[label]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=SVIC_pos[label]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=total_jounce[label]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=contact_patch[label]["x"]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=contact_patch[label]["y"]))
+                lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=contact_patch[label]["z"]))
             
-            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_stiffness["Fr"]))
-            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_center["Fr"]))
-            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_stiffness["Rr"]))
-            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=roll_center["Rr"]))
-            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=pitch_stiffness["tot"]))
-            lookup_objs.append(interp2d(x=steer_sweep, y=jounce_sweep, z=pitch_center["tot"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_stiffness["Fr"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_center["Fr"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_stiffness["Rr"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=roll_center["Rr"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=pitch_stiffness["tot"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=pitch_center["tot"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=cg_location["x"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=cg_location["y"]))
+            lookup_objs.append(interp4d(x=steer_sweep, y=heave_sweep, z=pitch_sweep, w=roll_sweep, v=cg_location["z"]))
 
             with open(f"./outputs/kin_interp/kin_lookup.pkl", 'wb') as outp:
                 pickle.dump(lookup_objs, outp, pickle.HIGHEST_PROTOCOL)
@@ -387,31 +430,50 @@ class SuspensionModel:
             self.FL_caster_lookup = lookup_objs[2]
             self.FL_FVIC_lookup = lookup_objs[3]
             self.FL_SVIC_lookup = lookup_objs[4]
+            self.FL_total_jounce_lookup = lookup_objs[5]
+            self.FL_Cpx_lookup = lookup_objs[6]
+            self.FL_Cpy_lookup = lookup_objs[7]
+            self.FL_Cpz_lookup = lookup_objs[8]
 
-            self.FR_gamma_lookup = lookup_objs[5]
-            self.FR_toe_lookup = lookup_objs[6]
-            self.FR_caster_lookup = lookup_objs[7]
-            self.FR_FVIC_lookup = lookup_objs[8]
-            self.FR_SVIC_lookup = lookup_objs[9]
+            self.FR_gamma_lookup = lookup_objs[9]
+            self.FR_toe_lookup = lookup_objs[10]
+            self.FR_caster_lookup = lookup_objs[11]
+            self.FR_FVIC_lookup = lookup_objs[12]
+            self.FR_SVIC_lookup = lookup_objs[13]
+            self.FR_total_jounce_lookup = lookup_objs[14]
+            self.FR_Cpx_lookup = lookup_objs[15]
+            self.FR_Cpy_lookup = lookup_objs[16]
+            self.FR_Cpz_lookup = lookup_objs[17]
             
-            self.RL_gamma_lookup = lookup_objs[10]
-            self.RL_toe_lookup = lookup_objs[11]
-            self.RL_caster_lookup = lookup_objs[12]
-            self.RL_FVIC_lookup = lookup_objs[13]
-            self.RL_SVIC_lookup = lookup_objs[14]
+            self.RL_gamma_lookup = lookup_objs[18]
+            self.RL_toe_lookup = lookup_objs[19]
+            self.RL_caster_lookup = lookup_objs[20]
+            self.RL_FVIC_lookup = lookup_objs[21]
+            self.RL_SVIC_lookup = lookup_objs[22]
+            self.RL_total_jounce_lookup = lookup_objs[23]
+            self.RL_Cpx_lookup = lookup_objs[24]
+            self.RL_Cpy_lookup = lookup_objs[25]
+            self.RL_Cpz_lookup = lookup_objs[26]
 
-            self.RR_gamma_lookup = lookup_objs[15]
-            self.RR_toe_lookup = lookup_objs[16]
-            self.RR_caster_lookup = lookup_objs[17]
-            self.RR_FVIC_lookup = lookup_objs[18]
-            self.RR_SVIC_lookup = lookup_objs[19]
+            self.RR_gamma_lookup = lookup_objs[27]
+            self.RR_toe_lookup = lookup_objs[28]
+            self.RR_caster_lookup = lookup_objs[29]
+            self.RR_FVIC_lookup = lookup_objs[30]
+            self.RR_SVIC_lookup = lookup_objs[31]
+            self.RR_total_jounce_lookup = lookup_objs[32]
+            self.RR_Cpx_lookup = lookup_objs[33]
+            self.RR_Cpy_lookup = lookup_objs[34]
+            self.RR_Cpz_lookup = lookup_objs[35]
 
-            self.Fr_Kr_lookup = lookup_objs[20]
-            self.Fr_RC_lookup = lookup_objs[21]
-            self.Rr_Kr_lookup = lookup_objs[22]
-            self.Rr_RC_lookup = lookup_objs[23]
-            self.Kp_lookup = lookup_objs[24]
-            self.PC_lookup = lookup_objs[25]
+            self.Fr_Kr_lookup = lookup_objs[36]
+            self.Fr_RC_lookup = lookup_objs[37]
+            self.Rr_Kr_lookup = lookup_objs[38]
+            self.Rr_RC_lookup = lookup_objs[39]
+            self.Kp_lookup = lookup_objs[40]
+            self.PC_lookup = lookup_objs[41]
+            self.cgx_lookup = lookup_objs[42]
+            self.cgy_lookup = lookup_objs[43]
+            self.cgz_lookup = lookup_objs[44]
 
         # Elements for plotting
         self.elements = [self.full_suspension]
@@ -622,51 +684,49 @@ class SuspensionModel:
         self.plot_elements(plotter=self.plotter, verbose=self.verbose)
     
     def generate_report(self) -> None:
+        data = OrderedDict(
+            [
+                ("Dimensions", ["Overall Dimensions", 
+                                "Wheelbase and Track", 
+                                "Center of Gravity Design Height", 
+                                "Mass without Driver", 
+                                "Weight Distribution with 68kg Driver"]),
+                ("Units", ["mm",
+                           "mm",
+                           "mm",
+                           "kg",
+                           "-"]),
+                ("  ", ["Length", 
+                      "Wheelbase", 
+                      "CG Height", 
+                      "Front", 
+                      "% Front"]),
+                (" ", [" ",
+                      " ",
+                      " ",
+                      " ",
+                      " "]),
+                ("", ["Width",
+                      "Front Track",
+                      "Confirmed Via",
+                      "Rear",
+                      "% Left"])
+            ]
+        )
 
-        # data = OrderedDict(
-        #     [
-        #         ("Dimensions", ["Overall Dimensions", 
-        #                         "Wheelbase and Track", 
-        #                         "Center of Gravity Design Height", 
-        #                         "Mass without Driver", 
-        #                         "Weight Distribution with 68kg Driver"]),
-        #         ("Units", ["mm",
-        #                    "mm",
-        #                    "mm",
-        #                    "kg",
-        #                    "-"]),
-        #         ("  ", ["Length", 
-        #               "Wheelbase", 
-        #               "CG Height", 
-        #               "Front", 
-        #               "% Front"]),
-        #         (" ", [" ",
-        #               " ",
-        #               " ",
-        #               " ",
-        #               " "]),
-        #         ("", ["Width",
-        #               "Front Track",
-        #               "Confirmed Via",
-        #               "Rear",
-        #               "% Left"])
-        #     ]
-        # )
+        df = pd.DataFrame(data)
 
-        # df = pd.DataFrame(data)
+        app = Dash(__name__)
 
-        # app = Dash(__name__)
+        app.layout = dash_table.DataTable(
+            data=df.to_dict('records'),
+            columns=[{'id': c, 'name': c} for c in df.columns],
+            style_header={'border': '1px solid black', 'backgroundColor': '#84a0a8'},
+            style_cell={'textAlign': 'center', 'border': '1px solid grey'},
+            merge_duplicate_headers=True
+        )
 
-        # app.layout = dash_table.DataTable(
-        #     data=df.to_dict('records'),
-        #     columns=[{'id': c, 'name': c} for c in df.columns],
-        #     style_header={'border': '1px solid black', 'backgroundColor': '#84a0a8'},
-        #     style_cell={'textAlign': 'center', 'border': '1px solid grey'},
-        #     merge_duplicate_headers=True
-        # )
-
-        # app.run(debug=False)
-        pass
+        app.run(debug=False)
 
     def generate_kin_plots(self, steer_sweep: np.ndarray, heave_sweep: np.ndarray, pitch_sweep: np.ndarray, roll_sweep: np.ndarray) -> None:
         self.steer_sweep = steer_sweep
@@ -680,209 +740,108 @@ class SuspensionModel:
         self.RL_dw = self.full_suspension.Rr_axle.left
         self.RR_dw = self.full_suspension.Rr_axle.right
 
-        kin_dict = {
-            "Bump Camber Full": {"FL": [], "FR": [], "RL": [], "RR": []},
-            "Bump Toe Full": {"FL": [], "FR": [], "RL": [], "RR": []},
-            "Roll Camber Full": {"FL": [], "FR": [], "RL": [], "RR": []},
-            "Roll Toe Full": {"FL": [], "FR": [], "RL": [], "RR": []},
-            "Bump Camber Lite": {"FL": [], "FR": [], "RL": [], "RR": []},
-            "Bump Toe Lite": {"FL": [], "FR": [], "RL": [], "RR": []},
-            "Roll Camber Lite": {"FL": [], "FR": [], "RL": [], "RR": []},
-            "Roll Toe Lite": {"FL": [], "FR": [], "RL": [], "RR": []},
-        }
+        # Store geometric properties
+        self.FL_cg_x = abs(self.FL_dw.contact_patch.position[0] - self.cg.position[0])
+        self.FR_cg_x = abs(self.FR_dw.contact_patch.position[0] - self.cg.position[0])
+        self.RL_cg_x = abs(self.RL_dw.contact_patch.position[0] - self.cg.position[0])
+        self.RR_cg_x = abs(self.RR_dw.contact_patch.position[0] - self.cg.position[0])
+        self.FL_cg_y = abs(self.FL_dw.contact_patch.position[1] - self.cg.position[1])
+        self.FR_cg_y = abs(self.FR_dw.contact_patch.position[1] - self.cg.position[1])
+        self.RL_cg_y = abs(self.RL_dw.contact_patch.position[1] - self.cg.position[1])
+        self.RR_cg_y = abs(self.RR_dw.contact_patch.position[1] - self.cg.position[1])
+
+        self.FL_bump_gamma = []
+        self.FR_bump_gamma = []
+        self.RL_bump_gamma = []
+        self.RR_bump_gamma = []
+
+        self.FL_bump_toe = []
+        self.FR_bump_toe = []
+        self.RL_bump_toe = []
+        self.RR_bump_toe = []
+
+        self.FL_roll_gamma = []
+        self.FR_roll_gamma = []
+        self.RL_roll_gamma = []
+        self.RR_roll_gamma = []
+
+        self.FL_2D_bump_jounce = []
+        self.FR_2D_bump_jounce = []
+        self.RL_2D_bump_jounce = []
+        self.RR_2D_bump_jounce = []
+        self.FL_2D_bump_steer = []
+        self.FR_2D_bump_steer = []
+        self.RL_2D_bump_steer = []
+        self.RR_2D_bump_steer = []
+        self.FL_2D_bump_gamma = []
+        self.FR_2D_bump_gamma = []
+        self.RL_2D_bump_gamma = []
+        self.RR_2D_bump_gamma = []
+
+        self.full_suspension.reset_position()
+
+        counter = 0
+        total_count_1D = len(self.steer_sweep)
+        total_count_2D = len(self.steer_sweep)**2
 
         for heave in self.heave_sweep:
-            self.generate_kin_helper(steer=0, heave=heave, pitch=0, roll=0)
-            kin_dict["Bump Camber Lite"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Bump Camber Lite"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Bump Camber Lite"]["RL"].append(-self.RL_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Bump Camber Lite"]["RR"].append(self.RR_dw.inclination_angle * 180 / np.pi)
+            counter += 1
+            # self.generate_kin_helper(steer=0, heave=heave, pitch=0, roll=0)
+            self.FL_dw.jounce(jounce=heave)
+            self.FR_dw.jounce(jounce=heave)
+            self.RL_dw.jounce(jounce=heave)
+            self.RR_dw.jounce(jounce=heave)
+            self.FL_bump_gamma.append(self.FL_dw.inclination_angle * 180 / np.pi)
+            self.FR_bump_gamma.append(self.FR_dw.inclination_angle * 180 / np.pi)
+            self.RL_bump_gamma.append(self.RL_dw.inclination_angle * 180 / np.pi)
+            self.RR_bump_gamma.append(self.RR_dw.inclination_angle * 180 / np.pi)
 
-            kin_dict["Bump Toe Lite"]["FL"].append(-self.FL_dw.toe * 180 / np.pi)
-            kin_dict["Bump Toe Lite"]["FR"].append(self.FR_dw.toe * 180 / np.pi)
-            kin_dict["Bump Toe Lite"]["RL"].append(-self.RL_dw.toe * 180 / np.pi)
-            kin_dict["Bump Toe Lite"]["RR"].append(self.RR_dw.toe * 180 / np.pi)
-        
+            self.FL_bump_toe.append(self.FL_dw.toe * 180 / np.pi)
+            self.FR_bump_toe.append(self.FR_dw.toe * 180 / np.pi)
+            self.RL_bump_toe.append(self.RL_dw.toe * 180 / np.pi)
+            self.RR_bump_toe.append(self.RR_dw.toe * 180 / np.pi)
+            print(f"Bump Toe/Camber Progress: {round(counter / total_count_1D * 100, 1)}%", end="\r")
+
+        print()
+        counter = 0
+        for steer in self.steer_sweep:
+            for heave in self.heave_sweep:
+                counter += 1
+                self.generate_kin_helper(steer=steer, heave=heave, pitch=0, roll=0)
+                self.FL_2D_bump_jounce.append(heave * 1000)
+                self.FR_2D_bump_jounce.append(heave * 1000)
+                self.RL_2D_bump_jounce.append(heave * 1000)
+                self.RR_2D_bump_jounce.append(heave * 1000)
+
+                self.FL_2D_bump_steer.append(steer * 1000)
+                self.FR_2D_bump_steer.append(steer * 1000)
+                self.RL_2D_bump_steer.append(steer * 1000)
+                self.RR_2D_bump_steer.append(steer * 1000)
+
+                self.FL_2D_bump_gamma.append(self.FL_dw.inclination_angle * 180 / np.pi)
+                self.FR_2D_bump_gamma.append(self.FR_dw.inclination_angle * 180 / np.pi)
+                self.RL_2D_bump_gamma.append(self.RL_dw.inclination_angle * 180 / np.pi)
+                self.RR_2D_bump_gamma.append(self.RR_dw.inclination_angle * 180 / np.pi)
+                print(f"Suspension Map Progress: {round(counter / total_count_2D * 100, 1)}%", end="\r")
+
+        print()
+        counter = 0
         for roll in self.roll_sweep:
+            counter += 1
             self.generate_kin_helper(steer=0, heave=0, pitch=0, roll=roll)
-            kin_dict["Roll Camber Lite"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi - roll)
-            kin_dict["Roll Camber Lite"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi + roll)
-            kin_dict["Roll Camber Lite"]["RL"].append(-self.RL_dw.inclination_angle * 180 / np.pi - roll)
-            kin_dict["Roll Camber Lite"]["RR"].append(self.RR_dw.inclination_angle * 180 / np.pi + roll)
+            self.FL_roll_gamma.append(self.FL_dw.inclination_angle * 180 / np.pi + roll)
+            self.FR_roll_gamma.append(self.FR_dw.inclination_angle * 180 / np.pi + roll)
+            self.RL_roll_gamma.append(self.RL_dw.inclination_angle * 180 / np.pi + roll)
+            self.RR_roll_gamma.append(self.RR_dw.inclination_angle * 180 / np.pi + roll)
+            print(f"Roll Camber Progress: {round(counter / total_count_1D * 100, 1)}%", end="\r")
 
-            kin_dict["Roll Toe Lite"]["FL"].append(-self.FL_dw.toe * 180 / np.pi)
-            kin_dict["Roll Toe Lite"]["FR"].append(self.FR_dw.toe * 180 / np.pi)
-            kin_dict["Roll Toe Lite"]["RL"].append(-self.RL_dw.toe * 180 / np.pi)
-            kin_dict["Roll Toe Lite"]["RR"].append(self.RR_dw.toe * 180 / np.pi)
-
-        for heave in self.heave_sweep:
-            self.heave(heave=heave)
-            kin_dict["Bump Camber Full"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Bump Camber Full"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Bump Camber Full"]["RL"].append(-self.RL_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Bump Camber Full"]["RR"].append(self.RR_dw.inclination_angle * 180 / np.pi)
-
-            kin_dict["Bump Toe Full"]["FL"].append(-self.FL_dw.toe * 180 / np.pi)
-            kin_dict["Bump Toe Full"]["FR"].append(self.FR_dw.toe * 180 / np.pi)
-            kin_dict["Bump Toe Full"]["RL"].append(-self.RL_dw.toe * 180 / np.pi)
-            kin_dict["Bump Toe Full"]["RR"].append(self.RR_dw.toe * 180 / np.pi)
-
-        self.FL_dw.heave_jounce = 0
-        self.FR_dw.heave_jounce = 0
-        self.RL_dw.heave_jounce = 0
-        self.RR_dw.heave_jounce = 0
-
-        for roll in self.roll_sweep:
-            self.roll(roll=roll)
-            kin_dict["Roll Camber Full"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Roll Camber Full"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Roll Camber Full"]["RL"].append(-self.RL_dw.inclination_angle * 180 / np.pi)
-            kin_dict["Roll Camber Full"]["RR"].append(self.RR_dw.inclination_angle * 180 / np.pi)
-
-            kin_dict["Roll Toe Full"]["FL"].append(-self.FL_dw.toe * 180 / np.pi)
-            kin_dict["Roll Toe Full"]["FR"].append(self.FR_dw.toe * 180 / np.pi)
-            kin_dict["Roll Toe Full"]["RL"].append(-self.RL_dw.toe * 180 / np.pi)
-            kin_dict["Roll Toe Full"]["RR"].append(self.RR_dw.toe * 180 / np.pi)
-        
-        fig_1, ax_1 = plt.subplots(nrows=2, ncols=2)
-        fig_1.set_size_inches(w=11, h=8.5)
-        fig_1.suptitle("Bump Camber")
-        fig_1.subplots_adjust(wspace=0.2, hspace=0.4)
-        
-        ax_1[0, 0].set_xlabel("Jounce (mm)")
-        ax_1[0, 0].set_ylabel("Camber (deg)")
-        ax_1[0, 0].set_title("FL Bump Camber")
-        ax_1[0, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Lite"]["FL"])
-        ax_1[0, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Full"]["FL"])
-
-        ax_1[0, 1].set_xlabel("Jounce (mm)")
-        ax_1[0, 1].set_ylabel("Camber (deg)")
-        ax_1[0, 1].set_title("FR Bump Camber")
-        ax_1[0, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Lite"]["FR"])
-        ax_1[0, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Full"]["FR"])
-
-        ax_1[1, 0].set_xlabel("Jounce (mm)")
-        ax_1[1, 0].set_ylabel("Camber (deg)")
-        ax_1[1, 0].set_title("RL Bump Camber")
-        ax_1[1, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Lite"]["RL"])
-        ax_1[1, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Full"]["RL"])
-
-        ax_1[1, 1].set_xlabel("Jounce (mm)")
-        ax_1[1, 1].set_ylabel("Camber (deg)")
-        ax_1[1, 1].set_title("RR Bump Camber")
-        ax_1[1, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Lite"]["RR"])
-        ax_1[1, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Camber Full"]["RR"])
-        fig_1.legend(["Lite Model", "Full Model"])
-
-        fig_2, ax_2 = plt.subplots(nrows=2, ncols=2)
-        fig_2.set_size_inches(w=11, h=8.5)
-        fig_2.suptitle("Bump Toe")
-        fig_2.subplots_adjust(wspace=0.2, hspace=0.4)
-
-        ax_2[0, 0].set_xlabel("Jounce (mm)")
-        ax_2[0, 0].set_ylabel("Toe (deg)")
-        ax_2[0, 0].set_title("FL Bump Toe")
-        ax_2[0, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Lite"]["FL"])
-        ax_2[0, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Full"]["FL"])
-
-        ax_2[0, 1].set_xlabel("Jounce (mm)")
-        ax_2[0, 1].set_ylabel("Toe (deg)")
-        ax_2[0, 1].set_title("FR Bump Toe")
-        ax_2[0, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Lite"]["FR"])
-        ax_2[0, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Full"]["FR"])
-
-        ax_2[1, 0].set_xlabel("Jounce (mm)")
-        ax_2[1, 0].set_ylabel("Toe (deg)")
-        ax_2[1, 0].set_title("RL Bump Toe")
-        ax_2[1, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Lite"]["RL"])
-        ax_2[1, 0].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Full"]["RL"])
-
-        ax_2[1, 1].set_xlabel("Jounce (mm)")
-        ax_2[1, 1].set_ylabel("Toe (deg)")
-        ax_2[1, 1].set_title("RR Bump Toe")
-        ax_2[1, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Lite"]["RR"])
-        ax_2[1, 1].plot(self.heave_sweep * 1000, kin_dict["Bump Toe Full"]["RR"])
-        fig_2.legend(["Lite Model", "Full Model"])
-
-        fig_3, ax_3 = plt.subplots(nrows=2, ncols=2)
-        fig_3.set_size_inches(w=11, h=8.5)
-        fig_3.suptitle("Roll Camber")
-        fig_3.subplots_adjust(wspace=0.2, hspace=0.4)
-        
-        ax_3[0, 0].set_xlabel("Roll (deg)")
-        ax_3[0, 0].set_ylabel("Camber (deg)")
-        ax_3[0, 0].set_title("FL Roll Camber")
-        ax_3[0, 0].plot(self.roll_sweep, kin_dict["Roll Camber Lite"]["FL"])
-        ax_3[0, 0].plot(self.roll_sweep, kin_dict["Roll Camber Full"]["FL"])
-
-        ax_3[0, 1].set_xlabel("Roll (deg)")
-        ax_3[0, 1].set_ylabel("Camber (deg)")
-        ax_3[0, 1].set_title("FR Roll Camber")
-        ax_3[0, 1].plot(self.roll_sweep, kin_dict["Roll Camber Lite"]["FR"])
-        ax_3[0, 1].plot(self.roll_sweep, kin_dict["Roll Camber Full"]["FR"])
-
-        ax_3[1, 0].set_xlabel("Roll (deg)")
-        ax_3[1, 0].set_ylabel("Camber (deg)")
-        ax_3[1, 0].set_title("RL Roll Camber")
-        ax_3[1, 0].plot(self.roll_sweep, kin_dict["Roll Camber Lite"]["RL"])
-        ax_3[1, 0].plot(self.roll_sweep, kin_dict["Roll Camber Full"]["RL"])
-
-        ax_3[1, 1].set_xlabel("Roll (deg)")
-        ax_3[1, 1].set_ylabel("Camber (deg)")
-        ax_3[1, 1].set_title("RR Roll Camber")
-        ax_3[1, 1].plot(self.roll_sweep, kin_dict["Roll Camber Lite"]["RR"])
-        ax_3[1, 1].plot(self.roll_sweep, kin_dict["Roll Camber Full"]["RR"])
-        fig_3.legend(["Lite Model", "Full Model"])
-
-        fig_4, ax_4 = plt.subplots(nrows=2, ncols=2)
-        fig_4.set_size_inches(w=11, h=8.5)
-        fig_4.suptitle("Roll Toe")
-        fig_4.subplots_adjust(wspace=0.2, hspace=0.4)
-        
-        ax_4[0, 0].set_xlabel("Roll (deg)")
-        ax_4[0, 0].set_ylabel("Toe (deg)")
-        ax_4[0, 0].set_title("FL Roll Toe")
-        ax_4[0, 0].plot(self.roll_sweep, kin_dict["Roll Toe Lite"]["FL"])
-        ax_4[0, 0].plot(self.roll_sweep, kin_dict["Roll Toe Full"]["FL"])
-
-        ax_4[0, 1].set_xlabel("Roll (deg)")
-        ax_4[0, 1].set_ylabel("Toe (deg)")
-        ax_4[0, 1].set_title("FR Roll Toe")
-        ax_4[0, 1].plot(self.roll_sweep, kin_dict["Roll Toe Lite"]["FR"])
-        ax_4[0, 1].plot(self.roll_sweep, kin_dict["Roll Toe Full"]["FR"])
-
-        ax_4[1, 0].set_xlabel("Roll (deg)")
-        ax_4[1, 0].set_ylabel("Toe (deg)")
-        ax_4[1, 0].set_title("RL Roll Toe")
-        ax_4[1, 0].plot(self.roll_sweep, kin_dict["Roll Toe Lite"]["RL"])
-        ax_4[1, 0].plot(self.roll_sweep, kin_dict["Roll Toe Full"]["RL"])
-
-        ax_4[1, 1].set_xlabel("Roll (deg)")
-        ax_4[1, 1].set_ylabel("Toe (deg)")
-        ax_4[1, 1].set_title("RR Roll Toe")
-        ax_4[1, 1].plot(self.roll_sweep, kin_dict["Roll Toe Lite"]["RR"])
-        ax_4[1, 1].plot(self.roll_sweep, kin_dict["Roll Toe Full"]["RR"])
-        fig_4.legend(["Lite Model", "Full Model"])
-
-        self.plot(figs=[fig_1, fig_2, fig_3, fig_4])
+        self.plot()
     
     def generate_kin_helper(self, steer: float, heave: float, pitch: float, roll: float):
-        dist_vecs = {"FL": {"CGx": None, "CGy": None},
-                     "FR": {"CGx": None, "CGy": None},
-                     "RL": {"CGx": None, "CGy": None},
-                     "RR": {"CGx": None, "CGy": None}}
-        sus_corners = [self.FL_double_wishbone, self.FR_double_wishbone, self.RL_double_wishbone, self.RR_double_wishbone]
-
-        for i, key in enumerate(dist_vecs.keys()):
-            x_dist = abs(sus_corners[i].contact_patch.position[0] - self.cg.position[0])
-            y_dist = abs(sus_corners[i].contact_patch.position[1] - self.cg.position[1])
-            dist_vecs[key]["CGx"] = x_dist
-            dist_vecs[key]["CGy"] = y_dist
-
-        FL_jounce = heave + dist_vecs["FL"]["CGx"] * np.tan(pitch * np.pi / 180) - dist_vecs["FL"]["CGy"] * np.tan(roll * np.pi / 180)
-        FR_jounce = heave + dist_vecs["FR"]["CGx"] * np.tan(pitch * np.pi / 180) + dist_vecs["FR"]["CGy"] * np.tan(roll * np.pi / 180)
-        RL_jounce = heave - dist_vecs["RL"]["CGx"] * np.tan(pitch * np.pi / 180) - dist_vecs["RL"]["CGy"] * np.tan(roll * np.pi / 180)
-        RR_jounce = heave - dist_vecs["RR"]["CGx"] * np.tan(pitch * np.pi / 180) + dist_vecs["RR"]["CGy"] * np.tan(roll * np.pi / 180)
+        FL_jounce = heave + (self.FL_cg_x * np.sin(pitch * np.pi / 180) + self.FL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+        FR_jounce = heave + (self.FR_cg_x * np.sin(pitch * np.pi / 180) + self.FR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+        RL_jounce = heave + (self.RL_cg_x * np.sin(pitch * np.pi / 180) + self.RL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+        RR_jounce = heave + (self.RR_cg_x * np.sin(pitch * np.pi / 180) + self.RR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
 
         self.FL_dw.steer(steer=steer)
         self.FR_dw.steer(steer=steer)
@@ -892,10 +851,50 @@ class SuspensionModel:
         self.RL_dw.jounce(jounce=RL_jounce)
         self.RR_dw.jounce(jounce=RR_jounce)
 
-    def plot(self, figs: Sequence[Figure]) -> Figure:
-        p = PdfPages("./outputs/kin_plots.pdf")
+    def plot(self) -> Figure:
+        # Create 1D Figure
+        fig, ax = plt.subplots(nrows=1, ncols=4)
 
-        for page in figs:
-            page.savefig(p, format="pdf")
+        ax[0].plot(self.heave_sweep * 1000, self.FL_bump_gamma)
+        ax[0].set_xlabel("Jounce (mm)")
+        ax[0].set_ylabel("Inclination Angle (deg)")
 
-        p.close()
+        ax[1].plot(self.roll_sweep, self.FL_roll_gamma)
+        ax[1].set_xlabel("Roll (deg)")
+        ax[1].set_ylabel("Inclination Angle (deg)")
+
+        ax[2].plot(self.heave_sweep * 1000, self.FL_bump_toe)
+        ax[2].set_xlabel("FL Jounce (mm)")
+        ax[2].set_ylabel("FL Toe Angle (deg)")
+
+        ax[3].plot(self.heave_sweep * 1000, self.RL_bump_toe)
+        ax[3].set_xlabel("RL Jounce (mm)")
+        ax[3].set_ylabel("RL Toe Angle (deg)")
+        # ax[2].plot()
+        plt.show()
+
+        # Create 2D figure
+        fig = plt.figure(figsize=[11, 8.5])
+        fig.suptitle("Tire Fit Plots", fontsize=20)
+        
+        ### Create subplots ###
+
+        # Pure slip Fx
+        ax = fig.add_subplot(1, 1, 1, projection='3d')
+        
+        steer_sweep, heave_sweep = np.meshgrid(self.steer_sweep * 1000, self.heave_sweep * 1000)
+        gamma = np.array(self.FL_2D_bump_gamma).reshape((len(self.steer_sweep * 1000), len(self.heave_sweep * 1000)))
+        ax.plot_surface(steer_sweep, heave_sweep, gamma)
+        ax.set_xlabel("Rack Displacement (mm)")
+        ax.set_ylabel("Jounce (mm)")
+        ax.set_zlabel("Inclination Angle (deg)")
+
+        # self.format_fig(ax=ax,
+        #                 title=f"Fx(Fz, alpha=0, kappa, gamma={round(gamma, 3)})",
+        #                 xlabel="Fz (N)",
+        #                 ylabel="Kappa (-)",
+        #                 zlabel="Fx (N)",
+        #                 title_size=8,
+        #                 label_size=6)
+
+        plt.show()

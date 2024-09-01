@@ -38,8 +38,8 @@ class YMD:
             for j, delta in enumerate(self.delta_sweep):
                 print(f"Progress | {round(counter / total_states * 100, 1)}%", end="\r")
                 counter += 1
-                x_ddot, y_ddot, yaw_ddot, heave, pitch, roll = minimize(self._residual_function, \
-                                        x0=[0, 0, 0, 0, 0, 0], args=[delta, beta, velocity], method="SLSQP").x
+                x_ddot, y_ddot, yaw_ddot, heave, pitch, roll = fsolve(self._residual_function, \
+                                        x0=[0, 0, 0, 0, 0, 0], args=[delta, beta, velocity])
 
                 self.steered_angle_iso_lines[j][0] = delta / (3.50 / 360 * 0.0254)
                 self.steered_angle_iso_lines[i][1][j] = y_ddot
@@ -130,14 +130,101 @@ class YMD:
         # Apply modal displacements
         suspension.steer(rack_displacement=delta)
         suspension.heave(heave=heave)
-        suspension.pitch(pitch=pitch)
-        suspension.roll(roll=roll)
+        suspension.pitch(pitch=pitch * 180 / np.pi)
+        suspension.roll(roll=roll * 180 / np.pi)
 
         # Calculate normal loads
-        FL_inelastic_Fz = FL_double_wishbone.weight / self.vehicle.environment["G"] * ay
-        # FL_elastic_Fz = 
-        FL_total_Fz = FL_double_wishbone.weight
-        FL_Fz = 
+        
+        # Inelastic lateral load transfer
+        FL_inelastic_lat = FL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FL_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Fr_axle.track_width)
+        FR_inelastic_lat = FR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FR_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Fr_axle.track_width)
+        RL_inelastic_lat = RL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RL_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Rr_axle.track_width)
+        RR_inelastic_lat = RR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RR_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Rr_axle.track_width)
+        
+        Fr_inelastic_lat = FL_inelastic_lat + FR_inelastic_lat
+        Rr_inelastic_lat = RL_inelastic_lat + RR_inelastic_lat
+        
+        # Inelastic longitudinal load transfer
+        FL_inelastic_long = FL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FL_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.left_wheelbase)
+        FR_inelastic_long = FR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FR_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.right_wheelbase)
+        RL_inelastic_long = RL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RL_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.left_wheelbase)
+        RR_inelastic_long = RR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RR_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.right_wheelbase)
+        
+        left_inelastic_long = FL_inelastic_long + RL_inelastic_long
+        right_inelastic_long = FR_inelastic_long + RR_inelastic_long
+        
+        # Elastic lateral load transfer
+        FL_elastic_lat_inertial = FL_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FL_double_wishbone.FV_FAP.position[2]) * ay
+        FR_elastic_lat_inertial = FR_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FR_double_wishbone.FV_FAP.position[2]) * ay
+        RL_elastic_lat_inertial = RL_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RL_double_wishbone.FV_FAP.position[2]) * ay
+        RR_elastic_lat_inertial = RR_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RR_double_wishbone.FV_FAP.position[2]) * ay
+        
+        # Fr_elastic_lat_normal = FL_double_wishbone.weight * FL_double_wishbone.lateral_arm - FR_double_wishbone.weight * FR_double_wishbone.lateral_arm
+        # Rr_elastic_lat_normal = RL_double_wishbone.weight * RL_double_wishbone.lateral_arm - RR_double_wishbone.weight * RR_double_wishbone.lateral_arm
+
+        Fr_elastic_lat = (FL_elastic_lat_inertial + FR_elastic_lat_inertial) / suspension.Fr_axle.track_width
+        Rr_elastic_lat = (RL_elastic_lat_inertial + RR_elastic_lat_inertial) / suspension.Rr_axle.track_width
+
+        total_elastic_lt_lat = Fr_elastic_lat + Rr_elastic_lat
+
+        # Elastic longitudinal load transfer
+        FL_elastic_long_inertial = FL_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FL_double_wishbone.SV_FAP.position[2]) * ax
+        FR_elastic_long_inertial = FR_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FR_double_wishbone.SV_FAP.position[2]) * ax
+        RL_elastic_long_inertial = RL_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RL_double_wishbone.SV_FAP.position[2]) * ax
+        RR_elastic_long_inertial = RR_double_wishbone.weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RR_double_wishbone.SV_FAP.position[2]) * ax
+        
+        # left_elastic_long_normal = FL_double_wishbone.weight * FL_double_wishbone.longitudinal_arm - RL_double_wishbone.weight * RL_double_wishbone.longitudinal_arm
+        # right_elastic_long_normal = FR_double_wishbone.weight * FR_double_wishbone.longitudinal_arm - RR_double_wishbone.weight * RR_double_wishbone.longitudinal_arm
+        
+        left_elastic_long = (FL_elastic_long_inertial + RL_elastic_long_inertial) / suspension.full_suspension.left_wheelbase
+        right_elastic_long = (FR_elastic_long_inertial + RR_elastic_long_inertial) / suspension.full_suspension.right_wheelbase
+
+        total_elastic_lt_long = left_elastic_long + right_elastic_long
+
+        # Total load transfers
+        Fr_lat_lt = Fr_inelastic_lat + suspension.Fr_axle.roll_stiffness / (suspension.Fr_axle.roll_stiffness + suspension.Rr_axle.roll_stiffness) * \
+            total_elastic_lt_lat
+        Rr_lat_lt = Rr_inelastic_lat + suspension.Rr_axle.roll_stiffness / (suspension.Fr_axle.roll_stiffness + suspension.Rr_axle.roll_stiffness) * \
+            total_elastic_lt_lat
+
+        left_long_lt = left_inelastic_long + left_elastic_long
+        right_long_lt = right_inelastic_long + right_elastic_long
+        
+        FL_Fz = FL_double_wishbone.weight - Fr_lat_lt + left_long_lt
+        FR_Fz = FR_double_wishbone.weight + Fr_lat_lt + right_long_lt
+        RL_Fz = RL_double_wishbone.weight - Rr_lat_lt - left_long_lt
+        RR_Fz = RR_double_wishbone.weight + Rr_lat_lt - right_long_lt
+
+        Fr_lat_lt = (FL_double_wishbone.weight + FR_double_wishbone.weight) / self.vehicle.environment["G"] * ay * self.cg_pos[2] / suspension.Fr_axle.track_width
+        Rr_lat_lt = (RL_double_wishbone.weight + RR_double_wishbone.weight) / self.vehicle.environment["G"] * ay * self.cg_pos[2] / suspension.Rr_axle.track_width
+
+        FL_Fz = FL_double_wishbone.weight - Fr_lat_lt
+        FR_Fz = FR_double_wishbone.weight + Fr_lat_lt
+        RL_Fz = RL_double_wishbone.weight - Rr_lat_lt
+        RR_Fz = RR_double_wishbone.weight + Rr_lat_lt
+
+        print()
+        print(FL_Fz)
+        print(FR_Fz)
+        print(RL_Fz)
+        print(RR_Fz)
+        print()
+        # print()
+        # print("Lateral Load Transfers:")
+        # print(FL_Fz)
+        # print(FR_Fz)
+        # print("Longitudinal Load Transfers:")
+        # print(RL_Fz)
+        # print(RR_Fz)
+        # print()
 
         # Store inclination angles
         FL_gamma = FL_double_wishbone.inclination_angle
@@ -163,67 +250,6 @@ class YMD:
         RL_alpha = RL_toe - np.arctan2(RL_velocity[1], RL_velocity[0])
         RR_alpha = RR_toe - np.arctan2(RR_velocity[1], RR_velocity[0])
 
-        # Jounce per corner
-        FL_jounce = FL_double_wishbone.total_jounce
-        FR_jounce = FR_double_wishbone.total_jounce
-        RL_jounce = RL_double_wishbone.total_jounce
-        RR_jounce = RR_double_wishbone.total_jounce
-
-        # Calculate force application points
-        FL_center = plane_eval(points= \
-                               [FL_double_wishbone.contact_patch.position, FL_double_wishbone.FVIC.position, FL_double_wishbone.SVIC.position],
-                               x=FL_double_wishbone.SVIC.position[0],
-                               y=FL_double_wishbone.FVIC.position[1])
-        FL_cg_wrt_center = self.cg_pos - FL_center
-
-        FR_center = plane_eval(points= \
-                               [FR_double_wishbone.contact_patch.position, FR_double_wishbone.FVIC.position, FR_double_wishbone.SVIC.position],
-                               x=FR_double_wishbone.SVIC.position[0],
-                               y=FR_double_wishbone.FVIC.position[1])
-        FR_cg_wrt_center = self.cg_pos - FR_center
-
-        RL_center = plane_eval(points= \
-                               [RL_double_wishbone.contact_patch.position, RL_double_wishbone.FVIC.position, RL_double_wishbone.SVIC.position],
-                               x=RL_double_wishbone.SVIC.position[0],
-                               y=RL_double_wishbone.FVIC.position[1])
-        RL_cg_wrt_center = self.cg_pos - RL_center
-
-        RR_center = plane_eval(points= \
-                               [RR_double_wishbone.contact_patch.position, RR_double_wishbone.FVIC.position, RR_double_wishbone.SVIC.position],
-                               x=RR_double_wishbone.SVIC.position[0],
-                               y=RR_double_wishbone.FVIC.position[1])
-        RR_cg_wrt_center = self.cg_pos - RR_center
-        
-        sprung_mass_moments = np.cross(FL_cg_wrt_center,    )
-
-        # Normal loads from springs
-        Fz_lst = []
-        for i in range(len(sus_corners)):
-            if sus_corners_jounce[i] >= 0:
-                Fz_lst.append(sus_corners[i].weight + sus_corners[i].wheelrate_function.integrate(0, sus_corners_jounce[i]))
-            else:
-                Fz_lst.append(sus_corners[i].weight - sus_corners[i].wheelrate_function.integrate(sus_corners_jounce[i], 0)) 
-
-        # Normal loads from accels
-        Fr_lat_LT = (FL_double_wishbone.weight + FR_double_wishbone.weight) * ay / 9.81 * self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[1] - FR_double_wishbone.contact_patch.position[1])
-        Rr_lat_LT = (RL_double_wishbone.weight + RR_double_wishbone.weight) * ay / 9.81 * self.cg_pos[2] / abs(RL_double_wishbone.contact_patch.position[1] - RR_double_wishbone.contact_patch.position[1])
-        left_long_LT = self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[0] - RL_double_wishbone.contact_patch.position[0]) * (FL_double_wishbone.weight + RL_double_wishbone.weight) * ax / 9.81
-        right_long_LT = self.cg_pos[2] / abs(FR_double_wishbone.contact_patch.position[0] - RR_double_wishbone.contact_patch.position[0]) * (FR_double_wishbone.weight + RR_double_wishbone.weight) * ax / 9.81
-        
-        FL_Fz_LT = FL_double_wishbone.weight - Fr_lat_LT - left_long_LT
-        FR_Fz_LT = FR_double_wishbone.weight + Fr_lat_LT - right_long_LT
-        RL_Fz_LT = RL_double_wishbone.weight - Rr_lat_LT + left_long_LT
-        RR_Fz_LT = RR_double_wishbone.weight + Rr_lat_LT + right_long_LT
-        
-        Fz_lst_LT = np.array([FL_Fz_LT, FR_Fz_LT, RL_Fz_LT, RR_Fz_LT])
-
-        FL_Fz, FR_Fz, RL_Fz, RR_Fz = Fz_lst
-
-        Fz_resid = Fz_lst_LT - np.array(Fz_lst)
-
-        # TODO: Instant center shit
-        self.cg_pos[2]
-
         # Tire loads
         self.FL_loads = FL_tire.tire_eval(FZ=FL_Fz, alpha=FL_alpha, kappa=0, gamma=FL_gamma)[0:3]
         self.FR_loads = FR_tire.tire_eval(FZ=FR_Fz, alpha=FR_alpha, kappa=0, gamma=FR_gamma)[0:3]
@@ -235,10 +261,34 @@ class YMD:
         self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_toe), self.RL_loads)
         self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_toe), self.RR_loads)
 
-        # print(self.FL_forces_aligned)
-        # print(self.FR_forces_aligned)
-        # print(self.RL_forces_aligned)
-        # print(self.RR_forces_aligned)
+        # Calculate force application points about instant screw axes
+        FL_center = plane_eval(points=[FL_double_wishbone.contact_patch.position, FL_double_wishbone.FVIC.position, FL_double_wishbone.SVIC.position],
+                               x=FL_double_wishbone.SVIC.position[0],
+                               y=FL_double_wishbone.FVIC.position[1])
+        FR_center = plane_eval(points=[FR_double_wishbone.contact_patch.position, FR_double_wishbone.FVIC.position, FR_double_wishbone.SVIC.position],
+                               x=FR_double_wishbone.SVIC.position[0],
+                               y=FR_double_wishbone.FVIC.position[1])
+        RL_center = plane_eval(points=[RL_double_wishbone.contact_patch.position, RL_double_wishbone.FVIC.position, RL_double_wishbone.SVIC.position],
+                               x=RL_double_wishbone.SVIC.position[0],
+                               y=RL_double_wishbone.FVIC.position[1])
+        RR_center = plane_eval(points=[RR_double_wishbone.contact_patch.position, RR_double_wishbone.FVIC.position, RR_double_wishbone.SVIC.position],
+                               x=RR_double_wishbone.SVIC.position[0],
+                               y=RR_double_wishbone.FVIC.position[1])
+        # print()
+        # print("########")
+        # print(FL_center)
+        # print(FR_center)
+        # print(RL_center)
+        # print(RR_center)
+        # print("########")
+        # print()
+
+        # Sprung mass forces and moments
+        sprung_mass_moment = np.cross(FL_center - FL_double_wishbone.contact_patch.position, self.FL_forces_aligned) + \
+            np.cross(FR_center - FR_double_wishbone.contact_patch.position, self.FR_forces_aligned) + \
+            np.cross(RL_center - RL_double_wishbone.contact_patch.position, self.RL_forces_aligned) + \
+            np.cross(RR_center - RR_double_wishbone.contact_patch.position, self.RR_forces_aligned)
+        sprung_mass_force = self.FL_forces_aligned + self.FR_forces_aligned + self.RL_forces_aligned + self.RR_forces_aligned
 
         ###############################################
         ### Calculate Forces and Moments from Tires ###
@@ -247,13 +297,46 @@ class YMD:
         vehicle_centric_forces = self.FL_forces_aligned + self.FR_forces_aligned + self.RL_forces_aligned + self.RR_forces_aligned
         vehicle_centric_moments = np.cross(-1 * self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(-1 * self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
             np.cross(-1 * self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(-1 * self.RR_Cp_wrt_cg, self.RR_forces_aligned)
-        
-        # print(vehicle_centric_forces)
 
         # Add gravity
         gravity_forces = np.array([0, 0, -self.vehicle.total_mass * self.vehicle.environment["G"]])
-        # print(gravity_forces)
         vehicle_centric_forces += gravity_forces
+
+        ##################################################
+        ### Calculate Resultant Heave, Pitch, and Roll ###
+        ##################################################
+
+        total_roll_stiffness = suspension.Fr_axle.roll_stiffness + suspension.Rr_axle.roll_stiffness
+        total_pitch_stiffness = suspension.full_suspension.pitch_stiffness
+        total_heave_stiffness = suspension.full_suspension.heave_stiffness
+
+        calculated_heave = (self.vehicle.SM * self.vehicle.environment["G"] + -1 * sprung_mass_force[2]) / total_heave_stiffness
+        calculated_roll = sprung_mass_moment[0] / total_roll_stiffness
+        calculated_pitch = sprung_mass_moment[1] / total_pitch_stiffness
+
+        calculated_heave = (self.vehicle.SM * self.vehicle.environment["G"] + -1 * sprung_mass_force[2]) / total_heave_stiffness
+        calculated_roll = self.vehicle.total_mass / 9.81 * ay * self.cg_pos[2] / total_roll_stiffness
+        calculated_pitch = self.vehicle.total_mass / 9.81 * ax * self.cg_pos[2] / total_pitch_stiffness
+
+        # print()
+        # print("###")
+        # print(heave)
+        # print(calculated_heave)
+        # print("###")
+        # print(roll)
+        # print(calculated_roll)
+        # print("###")
+        # print(pitch)
+        # print(calculated_pitch)
+        # print("###")
+        # print()
+
+        modal_disp_resid = [heave - calculated_heave, roll - calculated_roll, pitch - calculated_pitch]
+
+        # print("###")
+        # print(calculated_roll)
+        # print("###")
+        # print(calculated_pitch)
 
         ###################################################
         ### Calculate Forces and Moments from Iteration ###
@@ -269,12 +352,15 @@ class YMD:
         force_residuals = vehicle_centric_forces - sum_force
         moment_residuals = vehicle_centric_moments - sum_moment
 
-        # residuals = np.array([*force_residuals, *moment_residuals]) + np.linalg.norm(Fz_resid)
+        print()
+        print(np.linalg.norm(modal_disp_resid))
+        print()
+
+        residuals = np.array([*force_residuals, *moment_residuals]) + np.linalg.norm(modal_disp_resid)
 
         # print(residuals)
 
-        # return residuals
-        return np.linalg.norm([*force_residuals, *moment_residuals, *Fz_resid])
+        return residuals
 
     def generate_constant_radius_YMD(self, radius: float) -> None:
         pass

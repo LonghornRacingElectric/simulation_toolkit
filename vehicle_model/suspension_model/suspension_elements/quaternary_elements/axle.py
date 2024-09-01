@@ -180,6 +180,22 @@ class Axle:
         self.right.jounce(pitch_jounce=heave)
 
         self.kin_RC.update()
+
+    @property
+    def track_width(self) -> float:
+        """
+        ## Track Width
+
+        Calculates track width
+
+        Returns
+        -------
+        float
+            Track width of axle
+        """
+        track = abs(self.left.contact_patch.position[1] - self.right.contact_patch.position[1])
+
+        return track
     
     @property
     def roll_stiffness(self) -> float:

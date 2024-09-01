@@ -28,7 +28,6 @@ class Wishbone:
 
         self.elements = [self.fore_link, self.aft_link]
         self.all_elements = [self.fore_link.inboard_node, self.fore_link.outboard_node, self.aft_link.inboard_node]
-        # self.all_elements = []
 
     def plot_elements(self, plotter) -> None:
         """
