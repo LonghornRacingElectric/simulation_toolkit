@@ -1,5 +1,7 @@
 import math
 import numpy as np
+from scipy import optimize
+
 
 from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
 
@@ -57,8 +59,6 @@ class PowertrainModel(VehicleSystemModel):
 
     # TODO multi-motor configurations
     # TODO cooling from airflow (function of vehicle velocity)
-    # TODO diff?
-    # TODO cooling from infrared radiation??
 
     def eval(self, car: Car, controls_in: ControlsVector, state_in: StateVector,
              state_out: StateDotVector, observables: ObservablesVector):
@@ -74,10 +74,6 @@ class PowertrainModel(VehicleSystemModel):
         hv_battery_internal_resistance = (
             car.hv_battery_internal_resistance(state_in.hv_battery_charge))  # , state_in.hv_battery_temperature))
 
-        motor_torque = 0
-        motor_back_emf = state_in.motor_rpm / car.motor_induced_voltage
-        motor_efficiency = car.motor_efficiency(motor_torque)
-
         observables.line_pressures = [0, 0]
         observables.motor_torque = 0
 
@@ -88,6 +84,173 @@ class PowertrainModel(VehicleSystemModel):
         motor_power_out = 0
         inverter_power_out = 0
         hv_battery_power_out = 0
+
+        # Solve for motor torque
+
+        # TODO
+        #   regen
+        #   check residual threshold
+        #   setup necessary car variables
+        #       efficiency maps
+        #           motor
+        #           inverter
+        #           transmission stack (make this a method)
+        #               bearings -> maybe implement bearing class idk
+        #                   mos
+        #                   differential
+        #                   CV joint
+        #                   wheel
+        #               chain
+        #               differential
+        #                   gear mesh
+        #                   frictional torque transfer losses
+        #       cell ACIR maps
+        #       differential torque bias
+        #   docstrings
+        #   unit testing
+        #   diff model
+        #   object structure for all powertrain components
+        #   pass self into methods and reduce number of arguments, assign these values as atributes of ptn model
+        #       do this for regen instead of checking torque polarity over and over
+        #   clean up and match structure to sus model
+
+        #   TODO: setup model description docstrings
+        #       include: current revision/state, limitations, known approximations/inaccuracies,
+        #           areas for improvement, etc...
+
+        #   TODO: Cell Model
+        #       RC model
+        #       various cell limits (associataed dependencies i.e. soc, temp, etc)
+        #           charge(regen)/discharge c rate
+        #           temp derates
+        #           over/under voltage
+        #       cell thermal model
+        #           lumped capacitance vs nodal
+        #           cold plate variants, air cooled variants
+        #
+        #   TODO: Motor Model
+        #       RPM limits
+        #       motor equivalent circuit model
+        #       thermal model
+        #       quad motor
+
+        #   TODO: Differential model
+        #       transient locking behavior
+
+        torReq = controls_in.torque_request
+        leftWheelSpeed = state_in.wheel_angular_velocities[2]
+        rightWheelSpeed = state_in.wheel_angular_velocities[3]
+        motorAngVel = np.average(leftWheelSpeed, rightWheelSpeed)
+        motorRPM = rads_to_rpm(motorAngVel)
+
+        def maxMotorPwrCalc(torque, rpm, car, state_in):
+            ## assumption is that torque-speed curve, efficiency map are symetric about x (speed or RPM) axis
+            # positive power is defined in the direction from battery to motor
+
+            motorAngVel = rpm_to_rads(rpm)
+            motorPwrMech = torque * motorAngVel
+            dcPwrInverter = motorPwrMech / (motorEff(torque, rpm)*inverterEff(torque, rpm))
+            cellTemp = state_in.avgCellTemp
+            soc = state_in.soc
+            cellACIR = car.cellACIR(cellTemp, soc)
+            cellVOC = car.cellVOC(cellTemp, soc)
+
+            def voltSagCalc(v):
+                return v**2 - v*cellVOC + (dcPwrInverter/car.numParallelCells)*cellACIR
+            cellVTerm = optimize.root_scalar(voltSagCalc, cellVOC*.75, cellVOC*1.25)  # initial guess between 125% and 75% of OCV
+                #  need to fuck with this and see what this outputs, see edge cases...
+            packVTerm = cellVTerm * car.numSeriesCells
+            maxPwrRPM = packVTerm / car.motorKv
+
+            if torque >= 0:  # positive torque request
+                power = car.motorMaxTorque * rpm_to_rads(maxPwrRPM)
+            else:  # negative torque request; regen
+                power = -(car.motorMaxTorque * motorAngVel)
+            return power
+
+        ### repeated
+        motorEff = car.motor_efficiency(torReq, motorRPM)
+        inverterEff = car.inverter_efficiency(torReq, motorRPM)
+        maxMotorPwr = maxMotorPwrCalc(torReq, motorRPM)
+        regulatedPwrLimMotor = car.regulatedPwrLimEMeter * motorEff * inverterEff
+        if torReq >=0:
+            totalPwrLim = min(regulatedPwrLimMotor, maxMotorPwr)
+        elif torReq < 0:
+            totalPwrLim = max(-regulatedPwrLimMotor, maxMotorPwr)
+        pwrReq = torReq * motorAngVel
+        ### repeated
+
+
+        if abs(pwrReq) <= abs(totalPwrLim):
+            motorTorque = torReq
+        else:   # field weakening or power regulated, need to solve for torque iteratively
+            stepDir = -(pwrReq/abs(pwrReq))  # step in the direction opposite of current pwr/torque
+            stepSize = 1  # check if this initial step size is too big
+            step = stepSize * stepDir
+            resid = pwrReq - totalPwrLim
+            prevResid = 0
+            torTry = totalPwrLim/motorAngVel
+            residThres = 0.001  # need to check if this is small enough and if it affects the steady state solver
+
+            while abs(resid) > residThres:
+                pwrTry = torTry * motorAngVel
+                maxMotorPwr = maxMotorPwrCalc(torTry, motorRPM)
+                motorEff = car.motor_efficiency(torTry, motorRPM)
+                inverterEff = car.inverter_efficiency(torTry, motorRPM)
+                regulatedPwrLimMotor = car.regulatedPwrLimEMeter * motorEff * inverterEff
+                if torReq >= 0:
+                    totalPwrLim = min(regulatedPwrLimMotor, maxMotorPwr)
+                elif torReq < 0:
+                    totalPwrLim = max(-regulatedPwrLimMotor, maxMotorPwr)
+                prevResid = resid
+                resid = pwrTry - totalPwrLim
+
+                if prevResid*resid < 0:  # overshoot, flip step direction
+                    step *= -0.1
+
+                torTry += step
+
+            # once loop is broken, found possible torque state
+            motorTorque = torTry
+
+
+
+        # Solve for wheel torques / differential split with diff model
+
+        def transEff():
+            mosBearingEff = 0.995
+            chainEff = 0.98
+            diffBearingEff = 0.995**2 # 2 diff bearings
+            return mosBearingEff*chainEff*diffBearingEff  # this is bullshit, will implement later fr
+
+        def diffToWheelEff():
+            cvJointEff = 0.995
+            wheelBearingEff = 0.995**2 # 2 wheel bearings
+            return cvJointEff*wheelBearingEff # this is also bullshit, will implement later fr
+
+        def torMaxDelta(diffTorque, diffing=False):
+            delta = car.diffPreload +\
+                    diffTorque*car.diffBiasPerc  # make sure this definition is consistent between diffs
+            if diffing:
+                delta *= car.diffMuRatio  # if diffing, need to use dynamic friction coefficient (not currently used)
+            return delta
+
+        diffInTorque = motorTorque*car.gear_ratio*transEff()
+        leftGrip = car.tire_torques[2]
+        rightGrip = car.tire_torques[3]
+        gripDelta = (leftGrip - rightGrip)/diffToWheelEff()     # tire torque delta at diff, not wheel
+        biasDir = gripDelta/abs(gripDelta)  # left is pos (+), right is neg (-)
+        torqueDelta = min(torMaxDelta(diffInTorque), abs(gripDelta))*biasDir  # delta = left minus right
+
+        leftTorque = ((diffInTorque + torqueDelta)/2)*diffToWheelEff()
+        rightTorque = ((diffInTorque - torqueDelta)/2)*diffToWheelEff()
+
+        state_out.powertrain_torques = [0, 0, leftTorque, rightTorque]
+
+
+
+
+
 
         if controls_in.torque_request > 0:
             torque_request = controls_in.torque_request
