@@ -1,0 +1,295 @@
+### GENERAL ###
+Description:
+  VN:
+    Description: Name of vehicle
+    Type: string
+    Unit: N/A
+    Value: Sample Vehicle
+  V:
+    Description: Internal version number for vehicle
+    Type: string
+    Unit: N/A
+    Value: 1.0.2
+
+Environment:
+  G:
+    Description: Acceleration due to gravity
+    Type: float
+    Unit: m/s^2
+    Value: 9.81
+  AT:
+    Description: Ambient air temperature
+    Type: float
+    Unit: K
+    Value: 298
+  AP:
+    Description: Ambient pressure
+    Type: float
+    Unit: Pa
+    Value: 101325
+
+### MASS ###
+Mass Properties:
+  DM:
+    Description: Mass of the driver
+    Type: float
+    Unit: kg
+    Value: 70
+  FrUM:
+    Description: Mass of front wheel assemblies + half the front suspension linkages
+    Type: float
+    Unit: kg
+    Value: 16.328
+  RrUM:
+    Description: Mass of rear wheel assemblies + half the rear suspension linkages
+    Type: float
+    Unit: kg
+    Value: 18.611
+  SM:
+    Description: Sprung mass = Total mass - driver mass - unsprung mass
+    Type: float
+    Unit: kg
+    Value: 170
+  SI:
+    Description: Sprung mass inertia tensor
+    Type: list[list[float], list[float], list[float]]
+    Unit: kg*m^2
+    Value: [[119.8, 0, 0], [0, 33.4, 0], [0, 0, 108.2]]
+  CGBX:
+    Description: CG bias forward
+    Type: float
+    Unit: (-)
+    Value: 0.48
+  CGBY:
+    Description: CG bias leftward
+    Type: float
+    Unit: (-)
+    Value: 0.50
+  CGZ:
+    Description: CG height from ground plane
+    Type: float
+    Unit: m
+    Value: 0.28448
+
+### Hardpoints ###
+# Assuming vehicle symmetry about x-z to keep this shorter
+Geometric Properties:
+  FLIP:
+    Description: Front left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [1.12369212e-01, 2.53996084e-01, 2.14875584e-01],   
+      [-1.11609500e-01, 2.54773012e-01, 2.15108512e-01],
+      [1.12728471e-01, 1.96997607e-01, 7.38748634e-02],
+      [-1.12818028e-01, 1.97783520e-01, 7.37866576e-02],
+      [0.05715, 0.19685, 0.1049274],
+      [0, 0.27638715, 0.08312027]]
+  FLOP:
+    Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.05656435e-06, 5.55967813e-01, 0.293498081278],
+      [-1.05656435e-06, 5.55967813e-01, 0.293498081278], 
+      [-3.88041026e-07, 5.81988425e-01, 0.106808081278], 
+      [-3.88041026e-07, 5.81988425e-01, 0.106808081278],
+      [0.05543225261, 0.57796814937, 0.155080408152],
+      [-0.00002554, 0.51228060, 0.25244758]]
+  FL_Up:
+    Description: True if push/pull rod mounts to upper wishbone
+    Type: bool
+    Unit: N/A
+    Value: True
+  FLBC:
+    Description: Front left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [0, 0.24130000, 0.08890000],
+      [1, 0, 0],
+      [0, 0.24079888, 0.13334718],
+      [0, 0.05080000, 0.10160000]]
+  FLCP:
+    Description: Front left contact patch location
+    Type: list[float]
+    Unit: m
+    Value: [0.00000000, 0.6334506, 0.00000000]
+  RLIP:
+    Description: Rear left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.41914532e+00, 3.01603274e-01, 2.17437154e-01], 
+      [-1.75799856e+00, 3.01677333e-01, 2.18509911e-01],
+      [-1.42078371e+00, 2.68668508e-01, 7.21717706e-02],
+      [-1.70916334e+00, 2.67109393e-01, 7.37495767e-02],
+      [-1.4101318, 0.2851404, 0.1451864],
+      [-1.47573900, 0.30957935, 0.11471471]]
+  RLOP:
+    Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.55133049e+00, 5.12610611e-01, 0.2959862],
+      [-1.55133049e+00, 5.12610611e-01, 0.2959862],
+      [-1.54620799e+00, 5.66149180e-01, 0.1029462],
+      [-1.54620799e+00, 5.66149180e-01, 0.1029462],
+      [-1.4605508, 0.5583682, 0.2051558],
+      [-1.55040452, 0.51228235, 0.29667004]]
+  RL_Up:
+    Description: True if push/pull rod mounts to upper wishbone
+    Type: bool
+    Unit: N/A
+    Value: True
+  RLBC:
+    Description: Rear left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.47320000, 0.27940000, 0.13335000],
+      [1, 0, 0],
+      [-1.47840082, 0.25837024, 0.2],
+      [-1.43510000, 0.07899653, 0.13970000]]
+  RLCP:
+    Description: Rear left contact patch location
+    Type: list[float]
+    Unit: m
+    Value: [-1.5494, 0.6096, 0.000]
+  IA:
+    Description: Inclination angle of tires [FL, RL]
+    Type: float
+    Unit: deg
+    Value: [1, 1]
+  Toe:
+    Description: Toe angle of tires [FL, RL]
+    Type: Float
+    Unit: deg
+    Value: [0, 0]
+
+### SUSPENSION ###
+Suspension:
+  K:
+    Description: Linear rate of suspension springs [FL, FR, RL, RR]
+    Type: list[float]
+    Unit: N/m
+    Value: [150000, 150000, 70050.733858268, 70050.733858268]
+  ARBK:
+    Description: Linear stiffness of torsion bars from eye to eye [FR, RR]
+    Type: float
+    Unit: N/m
+    Value: [0, 0]
+  ARBMR:
+    Description: Wheel travel / vertical travel of stabars [FR, RR]
+    Type: float
+    Unit: (-)
+    Value: [1, 1]
+
+### BRAKES ###
+Brake Properties:
+  EffR:
+    Description: Planar distance from hub center to cetroid of brake caliper [FL, FR, RL, RR]
+    Type: float
+    Unit: m
+    Value: [0.072644, 0.072644, 0.072644, 0.072644]
+  MCSA:
+    Description: Surface area of master cylinder pistons [FR, RR]
+    Type: float
+    Unit: m^2
+    Value: [0.00015393517, 0.00015393517]
+  CSA:
+    Description: Surface area of caliper pistons [FL, FR, RL, RR]
+    Type: float
+    Unit: m^2
+    Value: [0.00181586733, 0.00181586733, 0.00181586733, 0.00181586733]
+  BMu:
+    Description: Average friction coefficient of brake pads [FL, FR, RL, RR]
+    Type: float
+    Unit: (-)
+    Value: [0.50, 0.50, 0.50, 0.50]
+
+# ### POWERTRAIN ###
+# Powertrain Properties:
+
+#   HVBV:
+#     Description: Nominal HV battery voltage (V)
+#     Type: float
+#     Value: 350
+
+#   LVP:
+#     Description: Average LV power draw (W)
+#     Type: float
+#     Value: 50
+
+#   ST:
+#     Description: Maximum torque output by motor (Nm)
+#     Type: float
+#     Value: 230
+
+#   # Adding separate input file for motor data sheet (torque vs speed, efficiency map, peak current draw, etc.)
+
+#   GR:
+#     Description: Gear ratio (-)
+#     Type: float
+#     Value: 3.38
+  
+#   PL:
+#     Description: Power limit (W)
+#     Type: float
+#     Value: 80000
+  
+#   DiffMB:
+#     Description: Differential mechanical bias (-)
+#     Type: float
+#     Value: 0.607
+  
+#   DiffPL:
+#     Description: Preload on differential (Nm)
+#     Type: float
+#     Value: 
+
+#   DTEff:
+#     Description: Drivetrain efficiency (-)
+#     Type: float
+#     Value: 0.90
+
+### AERODYNAMICS ###
+Aerodynamics Properties:
+
+# Need F(z, theta, phi) and COP(z, theta, phi) for accurate model
+
+  ClTot:
+    Description: Coefficient of lift with all aero elements mounted (-)
+    Type: float
+    Value: 4.384
+
+  CdTot:
+    Description: Coefficient of drag with all aero elements mounted (-)
+    Type: float
+    Value: 1.028
+
+  CsTot:
+    Description: Coefficient of sideforce with all aero elements mounted (-)
+    Type: float
+    Value: 5.673
+
+  Cl0:
+    Description: Coefficient of lift with NO aero elements mounted (-)
+    Type: float
+    Value: 0
+
+  Cd0:
+    Description: Coefficient of drag with NO aero elements mounted (-)
+    Type: float
+    Value: 0.7155
+
+  Cs0:
+    Description: Coefficient of sideforce with NO aero elements mounted (-)
+    Type: float
+    Value: 8.43
+
+  COP:
+    Description: Center of pressure with the origin at center of front track (m, m, m)
+    Type: list[float]
+    Value: [0.5, 0, 0]
+
