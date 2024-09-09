@@ -166,13 +166,41 @@ class YMD:
             if sus_corners_jounce[i] >= 0:
                 Fz_lst.append(sus_corners[i].weight + sus_corners[i].wheelrate_function.integrate(0, sus_corners_jounce[i]))
             else:
-                Fz_lst.append(sus_corners[i].weight - sus_corners[i].wheelrate_function.integrate(sus_corners_jounce[i], 0)) 
+                Fz_lst.append(sus_corners[i].weight - sus_corners[i].wheelrate_function.integrate(sus_corners_jounce[i], 0))
+
+        # Inelastic lateral  load transfer
+        FL_inelastic_lat = FL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FL_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Fr_axle.track_width)
+        FR_inelastic_lat = FR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FR_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Fr_axle.track_width)
+        RL_inelastic_lat = RL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RL_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Rr_axle.track_width)
+        RR_inelastic_lat = RR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RR_double_wishbone.FV_FAP.position[2] * ay / abs(suspension.Rr_axle.track_width)
+        
+        Fr_inelastic_lat = FL_inelastic_lat + FR_inelastic_lat
+        Rr_inelastic_lat = RL_inelastic_lat + RR_inelastic_lat
+        
+        # Inelastic longitudinal load transfer
+        FL_inelastic_long = FL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FL_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.left_wheelbase)
+        FR_inelastic_long = FR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            FR_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.right_wheelbase)
+        RL_inelastic_long = RL_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RL_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.left_wheelbase)
+        RR_inelastic_long = RR_double_wishbone.weight / self.vehicle.environment["G"] * \
+            RR_double_wishbone.SV_FAP.position[2] * ax / abs(suspension.full_suspension.right_wheelbase)
+        
+        left_inelastic_long = FL_inelastic_long + RL_inelastic_long
+        right_inelastic_long = FR_inelastic_long + RR_inelastic_long
+
+        inelastic_LT = np.array([-Fr_inelastic_lat])
 
         # Normal loads from accels
-        Fr_lat_LT = (FL_double_wishbone.weight + FR_double_wishbone.weight) * ay / 9.81 * self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[1] - FR_double_wishbone.contact_patch.position[1])
-        Rr_lat_LT = (RL_double_wishbone.weight + RR_double_wishbone.weight) * ay / 9.81 * self.cg_pos[2] / abs(RL_double_wishbone.contact_patch.position[1] - RR_double_wishbone.contact_patch.position[1])
-        left_long_LT = self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[0] - RL_double_wishbone.contact_patch.position[0]) * (FL_double_wishbone.weight + RL_double_wishbone.weight) * ax / 9.81
-        right_long_LT = self.cg_pos[2] / abs(FR_double_wishbone.contact_patch.position[0] - RR_double_wishbone.contact_patch.position[0]) * (FR_double_wishbone.weight + RR_double_wishbone.weight) * ax / 9.81
+        Fr_lat_LT = (FL_double_wishbone.weight + FR_double_wishbone.weight) * ay / self.vehicle.environment["G"] * self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[1] - FR_double_wishbone.contact_patch.position[1])
+        Rr_lat_LT = (RL_double_wishbone.weight + RR_double_wishbone.weight) * ay / self.vehicle.environment["G"] * self.cg_pos[2] / abs(RL_double_wishbone.contact_patch.position[1] - RR_double_wishbone.contact_patch.position[1])
+        left_long_LT = self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[0] - RL_double_wishbone.contact_patch.position[0]) * (FL_double_wishbone.weight + RL_double_wishbone.weight) * ax / self.vehicle.environment["G"]
+        right_long_LT = self.cg_pos[2] / abs(FR_double_wishbone.contact_patch.position[0] - RR_double_wishbone.contact_patch.position[0]) * (FR_double_wishbone.weight + RR_double_wishbone.weight) * ax / self.vehicle.environment["G"]
         
         FL_Fz_LT = FL_double_wishbone.weight - Fr_lat_LT - left_long_LT
         FR_Fz_LT = FR_double_wishbone.weight + Fr_lat_LT - right_long_LT

@@ -40,7 +40,7 @@ class FullSuspension:
         self.ang_y = 0
 
         self.elements = [self.Fr_axle, self.Rr_axle, self.cg]
-        self.all_elements = [self.Fr_axle, self.Rr_axle, self.cg,self.left_kin_PC, self.right_kin_PC]
+        self.all_elements = [self.Fr_axle, self.Rr_axle]
 
     def steer(self, rack_displacement: float) -> None:
         """
@@ -152,9 +152,6 @@ class FullSuspension:
         self.right_kin_PC.update()
         if self.transform_origin:
             self.flatten()
-        print("###")
-        print(self.Fr_axle.left.inclination_angle)
-        print(self.Fr_axle.right.inclination_angle)
 
     @property
     def left_wheelbase(self) -> float:

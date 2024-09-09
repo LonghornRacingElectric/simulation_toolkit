@@ -118,8 +118,8 @@ class VehicleModel:
 
         self.suspension.generate_kin_plots(steer_sweep=np.linspace(-1.5, 1.5, 26) * 0.0254, 
                                            heave_sweep=np.linspace(-4, 4, 26) * 0.0254,
-                                           pitch_sweep=np.linspace(-3, 3, 26),
-                                           roll_sweep=np.linspace(-15, 15, 26))
+                                           pitch_sweep=np.linspace(-3, 3, 26) * np.pi / 180,
+                                           roll_sweep=np.linspace(-3, 3, 26) * np.pi / 180)
 
         self.suspension.plot_elements(plotter=self.suspension_plotter, verbose=False, show_grid=False)
         
