@@ -122,18 +122,18 @@ class YMD:
         sus_corners: Sequence[DoubleWishbone] = [FL_double_wishbone, FR_double_wishbone, RL_double_wishbone, RR_double_wishbone]
 
         # Store contact patch positions
-        FL_Cp_pos = np.array([suspension.FL_Cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.FL_Cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.FL_Cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
-        FR_Cp_pos = np.array([suspension.FR_Cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.FR_Cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.FR_Cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
-        RL_Cp_pos = np.array([suspension.RL_Cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.RL_Cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.RL_Cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
-        RR_Cp_pos = np.array([suspension.RR_Cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.RR_Cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
-                              suspension.RR_Cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
+        FL_Cp_pos = np.array([suspension.FL_cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.FL_cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.FL_cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
+        FR_Cp_pos = np.array([suspension.FR_cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.FR_cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.FR_cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
+        RL_Cp_pos = np.array([suspension.RL_cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.RL_cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.RL_cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
+        RR_Cp_pos = np.array([suspension.RR_cpx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.RR_cpy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
+                              suspension.RR_cpz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]])
         
         cg_pos = np.array([suspension.cgx_lookup(x=delta, y=heave, z=pitch, w=roll)[0],
                            suspension.cgy_lookup(x=delta, y=heave, z=pitch, w=roll)[0],

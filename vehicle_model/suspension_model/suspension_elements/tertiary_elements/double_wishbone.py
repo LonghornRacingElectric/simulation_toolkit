@@ -348,7 +348,10 @@ class DoubleWishbone:
 
         self.total_jounce = jounce + self.heave_jounce + self.roll_jounce + self.pitch_jounce
 
-        wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(self.total_jounce))
+        if self.total_jounce:
+            wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(self.total_jounce))
+        else:
+            wishbone_angles = [0, 0]
 
         self.upper_wishbone.rotate(wishbone_angles[0])
         self.lower_wishbone.rotate(wishbone_angles[1])

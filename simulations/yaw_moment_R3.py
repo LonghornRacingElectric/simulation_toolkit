@@ -338,9 +338,9 @@ class YMD:
 
         fig = plt.figure()
         ax = fig.gca()
-        ax.title("Yaw Acceleration vs Lateral Acceleration")
-        ax.xlabel("Lateral Acceleration (m/s^2)")
-        ax.ylabel("Yaw Acceleration (rad/s^2)")
+        ax.set_title("Yaw Acceleration vs Lateral Acceleration")
+        ax.set_xlabel("Lateral Acceleration (m/s^2)")
+        ax.set_ylabel("Yaw Acceleration (rad/s^2)")
         ax.axhline(c="gray", linewidth=0.5)
         ax.axvline(c="gray", linewidth=0.5)
 
@@ -361,4 +361,4 @@ class YMD:
             # text_pos = (lat_accels[0] + 0.6, yaw_accels[0] + 0.3)
             ax.text(text_pos[0], text_pos[1], f'β = {round(body_slip, 1)}°', fontsize=6, c="blue")
 
-        fig.show()
+        plt.show()
