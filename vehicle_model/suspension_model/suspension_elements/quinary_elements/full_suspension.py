@@ -22,6 +22,9 @@ class FullSuspension:
         Center of gravity object
     """
     def __init__(self, Fr_axle: Axle, Rr_axle: Axle, cg: CG) -> None:
+        self.parameters = locals().copy()
+        del self.parameters['self']
+        
         self.Fr_axle = Fr_axle
         self.Rr_axle = Rr_axle
         self.cg = cg
@@ -322,6 +325,24 @@ class FullSuspension:
         
         # Revert all points to their initial position
         self.translate(translation=self.current_average_cp)
+    
+    def hard_reset(self) -> None:
+        """
+        ## Hard Reset
+
+        Re-initializes the suspension, wiping the current state and starting clean
+
+        *Only use this when absolutely necessary*
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.self = FullSuspension(**self.parameters)
 
     def flatten(self) -> None:
         """

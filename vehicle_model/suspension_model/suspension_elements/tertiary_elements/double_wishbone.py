@@ -612,11 +612,11 @@ class DoubleWishbone:
         return [x, y, z]
 
     @property
-    def FV_FAP_position(self) -> float:
+    def FV_FAP_position(self) -> Sequence[float]:
         """
         ## Front-view force application point height
 
-        Calculates the height of the front-view force application point
+        Calculates the position of the front-view force application point
 
         Returns
         -------

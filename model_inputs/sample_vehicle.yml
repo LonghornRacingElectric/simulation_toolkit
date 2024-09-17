@@ -173,7 +173,7 @@ Suspension:
     Description: Linear rate of suspension springs [FL, FR, RL, RR]
     Type: list[float]
     Unit: N/m
-    Value: [150000, 150000, 70050.733858268, 70050.733858268]
+    Value: [70050.733858268, 70050.733858268, 70050.733858268, 70050.733858268]
   ARBK:
     Description: Linear stiffness of torsion bars from eye to eye [FR, RR]
     Type: float

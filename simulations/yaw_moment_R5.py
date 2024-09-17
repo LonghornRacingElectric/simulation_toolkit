@@ -21,6 +21,13 @@ class YMD:
         self.beta_sweep = np.linspace(-8 * np.pi / 180, 8 * np.pi / 180, mesh)
     
     def generate_constant_velocity_YMD(self, velocity: float) -> None:
+        bounds = ((-3, 3),
+                  (-3, 3),
+                  (-500, 500),
+                  (0, 2 * 0.0254),
+                  (-0.5 * np.pi / 180, 0.5 * np.pi / 180),
+                  (-0.5 * np.pi / 180, 0.5 * np.pi / 180))
+        
         self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.all_points = []
@@ -38,8 +45,8 @@ class YMD:
             for j, delta in enumerate(self.delta_sweep):
                 print(f"Progress | {round(counter / total_states * 100, 1)}%", end="\r")
                 counter += 1
-                x_ddot, y_ddot, yaw_ddot, heave, pitch, roll = minimize(self._residual_function, \
-                                        x0=[0, 0, 0, 0, 0, 0], args=[delta, beta, velocity], method="SLSQP").x
+                x_ddot, y_ddot, yaw_ddot, heave, pitch, roll = fsolve(self._residual_function, \
+                                        x0=[0, 0, 0, 0, 0, 0], args=[delta, beta, velocity])
 
                 self.steered_angle_iso_lines[j][0] = delta / (3.50 / 360 * 0.0254)
                 self.steered_angle_iso_lines[i][1][j] = y_ddot
@@ -89,6 +96,11 @@ class YMD:
         pitch = x[4]
         roll = x[5]
 
+        # if ay > 9.81 * 5:
+        #     return 1e9
+        # if ax > 9.81 * 5:
+        #     return 1e9
+
         delta = args[0]
         beta = args[1]
         velocity = args[2]
@@ -103,6 +115,7 @@ class YMD:
         # Adjust acceleration vectors and dependencies
         imf_accel = np.array([ax, ay, 0])
         ntb_accel = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=beta), imf_accel)
+
         yaw_rate = 0 if ay == 0 else ntb_accel[1] / np.linalg.norm(imf_velocity)
 
         # Store suspension object and import all values
@@ -121,6 +134,20 @@ class YMD:
         
         FL_Fz, FR_Fz, RL_Fz, RR_Fz = Fz_lst
 
+        for val in Fz_lst:
+            if val < 0:
+                print(sus_corners_jounce)
+                print(Fz_lst)
+                print(heave / 0.0254)
+                print(pitch * 180 / np.pi)
+                print(roll * 180 / np.pi)
+                print()
+                break
+
+        # if RL_Fz == 0 or RR_Fz == 0:
+        #     RL_Fz = 0
+        #     RR_Fz = 0
+
         # Relative geometries for load transfer and moment calculations
         Fr_track = abs(self.FL_dw_cp_pos[1] - self.FR_dw_cp_pos[1])
         Rr_track = abs(self.RL_dw_cp_pos[1] - self.RR_dw_cp_pos[1])
@@ -133,72 +160,23 @@ class YMD:
         self.RL_Cp_wrt_cg = self.RL_dw_cp_pos - self.cg_pos
         self.RR_Cp_wrt_cg = self.RR_dw_cp_pos - self.cg_pos
 
-        # Calculate normal loads
+        # Steady state load transfers
+        Fr_lat_LT = (self.FL_weight + self.FR_weight) * ay / self.vehicle.environment["G"] * self.cg_pos[2] / Fr_track
+        Rr_lat_LT = (self.RL_weight + self.RR_weight) * ay / self.vehicle.environment["G"] * self.cg_pos[2] / Rr_track
+        left_long_LT = self.cg_pos[2] / left_wheelbase * (self.FL_weight + self.RL_weight) * ax / self.vehicle.environment["G"]
+        right_long_LT = self.cg_pos[2] / right_wheelbase * (self.FR_weight + self.RR_weight) * ax / self.vehicle.environment["G"]
         
-        # Inelastic lateral load transfer
-        FL_inelastic_lat = self.FL_weight / self.vehicle.environment["G"] * self.FL_FV_FAPz * ay / Fr_track
-        FR_inelastic_lat = self.FR_weight / self.vehicle.environment["G"] * self.FR_FV_FAPz * ay / Fr_track
-        RL_inelastic_lat = self.RL_weight / self.vehicle.environment["G"] * self.RL_FV_FAPz * ay / Rr_track
-        RR_inelastic_lat = self.RR_weight / self.vehicle.environment["G"] * self.RR_FV_FAPz * ay / Rr_track
-        
-        Fr_inelastic_lat = FL_inelastic_lat + FR_inelastic_lat
-        Rr_inelastic_lat = RL_inelastic_lat + RR_inelastic_lat
-        
-        # Inelastic longitudinal load transfer
-        FL_inelastic_long = FL_weight / self.vehicle.environment["G"] * FL_SV_FAPz * ax / left_wheelbase
-        FR_inelastic_long = FR_weight / self.vehicle.environment["G"] * FR_SV_FAPz * ax / right_wheelbase
-        RL_inelastic_long = RL_weight / self.vehicle.environment["G"] * RL_SV_FAPz * ax / left_wheelbase
-        RR_inelastic_long = RR_weight / self.vehicle.environment["G"] * RR_SV_FAPz * ax / right_wheelbase
-        
-        left_inelastic_long = FL_inelastic_long + RL_inelastic_long
-        right_inelastic_long = FR_inelastic_long + RR_inelastic_long
-        
-        # Elastic lateral load transfer
-        FL_elastic_lat_inertial = FL_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FL_FV_FAPz) * ay
-        FR_elastic_lat_inertial = FR_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FR_FV_FAPz) * ay
-        RL_elastic_lat_inertial = RL_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RL_FV_FAPz) * ay
-        RR_elastic_lat_inertial = RR_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RR_FV_FAPz) * ay
-        
-        Fr_elastic_lat = (FL_elastic_lat_inertial + FR_elastic_lat_inertial) / suspension.Fr_axle.track_width
-        Rr_elastic_lat = (RL_elastic_lat_inertial + RR_elastic_lat_inertial) / suspension.Rr_axle.track_width
-
-        total_elastic_lt_lat = Fr_elastic_lat + Rr_elastic_lat
-
-        # Elastic longitudinal load transfer
-        FL_elastic_long_inertial = FL_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FL_SV_FAPz) * ax
-        FR_elastic_long_inertial = FR_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - FR_SV_FAPz) * ax
-        RL_elastic_long_inertial = RL_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RL_SV_FAPz) * ax
-        RR_elastic_long_inertial = RR_weight / self.vehicle.environment["G"] * (self.cg_pos[2] - RR_SV_FAPz) * ax
-        
-        left_elastic_long = (FL_elastic_long_inertial + RL_elastic_long_inertial) / left_wheelbase
-        right_elastic_long = (FR_elastic_long_inertial + RR_elastic_long_inertial) / right_wheelbase
-
-        # Total load transfers
-        Fr_lat_lt = Fr_inelastic_lat + Fr_Kr / (Fr_Kr + Rr_Kr) * total_elastic_lt_lat
-        Rr_lat_lt = Rr_inelastic_lat + Rr_Kr / (Fr_Kr + Rr_Kr) * total_elastic_lt_lat
-
-        left_long_lt = left_inelastic_long + left_elastic_long
-        right_long_lt = right_inelastic_long + right_elastic_long
-        
-        FL_Fz_ss = FL_weight - Fr_lat_lt - left_long_lt
-        FR_Fz_ss = FR_weight + Fr_lat_lt - right_long_lt
-        RL_Fz_ss = RL_weight - Rr_lat_lt + left_long_lt
-        RR_Fz_ss = RR_weight + Rr_lat_lt + right_long_lt
+        FL_Fz_ss = self.FL_weight - Fr_lat_LT - left_long_LT
+        FR_Fz_ss = self.FR_weight + Fr_lat_LT - right_long_LT
+        RL_Fz_ss = self.RL_weight - Rr_lat_LT + left_long_LT
+        RR_Fz_ss = self.RR_weight + Rr_lat_LT + right_long_LT
         Fz_ss = [FL_Fz_ss, FR_Fz_ss, RL_Fz_ss, RR_Fz_ss]
 
-        # Steady state load transfers
-        Fr_lat_LT = (FL_weight + FR_weight) * ay / self.vehicle.environment["G"] * self.cg_pos[2] / Fr_track
-        Rr_lat_LT = (RL_weight + RR_weight) * ay / self.vehicle.environment["G"] * self.cg_pos[2] / Rr_track
-        left_long_LT = self.cg_pos[2] / left_wheelbase * (FL_weight + RL_weight) * ax / self.vehicle.environment["G"]
-        right_long_LT = self.cg_pos[2] / right_wheelbase * (FR_weight + RR_weight) * ax / self.vehicle.environment["G"]
-        
-        FL_Fz_LT = FL_weight - Fr_lat_LT - left_long_LT
-        FR_Fz_LT = FR_weight + Fr_lat_LT - right_long_LT
-        RL_Fz_LT = RL_weight - Rr_lat_LT + left_long_LT
-        RR_Fz_LT = RR_weight + Rr_lat_LT + right_long_LT
-        ss_Fz = np.array([FL_Fz_LT, FR_Fz_LT, RL_Fz_LT, RR_Fz_LT])
+        Fz_resid = np.array(Fz_lst) - np.array(Fz_ss)
 
-        Fz_resid = np.array(Fz_lst) - np.array(ss_Fz)
+        # print([float(x) for x in Fz_ss])
+        # print([float(x) for x in [Fr_lat_LT, Rr_lat_LT, left_long_LT, right_long_LT]])
+        # print([float(x) for x in Fz_lst])
 
         # Wheel velocities
         FL_velocity = imf_velocity + np.cross(np.array([0, 0, yaw_rate]), self.FL_Cp_wrt_cg)
@@ -207,29 +185,32 @@ class YMD:
         RR_velocity = imf_velocity + np.cross(np.array([0, 0, yaw_rate]), self.RR_Cp_wrt_cg)
 
         # Slip angles
-        FL_alpha = FL_toe - np.arctan2(FL_velocity[1], FL_velocity[0])
-        FR_alpha = FR_toe - np.arctan2(FR_velocity[1], FR_velocity[0])
-        RL_alpha = RL_toe - np.arctan2(RL_velocity[1], RL_velocity[0])
-        RR_alpha = RR_toe - np.arctan2(RR_velocity[1], RR_velocity[0])
+        FL_alpha = self.FL_toe - np.arctan2(FL_velocity[1], FL_velocity[0])
+        FR_alpha = self.FR_toe - np.arctan2(FR_velocity[1], FR_velocity[0])
+        RL_alpha = self.RL_toe - np.arctan2(RL_velocity[1], RL_velocity[0])
+        RR_alpha = self.RR_toe - np.arctan2(RR_velocity[1], RR_velocity[0])
 
         # Tire loads
-        self.FL_loads = FL_tire.tire_eval(FZ=FL_Fz, alpha=FL_alpha, kappa=0, gamma=FL_gamma)[0:3]
-        self.FR_loads = FR_tire.tire_eval(FZ=FR_Fz, alpha=FR_alpha, kappa=0, gamma=FR_gamma)[0:3]
-        self.RL_loads = RL_tire.tire_eval(FZ=RL_Fz, alpha=RL_alpha, kappa=0, gamma=RL_gamma)[0:3]
-        self.RR_loads = RR_tire.tire_eval(FZ=RR_Fz, alpha=RR_alpha, kappa=0, gamma=RR_gamma)[0:3]
+        self.FL_loads = self.vehicle.FL_tire.tire_eval(FZ=FL_Fz, alpha=FL_alpha, kappa=0, gamma=self.FL_gamma)[0:3]
+        self.FR_loads = self.vehicle.FR_tire.tire_eval(FZ=FR_Fz, alpha=FR_alpha, kappa=0, gamma=self.FR_gamma)[0:3]
+        self.RL_loads = self.vehicle.RL_tire.tire_eval(FZ=RL_Fz, alpha=RL_alpha, kappa=0, gamma=self.RL_gamma)[0:3]
+        self.RR_loads = self.vehicle.RR_tire.tire_eval(FZ=RR_Fz, alpha=RR_alpha, kappa=0, gamma=self.RR_gamma)[0:3]
 
-        self.FL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_toe), self.FL_loads)
-        self.FR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_toe), self.FR_loads)
-        self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_toe), self.RL_loads)
-        self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_toe), self.RR_loads)
+        self.FL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=self.FL_toe), self.FL_loads)
+        self.FR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=self.FR_toe), self.FR_loads)
+        self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=self.RL_toe), self.RL_loads)
+        self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=self.RR_toe), self.RR_loads)
 
         ###############################################
         ### Calculate Forces and Moments from Tires ###
         ###############################################
 
         vehicle_centric_forces = self.FL_forces_aligned + self.FR_forces_aligned + self.RL_forces_aligned + self.RR_forces_aligned
-        vehicle_centric_moments = np.cross(-1 * self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(-1 * self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
-            np.cross(-1 * self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(-1 * self.RR_Cp_wrt_cg, self.RR_forces_aligned)
+        vehicle_centric_moments = \
+            np.cross(-1 * self.FL_Cp_wrt_cg, self.FL_forces_aligned) + \
+            np.cross(-1 * self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
+            np.cross(-1 * self.RL_Cp_wrt_cg, self.RL_forces_aligned) + \
+            np.cross(-1 * self.RR_Cp_wrt_cg, self.RR_forces_aligned)
 
         # Add gravity
         gravity_forces = np.array([0, 0, -self.vehicle.total_mass * self.vehicle.environment["G"]])
@@ -244,12 +225,21 @@ class YMD:
 
         # Sum of forces and moments
         sum_force = self.vehicle.total_mass * translational_accelerations_IMF
-        sum_moment = np.dot(self.vehicle.masses["SI"], np.array([0, 0, yaw_ddot]))
+        sum_moment = np.matmul(self.vehicle.masses["SI"], np.array([0, 0, yaw_ddot]))
 
         force_residuals = vehicle_centric_forces - sum_force
         moment_residuals = vehicle_centric_moments - sum_moment
 
-        residuals = np.linalg.norm([*force_residuals, *moment_residuals, *Fz_resid])
+        # residuals = np.linalg.norm([*force_residuals, *moment_residuals])
+        residuals = np.array([*force_residuals, *moment_residuals])
+
+        # if np.array(Fz_lst).any() < 0:
+        #     return residuals**2
+
+        # for val in Fz_lst:
+        #     if val < 0:
+        #         residuals = [x**2 * np.sign(x) for x in residuals]
+        #         break
 
         return residuals
 
