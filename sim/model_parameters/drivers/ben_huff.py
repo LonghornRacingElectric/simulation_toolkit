@@ -25,9 +25,13 @@ class BenHuff(Driver):
             out.accel_pedal_pct = 0
             out.brake_pedal_pct = 0.5
             out.drive_switch = False
-        elif time < 1.0:
+        elif time < 0.8:
             out.accel_pedal_pct = 0
             out.brake_pedal_pct = 0.5
+            out.drive_switch = True
+        elif time < 1.0:
+            out.accel_pedal_pct = 0
+            out.brake_pedal_pct = 0
             out.drive_switch = True
         elif time < 2:
             out.accel_pedal_pct = 0.5

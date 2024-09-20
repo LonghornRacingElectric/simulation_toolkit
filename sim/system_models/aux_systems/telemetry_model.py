@@ -56,8 +56,8 @@ class TelemetryModel:
 
         sensor_data.inverter_ready = True
 
-        sensor_data.battery_voltage = observables.hv_battery_terminal_voltage
-        sensor_data.battery_current = state_dot.hv_battery_current
+        sensor_data.hv_battery_voltage = observables.hv_battery_terminal_voltage
+        sensor_data.hv_battery_current = state_dot.hv_battery_current
 
         # TODO linearize position into GPS coordinates (with noise)
         sensor_data.gps_lat = 0

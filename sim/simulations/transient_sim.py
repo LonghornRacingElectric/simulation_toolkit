@@ -51,8 +51,9 @@ class TransientSimulation:
 
             while self.sim_time < self.duration:
                 cpu_elapsed_time = round(time.time() - cpu_start_time, 2)
-                print(f"\rSimulation Progress: {round(self.sim_time / self.duration * 100, 1)}%\t({cpu_elapsed_time}s elapsed)",
-                      end='')
+                print(
+                    f"\rSimulation Progress: {round(self.sim_time / self.duration * 100, 1)}%\t({cpu_elapsed_time}s elapsed)",
+                    end='')
 
                 driver_controls = self.driver.eval(self.sim_time, state, state_dot)
                 sensor_data = self.telemetry.eval(self.sim_time, state, state_dot, observables, driver_controls)
@@ -134,7 +135,9 @@ class TransientSimulation:
         y_min = min(y) - padding
         y_max = max(y) + padding
 
-        plt.scatter(x, y, c=[(0.5-np.sign(np.sin(c*2*np.pi))/2, 0, 0.5+np.sign(np.sin(c*2*np.pi))/2) for c in t], s=0.5)
+        plt.scatter(x, y,
+                    c=[(0.5 - np.sign(np.sin(c * 2 * np.pi)) / 2, 0, 0.5 + np.sign(np.sin(c * 2 * np.pi)) / 2) for c in
+                       t], s=0.5)
         # plt.plot(x, y)
         plt.title("displacement")
         plt.xlabel("x pos (m)")
@@ -144,6 +147,19 @@ class TransientSimulation:
         plt.grid(color='gray', linestyle='-', linewidth=0.5)
         plt.show()
 
+    def plot_step_response(self):
+        x = np.array([t[0] for t in self.data])
+        y0 = np.array([getattr(t[3], "accel_pedal_pct") for t in self.data]) * 230
+        y1 = np.array([getattr(t[5], "torque_request") for t in self.data])
+
+        plt.plot(x, y0, label="pedal requested torque", color="red")
+        plt.plot(x, y1, label="VCU commanded torque", color="blue")
+
+        plt.title("Traction control step response")
+        plt.ylabel("Torque (Nm)")
+        plt.xlabel("Time (s)")
+        plt.legend()
+        plt.show()
 
     def _calculate_key_points(self):
         self.key_points = [

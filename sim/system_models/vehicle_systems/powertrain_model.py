@@ -217,7 +217,8 @@ class PowertrainModel(VehicleSystemModel):
         discriminant = (battery_open_circuit_voltage * battery_open_circuit_voltage
                         - 4 * battery_internal_resistance * battery_power)
         if discriminant < 0:
-            raise Exception("too much current! not sure what to do now. maybe try not flooring it bruh")
+            # raise Exception("too much current! not sure what to do now. maybe try not flooring it bruh")
+            return battery_open_circuit_voltage / (battery_internal_resistance * 2)  # TODO use maximum power transfer for now?
         i = (battery_open_circuit_voltage - math.sqrt(discriminant)) / 2 / battery_internal_resistance
         return i
 

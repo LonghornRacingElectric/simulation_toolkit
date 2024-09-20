@@ -134,10 +134,10 @@ class LadyLuck(Car):
 
         # ----- Battery -----
         self.hv_battery_capacity = ConstantParameter(300000)  # [As]
-        self.hv_battery_nominal_voltage = ConstantParameter(350)  # [V]
-        self.hv_battery_open_circuit_voltage = CurveParameter(from_function=lambda soc: soc * 100 + 320,
+        self.hv_battery_nominal_voltage = ConstantParameter(500)  # [V]
+        self.hv_battery_open_circuit_voltage = CurveParameter(from_function=lambda soc: soc * 100 + 470,
                                                               x_min=0, x_max=1, x_samples=20)  # [V] = f(SoC [As], temp [C])
-        self.hv_battery_internal_resistance = CurveParameter(from_function=lambda soc: 0.1,
+        self.hv_battery_internal_resistance = CurveParameter(from_function=lambda soc: 0.65,
                                                              x_min=0, x_max=1, x_samples=20)  # [Ohms] = f(SoC [As], temp [C])
         self.hv_battery_thermal_resistance = ConstantParameter(0)  # [C/W]
         self.lv_battery_capacity = ConstantParameter(50000)  # [As]
