@@ -17,6 +17,7 @@ class Plotter:
     """
     def __init__(self) -> None:
         self.pl = pv.Plotter()
+        self.pl.set_background('white')
 
     def add_ground(self, FL_cp: Node, RL_cp: Node, tire: Tire) -> None:
         """
