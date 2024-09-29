@@ -279,6 +279,9 @@ class SuspensionModel:
         # Initialize front and rear axles together
         self.full_suspension: FullSuspension = FullSuspension(Fr_axle=self.Fr_axle, Rr_axle=self.Rr_axle, cg=self.cg)
 
+        # Elements for plotting
+        self.elements = [self.full_suspension]
+
     def generate_kin(self) -> None:
         """
         ## Generate Kinematics
@@ -538,9 +541,6 @@ class SuspensionModel:
             print()
             self.generate_kin()
             print()
-
-        # Elements for plotting
-        self.elements = [self.full_suspension]
     
     def steer(self, rack_displacement: float) -> None:
         """
