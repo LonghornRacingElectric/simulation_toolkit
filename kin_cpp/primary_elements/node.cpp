@@ -5,12 +5,14 @@ using namespace std;
 class Node {
 private:
     //x, y, z coordinates
-    double position[];
+    double position[3];
 
 public:
     Node (double pos[]) {
-        //ensure pos passes in x, y z
-        assert (sizeof (pos) / sizeof (double) == 3);
-        position = pos;
+        //copy coordinates into position
+        for (int i = 0; i < 3; i++)
+        {
+            position[i] = pos[i];
+        } 
     }
-}
+};
