@@ -1,12 +1,5 @@
-#include <iostream>
 #include "beam.h"
 using namespace std;
-
-Node *inboard_node;
-Node *outboard_node;
-Node *elements[2];
-Node *all_elements[2];
-bool plotted;
 
 //Beam constructor
 Beam::Beam (Node *in, Node *out) {
