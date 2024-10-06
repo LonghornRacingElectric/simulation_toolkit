@@ -7,10 +7,8 @@ Beam::Beam (Node *in, Node *out) {
     outboard_node = out;
     plotted = false;
 
-    elements[0] = in;
-    elements[1] = out;
-    all_elements[0] = in;
-    all_elements[1] = out;
+    elements[0] = all_elements[0] = in;
+    elements[1] = all_elements[1] = out;
 }
 
 Node *Beam::getInboardNode () {

@@ -24,7 +24,7 @@ public:
     array<double, 3> direction ();
     array<double, 3> center ();
     array<double, 3> radius ();
-    
+
     double height ();
 
 private:

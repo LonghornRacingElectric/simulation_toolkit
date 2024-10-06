@@ -1,6 +1,9 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <array>
+using namespace std;
+
 class Node {
 public:
     // x, y, z coordinates
