@@ -1,9 +1,9 @@
 #include <array>
 #include "../primary_elements/beam.h"
-#include "aframe.h"
+#include "wishbone.h"
 
 //Aframe constructor
-Aframe::Aframe (Beam *fore_beam, Beam *aft_beam) {
+Wishbone::Wishbone (Beam *fore_beam, Beam *aft_beam) {
     fore = fore_beam;
     aft = aft_beam;
 

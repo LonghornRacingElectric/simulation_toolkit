@@ -1,14 +1,14 @@
-#ifndef AFRAME_H
-#define AFRAME_H
+#ifndef WISHBONE_H
+#define WISHBONE_H
 
 #include <array>
 #include "../primary_elements/beam.h"
 
 using namespace std;
 
-class Aframe {
+class Wishbone {
 public:
-    Aframe (Beam *fore, Beam *aft);
+    Wishbone (Beam *fore, Beam *aft);
     void rotate (double angle);
     void flatten_rotate (array<double, 3>); //angle : [x_rot, y_rot, z_rot]
     void _set_initial_position ();
