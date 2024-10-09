@@ -17,7 +17,6 @@ all: $(TARGET)
 # Link object files into the final executable
 $(TARGET): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^
-	rm main.o
 
 # Compile each .cpp file into a .o file
 %.o: %.cpp

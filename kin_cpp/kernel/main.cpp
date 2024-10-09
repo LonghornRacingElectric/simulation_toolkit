@@ -1,7 +1,7 @@
 #include <iostream>
-#include "./primary_elements/node.h"
-#include "./primary_elements/beam.h"
-#include "./secondary_elements/tie.h"
+#include "../primary_elements/node.h"
+#include "../primary_elements/beam.h"
+#include "../secondary_elements/tie.h"
 
 using namespace std;
 
