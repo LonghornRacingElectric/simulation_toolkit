@@ -114,18 +114,18 @@ class VehicleModel:
             show_ICs=False,
             plotter=self.suspension_plotter)
         
-        self.suspension.generate_kin()
+        # self.suspension.generate_kin()
 
-        self.suspension.generate_kin_plots(steer_sweep=np.linspace(-1.5, 1.5, 26) * 0.0254, 
-                                           heave_sweep=np.linspace(-4, 4, 26) * 0.0254,
-                                           pitch_sweep=np.linspace(-3, 3, 26) * np.pi / 180,
-                                           roll_sweep=np.linspace(-3, 3, 26) * np.pi / 180)
+        # self.suspension.generate_kin_plots(steer_sweep=np.linspace(-1.5, 1.5, 26) * 0.0254, 
+        #                                    heave_sweep=np.linspace(-4, 4, 26) * 0.0254,
+        #                                    pitch_sweep=np.linspace(-3, 3, 26) * np.pi / 180,
+        #                                    roll_sweep=np.linspace(-3, 3, 26) * np.pi / 180)
 
-        # self.suspension.plot_elements(plotter=self.suspension_plotter, verbose=False, show_grid=False)
+        self.suspension.plot_elements(plotter=self.suspension_plotter, verbose=False, show_grid=False)
         
-        # self.suspension_plotter.add_slider(func=self.suspension.roll_slider, title="Roll", bounds=[-15, 15], pos=[[0.75, 0.1], [0.98, 0.1]])
-        # self.suspension_plotter.add_slider(func=self.suspension.pitch_slider, title="Pitch", bounds=[-10, 10], pos=[[0.75, 0.225], [0.98, 0.225]])
-        # self.suspension_plotter.add_slider(func=self.suspension.heave_slider, title="Heave", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.350], [0.98, 0.350]])
-        # self.suspension_plotter.add_slider(func=self.suspension.steer_slider, title="Steer", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.475], [0.98, 0.475]])
+        self.suspension_plotter.add_slider(func=self.suspension.roll_slider, title="Roll", bounds=[-15, 15], pos=[[0.75, 0.1], [0.98, 0.1]])
+        self.suspension_plotter.add_slider(func=self.suspension.pitch_slider, title="Pitch", bounds=[-10, 10], pos=[[0.75, 0.225], [0.98, 0.225]])
+        self.suspension_plotter.add_slider(func=self.suspension.heave_slider, title="Heave", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.350], [0.98, 0.350]])
+        self.suspension_plotter.add_slider(func=self.suspension.steer_slider, title="Steer", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.475], [0.98, 0.475]])
 
-        # self.suspension_plotter.show()
+        self.suspension_plotter.show()

@@ -1,10 +1,12 @@
 from vehicle_model.suspension_model.suspension_elements.tertiary_elements.tire import Tire
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
 from typing import Sequence
+from pyvista import PolyData
 from typing import Callable
 from typing import Tuple
 import pyvista as pv
 import numpy as np
+
 
 class Plotter:
     """
@@ -17,6 +19,10 @@ class Plotter:
     """
     def __init__(self) -> None:
         self.pl = pv.Plotter()
+        self.pl.enable_anti_aliasing()
+        self.pl.set_background('white')
+        self.tires: Sequence[PolyData] | None = []
+        self.links: Sequence[PolyData] | None = []
 
     def add_ground(self, FL_cp: Node, RL_cp: Node, tire: Tire) -> None:
         """
@@ -69,6 +75,7 @@ class Plotter:
         None
         """
         self.pl.add_mesh(pv.CylinderStructured(radius=[0.127, radius], height=height, center=center, direction=direction), color="#504050", opacity=0.5)
+        self.tires.append(pv.Cylinder(radius=radius, height=height, center=center, direction=direction))
     
     def add_link(self, center: Sequence[float], direction: Sequence[float], radius: float, height: float, color: str = "gray") -> None:
         """
@@ -94,6 +101,7 @@ class Plotter:
         None
         """
         self.pl.add_mesh(pv.Cylinder(center=center, direction=direction, radius=radius, height=height), color=color)
+        self.links.append(pv.Cylinder(center=center, direction=direction, radius=radius, height=height))
     
     def add_node(self, center: Sequence[float], radius: float = 0.022225 / 2, color: str = "red") -> None:
         """
@@ -248,4 +256,9 @@ class Plotter:
         None
         """
         self.pl.show_axes()
+        # for tire in self.tires:
+        #     for link in self.links:
+        #         result = tire.triangulate().boolean_intersection(other_mesh=link.triangulate())
+        #         if bool(result) == True: break
+        #     if bool(result) == True: break; print("Blow me")
         self.pl.show()
