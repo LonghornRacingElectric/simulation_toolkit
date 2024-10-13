@@ -2,7 +2,6 @@
 #include "node.h"
 using namespace std;
 
-Node (array<double, 3>);
 void reset ();
 void translate(array<double, 3>);
 void flatten_rotate(array<double, 3>);
@@ -18,17 +17,22 @@ Node::Node (array<double, 3> pos) {
 
 }
 
-// Function Reset: resets the current posiiton array to the initial position
+/* Function Reset: resets the current posiiton array to the initial position */ 
 void Node::reset() {
     for (int i=0; i<3; i++) {
         position[i] = initial_position[i];
     }
 }
 
-void Node::translate() {
+/* Translates Node
+   Parameters : translation (3-element array) -- [x_shift, y_shift, z_shift]*/
+void Node::translate(array<double, 3> translation) {
     //TODO: requires plotting library
 }
 
-void Node::flatten_rotate() {
+/* Rotates node
+   - Used to re-orient vehicle such that contact patches intersect with x-y plane 
+   Parameters : angle (3-element array) -- [x_rot, y_rot, z_rot] */
+void Node::flatten_rotate(array<double, 3> angle) {
     //TODO: requires linear alg library
 }

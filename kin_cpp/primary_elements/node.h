@@ -2,13 +2,14 @@
 #define NODE_H
 
 #include <array>
+
 using namespace std;
 
 class Node {
 public:
     // x, y, z coordinates
-    double position[3];
-    double intial_position[3];
+    array<double, 3> position;
+    array<double, 3> initial_position;
 
     // Constructor that takes an array of positions
     Node (array<double, 3>);
