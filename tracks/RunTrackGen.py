@@ -3,6 +3,17 @@ from TrackData import Endurance as Endurance
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
+import math as m
+
+
+# def round_to_sig_figs(lst, sig_figs):
+#     def round_elem(x):
+#         if x == 0:
+#             return 0  # Avoid log10 issues with zero
+#         else:
+#             return round(x, sig_figs - int(m.floor(m.log10(abs(x)))) - 1)
+    
+#     return [round_elem(x) for x in lst]
 
 if __name__ == "__main__":
     track_points_inner, track_points_outer = Endurance()
@@ -41,6 +52,8 @@ if __name__ == "__main__":
                   new_Track.curve_length_total_opt,
                   new_Track.total_curvature_opt,
                   new_Track.average_curvature_opt]
+       
+        values = [round(x, 3) for x in values]
         
         data = [[label, value] for label, value in zip(row_labels, values)]
         
@@ -52,7 +65,7 @@ if __name__ == "__main__":
         column_labels = ['Track Parameters', 'Track Values']  
         table = ax2.table(cellText=data, colLabels=column_labels, 
                         cellLoc='center', loc='center')
-        ax2.title('Track Generation Parameters')
+        ax2.set_title('Track Generation Parameters')
         # Adjust font size (optional)
         table.auto_set_font_size(False)
         table.set_fontsize(10)
