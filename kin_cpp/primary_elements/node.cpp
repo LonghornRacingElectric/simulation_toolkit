@@ -13,8 +13,22 @@ Node::Node (array<double, 3> pos) {
     //copy coordinates into position
     for (int i = 0; i < 3; i++)
     {
-        position[i] = pos[i];
+        position[i] = initial_position[i] = pos[i];
     } 
+
 }
 
-/*  */
+// Function Reset: resets the current posiiton array to the initial position
+void Node::reset() {
+    for (int i=0; i<3; i++) {
+        position[i] = initial_position[i];
+    }
+}
+
+void Node::translate() {
+    //TODO: requires plotting library
+}
+
+void Node::flatten_rotate() {
+    //TODO: requires linear alg library
+}
