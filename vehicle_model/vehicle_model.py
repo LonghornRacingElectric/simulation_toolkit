@@ -114,7 +114,7 @@ class VehicleModel:
             show_ICs=False,
             plotter=self.suspension_plotter)
         
-        # self.suspension.generate_kin()
+        self.suspension.generate_kin()
 
         # self.suspension.generate_kin_plots(steer_sweep=np.linspace(-1.5, 1.5, 26) * 0.0254, 
         #                                    heave_sweep=np.linspace(-4, 4, 26) * 0.0254,

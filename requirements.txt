@@ -1,6 +1,7 @@
 pyvista
 imageio
 numpy
+PyQt5
 scipy
 pandas
 pyyaml
