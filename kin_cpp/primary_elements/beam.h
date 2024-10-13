@@ -10,20 +10,20 @@ public:
 
     Node *getInboardNode ();
     Node *getOutboardNode ();
-
+    
     array<double, 2> normalized_transform ();
 
     //calculate intersection points
-    array<double, 3> yz_intersection ();
-    array<double, 3> xz_intersection ();
+    array<double, 3> yz_intersection (Beam *);
+    array<double, 3> xz_intersection (Beam *);
 
     void translate (array<double, 3>); //parameter : [x_shift, y_shift, z_shift]
     void flatten_rotate (array<double, 3>); //parameter : [x_rot, y_rot, z_rot]
     
     //coordinates relating to the beam
-    array<double, 3> direction ();
-    array<double, 3> center ();
-    array<double, 3> radius ();
+    array<double, 3> direction () const;
+    array<double, 3> center () const;
+    array<double, 3> radius () const;
 
     double height ();
 
