@@ -21,4 +21,4 @@ int main() {
     cout << tie1.getLength() << endl;
 
     return 0;
-}
+}   
