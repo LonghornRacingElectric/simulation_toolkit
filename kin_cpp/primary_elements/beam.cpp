@@ -94,15 +94,75 @@ array<double, 3> Beam::yz_intersection (Beam *second_beam) {
 array<double, 3> Beam::xz_intersection (Beam *second_beam) {
     array<double, 3> l_1i = inboard_node->position;
     array<double, 3> l_1o = outboard_node->position;
-    
+    double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0]);
+    double x_1, z_1 = l_1o[0], l_1o[2];
+
+    array<double, 3> l_2i = inboard_node->position;
+    array<double, 3> l_2o = outboard_node->position;
+    double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0]);
+    double x_2, z_2 = l_2o[0], l_2o[2];
+
+    array<array<double, 2>, 2> a = {{-1 * m_1, 1}, {-1 * m_2, 1}};
+    array<array<double, 1>, 2> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_2}};
+
+    /* NEED LINALG FOR THE FOLLOWING : 
+        y = np.average([l_1o[1], l_2o[1]])
+
+        try:
+            x, z = np.linalg.solve(a=a, b=b)
+        except:
+            y = np.average([l_1o[1], l_2o[1]])
+            return [1e9, y, 0]
+
+        return np.array([x[0], y, z[0]])
+    */ 
+   return nullptr;
 }
 
-void Beam::translate (array<double, 3>); //parameter : [x_shift, y_shift, z_shift]
-void Beam::flatten_rotate (array<double, 3>); //parameter : [x_rot, y_rot, z_rot]
+/* Translates all children (inboard and outboard nodes)
+   Params : translation (3-element array) -- translation to apply [x_shift, y_shift, z_shift]*/
+void Beam::translate (array<double, 3> translation) {
+    for (Node *curr : all_elements) {
+        curr->translate (translation);
+    }
+}
 
-//coordinates relating to the beam
-array<double, 3> Beam::direction ();
-array<double, 3> Beam::center ();
-array<double, 3> Beam::radius ();
+/* Rotates all children (inboard and outboard nodes)
+    - Used to re-orient vehicle so that contact patches intersect xy plane
+    Params : angle (3-element array) -- angle in radians of rotation [x_rot, y_rot, z_rot] */
+void Beam::flatten_rotate (array<double, 3> angle) {
+    for (Node *curr : all_elements) {
+        curr->flatten_rotate (angle);
+    }
+}
 
-double Beam::height ();
+/* Direction attribute of Link
+   Returns 3-element array -- direction of link */
+array<double, 3> Beam::direction () const {
+    /* REQUIRE LINALG TO DO : 
+        return unit_vec (self.outboard_node, self.inboard_node)*/
+
+    return nullptr;
+}
+
+/* Center attribute of link 
+   Returns 3-element array -- center of beam */
+array<double, 3> Beam::center () const {
+
+}
+
+/* Radius attribute of Link
+   Returns : double --  radius of link */
+double Beam::radius () const {
+    const double DIAMETER = 0.015875;
+    return  DIAMETER / 2
+}
+
+/* Height (length) attribute of link
+   Returns : float -- length of link */
+double Beam::height () const {
+    /* NEED LINALG TO DO : 
+        return float(np.linalg.norm(self.inboard_node.position - self.outboard_node.position))
+    */
+    return nullptr;
+}

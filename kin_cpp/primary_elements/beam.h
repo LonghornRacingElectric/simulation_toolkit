@@ -23,7 +23,7 @@ public:
     //coordinates relating to the beam
     array<double, 3> direction () const;
     array<double, 3> center () const;
-    array<double, 3> radius () const;
+    double radius () const;
 
     double height ();
 
