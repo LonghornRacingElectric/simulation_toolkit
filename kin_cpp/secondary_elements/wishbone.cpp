@@ -10,8 +10,11 @@ void _set_initial_position ();
 void translate (array<double, 3>); 
 array<double, 6> plane ();
 array<double, 3> direction_vec ();
+
 Beam *getForeBeam ();
 Beam *getAftBeam ();
+double getAngle ();
+array<double, 3> getDirection ();
 
 array<double, 3> position_diff (array<double, 3> pos_out, pos_in);
 
@@ -90,6 +93,16 @@ Beam *Wishbone::getForeBeam () {
 /* GETTER : Aft beam*/
 Beam *Wishbone::getAftBeam () {
     return aft;
+}
+
+/*GETTER : angle */
+double Wishbone::getAngle () {
+    return angle;
+}
+
+/* GETTER : direction vector */
+array<double, 3> Wishbone::getDirection () {
+    return direction;
 }
 //Helper function to vector between two points because I don't wanna write this shit multiple times
 array<double, 3> Wishbone::position_diff (array<double, 3> pos_out, array<double, 3> pos_in) {

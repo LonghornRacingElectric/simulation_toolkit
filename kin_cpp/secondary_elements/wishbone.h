@@ -19,6 +19,8 @@ public:
     //getters
     Beam *getForeBeam ();
     Beam *getAftBeam ();
+    double getAngle ();
+    array<double, 3> getDirection ();
 private:
     Beam *fore;
     Beam *aft;
