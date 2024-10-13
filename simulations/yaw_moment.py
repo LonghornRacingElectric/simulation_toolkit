@@ -134,16 +134,6 @@ class YMD:
         RL_jounce = heave + -1 * abs(self.RL_Cp_wrt_cg[0]) * np.tan(pitch) + -1 * abs(self.RL_Cp_wrt_cg[1]) * np.tan(roll)
         RR_jounce = heave + -1 * abs(self.RR_Cp_wrt_cg[0]) * np.tan(pitch) + abs(self.RR_Cp_wrt_cg[1]) * np.tan(roll)
         sus_corners_jounce: Sequence[float] = [FL_jounce, FR_jounce, RL_jounce, RR_jounce]
-        # print([x / 0.0254 for x in [FL_jounce, FR_jounce, RL_jounce, RR_jounce]])
-
-        # Apply jounce and steer conditions
-        # FL_double_wishbone.steer(steer=delta)
-        # FR_double_wishbone.steer(steer=delta)
-        
-        # FL_double_wishbone.jounce(jounce=FL_jounce)
-        # FR_double_wishbone.jounce(jounce=FR_jounce)
-        # RL_double_wishbone.jounce(jounce=RL_jounce)
-        # RR_double_wishbone.jounce(jounce=RR_jounce)
 
         # Inclination angles
         FL_gamma = self.vehicle.suspension.FL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
@@ -169,15 +159,6 @@ class YMD:
         RL_alpha = RL_toe - np.arctan2(RL_velocity[1], RL_velocity[0])
         RR_alpha = RR_toe - np.arctan2(RR_velocity[1], RR_velocity[0])
 
-        # print([x * 180 / np.pi for x in [FL_alpha, FR_alpha, RL_alpha, RR_alpha]])
-
-        # This is jank, but find real solution for modal displacements
-        # x[3], x[4], x[5] = fsolve(self._IC_residual_function, x0=[heave, pitch, roll], args=[[imf_velocity, yaw_rate], [FL_tire, FR_tire, RL_tire, RR_tire], suspension])
-
-        # self.heave_soln = x[3]
-        # self.pitch_soln = x[4]
-        # self.roll_soln = x[5]
-
         # Normal loads from springs
         Fz_lst = []
         for i in range(len(sus_corners)):
@@ -186,22 +167,7 @@ class YMD:
             else:
                 Fz_lst.append(sus_corners[i].weight - sus_corners[i].wheelrate_function.integrate(sus_corners_jounce[i], 0)) 
 
-        # Normal loads from accels
-        Fr_lat_LT = (FL_double_wishbone.weight + FR_double_wishbone.weight) * ay / 9.81 * self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[1] - FR_double_wishbone.contact_patch.position[1])
-        Rr_lat_LT = (RL_double_wishbone.weight + RR_double_wishbone.weight) * ay / 9.81 * self.cg_pos[2] / abs(RL_double_wishbone.contact_patch.position[1] - RR_double_wishbone.contact_patch.position[1])
-        left_long_LT = self.cg_pos[2] / abs(FL_double_wishbone.contact_patch.position[0] - RL_double_wishbone.contact_patch.position[0]) * (FL_double_wishbone.weight + RL_double_wishbone.weight) * ax / 9.81
-        right_long_LT = self.cg_pos[2] / abs(FR_double_wishbone.contact_patch.position[0] - RR_double_wishbone.contact_patch.position[0]) * (FR_double_wishbone.weight + RR_double_wishbone.weight) * ax / 9.81
-        
-        FL_Fz_LT = FL_double_wishbone.weight - Fr_lat_LT - left_long_LT
-        FR_Fz_LT = FR_double_wishbone.weight + Fr_lat_LT - right_long_LT
-        RL_Fz_LT = RL_double_wishbone.weight - Rr_lat_LT + left_long_LT
-        RR_Fz_LT = RR_double_wishbone.weight + Rr_lat_LT + right_long_LT
-        
-        Fz_lst_LT = np.array([FL_Fz_LT, FR_Fz_LT, RL_Fz_LT, RR_Fz_LT])
-
         FL_Fz, FR_Fz, RL_Fz, RR_Fz = Fz_lst
-
-        Fz_resid = Fz_lst_LT - np.array(Fz_lst)
 
         # Tire loads
         self.FL_loads = FL_tire.tire_eval(FZ=FL_Fz, alpha=FL_alpha, kappa=0, gamma=FL_gamma)[0:3]
@@ -214,11 +180,6 @@ class YMD:
         self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_toe), self.RL_loads)
         self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_toe), self.RR_loads)
 
-        # print(self.FL_forces_aligned)
-        # print(self.FR_forces_aligned)
-        # print(self.RL_forces_aligned)
-        # print(self.RR_forces_aligned)
-
         ###############################################
         ### Calculate Forces and Moments from Tires ###
         ###############################################
@@ -227,11 +188,8 @@ class YMD:
         vehicle_centric_moments = np.cross(-1 * self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(-1 * self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
             np.cross(-1 * self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(-1 * self.RR_Cp_wrt_cg, self.RR_forces_aligned)
         
-        # print(vehicle_centric_forces)
-
         # Add gravity
         gravity_forces = np.array([0, 0, -self.vehicle.total_mass * self.vehicle.environment["G"]])
-        # print(gravity_forces)
         vehicle_centric_forces += gravity_forces
 
         ###################################################
@@ -248,11 +206,6 @@ class YMD:
         force_residuals = vehicle_centric_forces - sum_force
         moment_residuals = vehicle_centric_moments - sum_moment
 
-        # residuals = np.array([*force_residuals, *moment_residuals]) + np.linalg.norm(Fz_resid)
-
-        # print(residuals)
-
-        # return residuals
         return [*force_residuals, *moment_residuals]
 
     def generate_constant_radius_YMD(self, radius: float) -> None:
