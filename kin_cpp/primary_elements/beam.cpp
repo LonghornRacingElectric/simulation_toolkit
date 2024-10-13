@@ -1,7 +1,7 @@
 #include "beam.h"
+#include <blaze/Math.h>
 using namespace std;
 
-Beam(Node *inboard, Node *outboard);
 Node *getInboardNode ();
 Node *getOutboardNode ();
 array<double, 2> normalized_transform ();
@@ -54,28 +54,18 @@ array<double, 2> Beam::normalized_transform () {
 array<double, 3> Beam::yz_intersection (Beam *second_beam) {
     array<double, 3> l_1i = inboard_node->position;
     array<double, 3> l_1o = outboard_node->position;
-    double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[1] - l_1i[1])
-    double x_1, z_1 = l_1o[1], l_1o[2]
+    double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[1] - l_1i[1]);
+    double x_1, z_1 = l_1o[1], l_1o[2];
 
     array<double, 3> l_2i = second_beam->inboard_node->position;
     array<double, 3> l_2o = second_beam->outboard_node->position;
-    double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[1] - l_2i[1])
-    double x_2, z_2 = l_2o[1], l_2o[2]
+    double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[1] - l_2i[1]);
+    double x_2, z_2 = l_2o[1], l_2o[2];
 
-    array<array<int, 1>, 2> a = {{-1 * m_1, 1}, {-1 * m_2, 1}};
-    array<array<int, 1>, 2> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_1}};
+    array<array<double, 2>, 2> a = {{-1 * m_1, 1}, {-1 * m_2, 1}};
+    array<array<double, 1>, 2> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_1}};
 
     /* NEED LINALG FOR THE FOLLOWING : 
-        a = np.array([
-            [-1 * m_1, 1],
-            [-1 * m_2, 1]
-        ])
-
-        b = np.array([
-            [-1 * m_1 * y_1 + z_1],
-            [-1 * m_2 * y_2 + z_2]
-        ])
-
         y, z = np.linalg.solve(a=a, b=b)
 
         # Calculate x-value
@@ -85,7 +75,7 @@ array<double, 3> Beam::yz_intersection (Beam *second_beam) {
         return np.array([x, y[0], z[0]])
     */
 
-   return nullptr;
+   return {0, 0, 0};
 }
 
 /* Calculates intersection point between two links in the x-z plane 
@@ -116,7 +106,7 @@ array<double, 3> Beam::xz_intersection (Beam *second_beam) {
 
         return np.array([x[0], y, z[0]])
     */ 
-   return nullptr;
+   return {0, 0, 0};
 }
 
 /* Translates all children (inboard and outboard nodes)
@@ -139,16 +129,34 @@ void Beam::flatten_rotate (array<double, 3> angle) {
 /* Direction attribute of Link
    Returns 3-element array -- direction of link */
 array<double, 3> Beam::direction () const {
-    /* REQUIRE LINALG TO DO : 
-        return unit_vec (self.outboard_node, self.inboard_node)*/
-
-    return nullptr;
+    array<double, 3> vec = {
+                            outboard_node->position[0] - inboard_node->position[0],
+                            outboard_node->position[1] - inboard_node->position[1],
+                            outboard_node->position[2] - inboard_node->position[2],
+                           };
+    blaze::DynamicVector<double> dyn_vec(vec);
+    double magnitude = blaze::norm (dyn_vec);
+    blaze::DynamicVector<double> unit_vec = dyn_vec / magnitude;
+    return {unit_vec[0], unit_vec[1], unit_vec[2]};
 }
 
 /* Center attribute of link 
    Returns 3-element array -- center of beam */
 array<double, 3> Beam::center () const {
+    array<double, 3> in_pos = inboard_node->position;
+    array<double, 3> out_pos = outboard_node->position;
+    
+    for (double e : inboard_node->position) {
+        if (e == 1e9) {
+            return {
+                    (in_pos[0] + out_pos[0]) / 2,
+                    (in_pos[1] + out_pos[1]) / 2,
+                    (in_pos[2] + out_pos[2]) / 2
+                   };
+        }
+    }
 
+    return out_pos;
 }
 
 /* Radius attribute of Link
@@ -161,8 +169,11 @@ double Beam::radius () const {
 /* Height (length) attribute of link
    Returns : float -- length of link */
 double Beam::height () const {
-    /* NEED LINALG TO DO : 
-        return float(np.linalg.norm(self.inboard_node.position - self.outboard_node.position))
-    */
-    return nullptr;
+   array<double, 3> vec = {
+                            outboard_node->position[0] - inboard_node->position[0],
+                            outboard_node->position[1] - inboard_node->position[1],
+                            outboard_node->position[2] - inboard_node->position[2],
+                           };
+    blaze::DynamicVector<double> dyn_vec(vec);
+    return blaze::norm(dyn_vec);
 }

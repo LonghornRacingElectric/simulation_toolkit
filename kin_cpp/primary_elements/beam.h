@@ -6,8 +6,6 @@
 
 class Beam {
 public:
-    Beam(Node *inboard, Node *outboard);
-
     Node *getInboardNode ();
     Node *getOutboardNode ();
     
@@ -25,7 +23,7 @@ public:
     array<double, 3> center () const;
     double radius () const;
 
-    double height ();
+    double height () const;
 
 private:
     Node *inboard_node;
