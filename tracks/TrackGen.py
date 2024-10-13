@@ -180,24 +180,40 @@ class Track():
         return total_curvature
 
     # Plot solution on track
-    def plot(self):
-
+    def plot(self, axes, aspect_ratio_bool, legend_bool):
+        # Calculate track limits
         xi, yi = self.track_limits(self.track_points_inner)
         xo, yo = self.track_limits(self.track_points_outer)
         xm, ym = self.track_limits(self.midpoints)
         xmf, ymf = self.track_limits(self.track_points_opt)
 
+        # Unzip the track points
         trackx_inner, tracky_inner = map(list, zip(*self.track_points_inner))
         trackx_outer, tracky_outer = map(list, zip(*self.track_points_outer))
 
-        plt.figure('Figure_1')
-        plt.plot(trackx_inner, tracky_inner, 'bo')
-        plt.plot(trackx_outer, tracky_outer, 'ro')
-        plt.plot(self.trackx_mid, self.tracky_mid, 'mo')
-        plt.plot(xi, yi, '-b')
-        plt.plot(xo, yo, '-r')
-        plt.plot(xm, ym, '-m')
-        plt.plot(xmf, ymf, '-g')
-        self.connect_cones(self.track_points_inner, self.track_points_outer)
-        plt.gca().set_aspect('equal')
-        plt.show()
+        # Plot on the provided axes
+        axes.plot(trackx_inner, tracky_inner, 'bo', label='Inner Track Points')
+        axes.plot(trackx_outer, tracky_outer, 'ro', label='Outer Track Points')
+        axes.plot(self.trackx_mid, self.tracky_mid, 'mo', label='Midpoints')
+        axes.plot(xi, yi, '-b', label='Inner Limit')
+        axes.plot(xo, yo, '-r', label='Outer Limit')
+        axes.plot(xm, ym, '-m', label='Midpoint Line')
+        axes.plot(xmf, ymf, '-g', label='Optimized Track Points')
+        
+        # Add legend 
+        
+        if aspect_ratio_bool == True:
+            # Ensure equal aspect ratio for the plot
+            axes.set_aspect('equal')
+        if legend_bool == True:
+            axes.legend(loc='lower right')
+        
+        # Draw connections between cones
+        # self.connect_cones(self.track_points_inner, self.track_points_outer)
+        for (xi,yi), (xo,yo) in zip(self.track_points_inner, self.track_points_outer):
+            axes.plot([xi,xo],[yi,yo], 'k-')
+
+        # Return the figure object
+        return axes.figure, axes.legend
+
+      
