@@ -214,6 +214,6 @@ class Track():
             axes.plot([xi,xo],[yi,yo], 'k-')
 
         # Return the figure object
-        return axes.figure
+        return axes.figure, axes.legend
 
       

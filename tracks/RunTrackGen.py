@@ -3,17 +3,6 @@ from TrackData import Endurance as Endurance
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
-import math as m
-
-
-# def round_to_sig_figs(lst, sig_figs):
-#     def round_elem(x):
-#         if x == 0:
-#             return 0  # Avoid log10 issues with zero
-#         else:
-#             return round(x, sig_figs - int(m.floor(m.log10(abs(x)))) - 1)
-    
-#     return [round_elem(x) for x in lst]
 
 if __name__ == "__main__":
     track_points_inner, track_points_outer = Endurance()
@@ -22,7 +11,7 @@ if __name__ == "__main__":
    
     with PdfPages('./outputs/Track_Outputs.pdf') as pdf:
         
-        # 1st page: Track Plots
+        # 1st Page: Track Plots
        
         # Create a new figure
         fig, axs = plt.subplots(nrows=2, ncols=1, figsize=[11, 8.5])  # Create a 2x2 grid of subplots
@@ -30,14 +19,26 @@ if __name__ == "__main__":
         # Use the modified plot method to plot on the first subplot
         new_Track.plot(axs[0], aspect_ratio_bool=True, legend_bool=False)  
         axs[0].set_title("Plot 1: Track With 1-to-1 Aspect Ratio", fontsize=12)
-        new_Track.plot(axs[1], aspect_ratio_bool=False, legend_bool=True)
+        new_Track.plot(axs[1], aspect_ratio_bool=False, legend_bool=False)
         axs[1].set_title("Plot 2: Track With Stretched Aspect Ratio", fontsize=12)
+
+        # Collect handles and labels
+        handles, labels = axs[0].get_legend_handles_labels()
+       
+        # Create a legend outside the figure
+        fig.legend(
+            handles, labels,  # Use only the handles and labels from the first plot
+            loc='upper center',  # Position the legend at the top center
+            ncol=3,  # Arrange legend entries in a row
+            fontsize=10)
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
 
         # Save the entire figure (containing subplots) to the PDF
         pdf.savefig(fig)  # Save the figure with subplots
         plt.close(fig)    # Close the figure after saving
 
         # 2nd Page: Table Figure
+
         # Table Data
         row_labels = ['Initial Track Length (Midpoints) (ft)', 
                     'Initial Total Curvature (ft^-1)', 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
                   new_Track.average_curvature_opt]
        
         values = [round(x, 3) for x in values]
-        
+
         data = [[label, value] for label, value in zip(row_labels, values)]
         
         fig2, ax2 = plt.subplots()
