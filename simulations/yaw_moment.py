@@ -55,7 +55,7 @@ class YMD:
                     delta_lst.append(delta / (3.50 / 360 * 0.0254))
                     Ay_lst.append(y_ddot / 9.81)
 
-        plt.plot(Ay_lst, delta_lst)
+        # plt.plot(Ay_lst, delta_lst)
         plt.show()
         self.plot()
 

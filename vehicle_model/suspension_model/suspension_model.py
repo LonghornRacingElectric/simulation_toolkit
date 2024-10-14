@@ -748,52 +748,76 @@ class SuspensionModel:
         self.plot_elements(plotter=self.plotter, verbose=self.verbose)
     
     def generate_report(self) -> None:
+        hwa_to_rack = 1 / 360 * 3.50 * 0.0254
+        self.steer_sweep = np.linspace(-100, 100, 100) * hwa_to_rack
+        self.heave_sweep = np.linspace(-2 * 0.0254, 2 * 0.0254, 4)
 
-        # data = OrderedDict(
-        #     [
-        #         ("Dimensions", ["Overall Dimensions", 
-        #                         "Wheelbase and Track", 
-        #                         "Center of Gravity Design Height", 
-        #                         "Mass without Driver", 
-        #                         "Weight Distribution with 68kg Driver"]),
-        #         ("Units", ["mm",
-        #                    "mm",
-        #                    "mm",
-        #                    "kg",
-        #                    "-"]),
-        #         ("  ", ["Length", 
-        #               "Wheelbase", 
-        #               "CG Height", 
-        #               "Front", 
-        #               "% Front"]),
-        #         (" ", [" ",
-        #               " ",
-        #               " ",
-        #               " ",
-        #               " "]),
-        #         ("", ["Width",
-        #               "Front Track",
-        #               "Confirmed Via",
-        #               "Rear",
-        #               "% Left"])
-        #     ]
-        # )
+        # Store double wishbones
+        self.FL_dw = self.full_suspension.Fr_axle.left
+        self.FR_dw = self.full_suspension.Fr_axle.right
 
-        # df = pd.DataFrame(data)
+        ackermann_dict = {
+            "Steer Steer": {"FL": [], "FR": []},
+        }
+        
+        fig_1, ax_1 = plt.subplots(nrows=2, ncols=2)
+        fig_1.set_size_inches(w=11, h=8.5)
+        fig_1.suptitle("Steering Characteristics")
+        fig_1.subplots_adjust(wspace=0.2, hspace=0.4)
 
-        # app = Dash(__name__)
+        ax_1[0, 0].set_xlabel("Steer (in)")
+        ax_1[0, 0].set_ylabel("Tire Heading (deg)")
+        ax_1[0, 0].set_title("Tire Heading vs Steer")
+        ax_1[0, 0].grid()
 
-        # app.layout = dash_table.DataTable(
-        #     data=df.to_dict('records'),
-        #     columns=[{'id': c, 'name': c} for c in df.columns],
-        #     style_header={'border': '1px solid black', 'backgroundColor': '#84a0a8'},
-        #     style_cell={'textAlign': 'center', 'border': '1px solid grey'},
-        #     merge_duplicate_headers=True
-        # )
+        ax_1[0, 1].set_xlabel("Steer (in)")
+        ax_1[0, 1].set_ylabel("Tire Heading (deg)")
+        ax_1[0, 1].set_title("Tire Heading vs Steer")
+        ax_1[0, 1].grid()
 
-        # app.run(debug=False)
-        pass
+        ax_1[1, 0].set_xlabel("Steer (in)")
+        ax_1[1, 0].set_ylabel("Tire Heading (deg)")
+        ax_1[1, 0].set_title("Tire Heading vs Steer")
+        ax_1[1, 0].grid()
 
+        ax_1[1, 1].set_xlabel("Steer (in)")
+        ax_1[1, 1].set_ylabel("Ackermann Percent (%)")
+        ax_1[1, 1].set_title("Ackermann Percent vs Steer")
+        ax_1[1, 1].grid()
+
+        ackermann_dict["Steer Steer"]["FL"] = []
+        ackermann_dict["Steer Steer"]["FR"] = []
+
+        for heave in [0.0001]:
+            self.heave(heave=heave)
+
+            for steer in self.steer_sweep:
+                self.steer(rack_displacement=steer)
+
+                ackermann_dict["Steer Steer"]["FL"].append(float(self.FL_dw.toe * 180 / np.pi))
+                ackermann_dict["Steer Steer"]["FR"].append(float(self.FR_dw.toe * 180 / np.pi))
+        
+            ax_1[0, 0].plot(self.steer_sweep / hwa_to_rack, ackermann_dict["Steer Steer"]["FL"])
+            ax_1[0, 1].plot(self.steer_sweep / hwa_to_rack, ackermann_dict["Steer Steer"]["FR"])
+
+            ax_1[1, 0].plot(self.steer_sweep / hwa_to_rack, ackermann_dict["Steer Steer"]["FL"], label="Left")
+            ax_1[1, 0].plot(self.steer_sweep / hwa_to_rack, ackermann_dict["Steer Steer"]["FR"], label="Right")
+
+            ackermann_lst = []
+            for i in range(len(self.steer_sweep)):
+                if self.steer_sweep[i] <= 0:
+                    ackermann_lst.append((ackermann_dict["Steer Steer"]["FR"][i] - ackermann_dict["Steer Steer"]["FL"][i]) / ackermann_dict["Steer Steer"]["FR"][i] * 100)
+                else:
+                    ackermann_lst.append((ackermann_dict["Steer Steer"]["FL"][i] - ackermann_dict["Steer Steer"]["FR"][i]) / ackermann_dict["Steer Steer"]["FL"][i] * 100)
+
+            ax_1[1, 1].plot(self.steer_sweep / hwa_to_rack, ackermann_lst)
+
+        ax_1[1, 0].legend()
+
+        ax_1[1, 1].set_ylim([min(ackermann_lst) * 5, max(ackermann_lst) * 5])
+
+        plt.show()
+    
     def generate_kin_plots(self, steer_sweep: np.ndarray, heave_sweep: np.ndarray, pitch_sweep: np.ndarray, roll_sweep: np.ndarray) -> None:
         self.steer_sweep = steer_sweep
         self.heave_sweep = heave_sweep
