@@ -1,404 +1,275 @@
-import math
 import numpy as np
 from scipy import optimize
+# from simulation_toolkit.vehicle_model.vehicle_model import VehicleModel
+import os
+import sys
+
+# make everything in cd accessible
+for dirpath, dirnames, filenames in os.walk(os.curdir):
+    sys.path.append(dirpath)
+
+"""
+
+for now i guess i'll assume a vehicle ("car") class object that has parameter, previous state ("in"),
+current state ("out"), and current control signal ("control") attributes
+
+e.g.
+ptn_parameters = car.parameters.powertrain
+state_in = car.state_in
+controls = car.controls
+car.state_out = state_out
+    sate out is just an updated copy of state in
+    meaning state_out = state_in after state in has been modified by functions that take in
+    state_in and controls as arguments (current control signal will result in some change in the vehicle
+    state over a certain timestep for transient, or will result in a different quasi-static state (because certain
+    powertrain parameters depend on the state of other parts of the car, e.g. current tire grip)
+
+"""
+
+class PowertrainModel:
+
+    """
+    ## Powertrain Model
+
+    Parameters
+    ----------
+    # type shit
+
+    """
+
+    # def __init__(self, car: VehicleModel) -> None:
+    def __init__(self, car) -> None:
+        """
+        ~ Contains all the static powertrain parameters (coefficients, constants, lookup tables, etc.) ~
+
+        """
+
+        self.cell_dcir = None
+        self.cell_ocv = None
+        self.soc = None
+        self.motor_rpm = None
+        self.back_emf = None
+
+        params = car.parameters['powertrain']  # dictionary with various ptn parameters / LUTs...
+
+        self.motor_max_rpm = params['motor_max_rpm']['value']
+        self.motor_efficiency = params['motor_efficiency']['table']
+        self.inverter_efficiency = params['inverter_efficiency']['table']
+        self.cell_ocv_lu = params['cell_ocv_lu']['table']
+        self.cell_dcir_lu = params['cell_dcir_lu']['table']
+        self.s_count = params['s_count']['value']
+        self.p_count = params['p_count']['value']
+        self.motor_kv = params['motor_kv']['value']
+        self.motor_kt = params['motor_kt']['value']
+        self.motor_max_torque = params['motor_max_torque']['value']
+        self.max_cell_voltage = params['max_cell_voltage']['value']
+        self.max_cell_charge_current = params['max_cell_charge_current']['value']
+        self.regulated_power_limit_emeter = params['regulated_power_limit_emeter']['value']
+        self.mech_efficiencies = params['mech_efficiencies']['value']
+        self.diff_preload = params['diff_preload']['value']
+        self.diffBiasPerc = params['diffBiasPerc']['value']
+        self.diffMuRatio = params['diffMuRatio']['value']
+        self.gear_ratio = params['gear_ratio']['value']
+
+        # for par in list(params.keys()):
+        #     try:
+        #         self.__setattr__(par, params[par]['value'])
+        #     except KeyError:
+        #         try:
+        #             self.__setattr__(par, params[par]['table'])
+        #         except KeyError:
+        #             print('parameter initializing error:', par)
+
+    def eval(self, state_in, controls):
+        """
+        ~ Evaluate a powertrain state given vehicle state and control input ~
 
 
-from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
+        ~ Arguments ~
+        -------------
+        state_in: car.state_in (type = dict)
+            left_wheel_speed: float [rad/s]
+            right_wheel_speed: float [rad/s]
+            soc: float [0->1]
+            avg_cell_temp: float [C]
+            tire_torques: [FL, FR, RL, RR]: list[float] [Nm]
 
-from sim.model_parameters.cars.car import Car
-from sim.system_models.vectors.controls_vector import ControlsVector
-from sim.system_models.vectors.observables_vector import ObservablesVector
-from sim.system_models.vectors.state_vector import StateVector
-from sim.system_models.vectors.state_dot_vector import StateDotVector
-from sim.util.math.conversions import rpm_to_rads, rads_to_rpm
+        controls: car.controls (type = dict)
+            torque_request: float [Nm]
 
 
-class PowertrainModel(VehicleSystemModel):
-    def __init__(self):
-        super().__init__()
+        ~ Return ~
+        ----------
+        powertrain_torques: [FL, FR, RL, RR]: list[float] [Nm]
 
-        self.controls_in = [
-            "torque_request",
-            "cooling_percent",
-        ]
+        """
 
-        self.state_in = [
-            "hv_battery_charge",
-            "lv_battery_charge",
+        torque_request = controls['torque_request']
+        left_wheel_speed = state_in['wheel_angular_velocities'][2]
+        right_wheel_speed = state_in['wheel_angular_velocities'][3]
+        motor_ang_vel = np.average([left_wheel_speed, right_wheel_speed])*self.gear_ratio  # differential imposed constraint
+        self.motor_rpm = self.omega_to_rpm(omega=motor_ang_vel)
+        self.back_emf = self.motor_rpm / self.motor_kv
+        self.soc = state_in['soc']
+        # cell_temp = state_in.avg_cell_temp
+        self.cell_ocv = self.cell_ocv_lu([self.soc])  # add f(cell temp)
+        self.cell_dcir = self.cell_dcir_lu([self.soc])  # add f(cell temp, frequency)... 2 RC model later
 
-            "hv_battery_temperature",
-            "inverter_temperature",
-            "motor_temperature",
-            "coolant_temperature",
+        def max_motor_battery_pwr_calc(test_torque: float) -> float:
+            # assumption is that torque-speed curve, efficiency map are symetric about x (speed or RPM) axis
+            # positive (+) power is defined in the direction from battery to motor
+            # this calc uses some assumed torque and rpm to evaluate the maximum power the motor can output and is
+            # later compared to the requested power to determine actual output
 
-            "motor_rpm",
-            # "v_long",  # this will be for cooling from external airflow later
-        ]
+            if self.motor_rpm > self.motor_max_rpm:
+                power = 0
+                return power
 
-        self.state_out = [
-            "hv_battery_current",
-            "lv_battery_current",
+            motor_ang_vel = self.rpm_to_omega(self.motor_rpm)
+            motor_pwr_mech = test_torque * motor_ang_vel
+            phase_current = test_torque / self.motor_kt
+            dc_pwr_inverter = motor_pwr_mech / (self.motor_efficiency([self.motor_rpm, test_torque]) *
+                                                self.inverter_efficiency([phase_current, self.back_emf]))
+            battery_terminal_voltage = self.terminal_voltage_calc(battery_power=dc_pwr_inverter)
+            # print('voltage:', battery_terminal_voltage)
+            max_power_rpm = battery_terminal_voltage * self.motor_kv
 
-            "hv_battery_net_heat",
-            "inverter_net_heat",
-            "motor_net_heat",
-            "coolant_net_heat",
-
-            "applied_torque_fl",
-            "applied_torque_fr",
-            "applied_torque_rl",
-            "applied_torque_rr",
-        ]
-
-        self.observables = [
-            "hv_battery_open_circuit_voltage",
-            "hv_battery_terminal_voltage",
-            "lv_battery_open_circuit_voltage",
-            "lv_battery_terminal_voltage",
-        ]
-
-    # TODO multi-motor configurations
-    # TODO cooling from airflow (function of vehicle velocity)
-
-    def eval(self, car: Car, controls_in: ControlsVector, state_in: StateVector,
-             state_out: StateDotVector, observables: ObservablesVector):
-
-        lv_system_power_out = car.lv_system_constant_power_draw + car.cooling_power_draw(controls_in.cooling_percent)
-        hv_battery_cooling, hv_battery_cooling_from_coolant = self._calculate_cooling(0, 0, 0)  # TODO implement
-        inverter_cooling, inverter_cooling_from_coolant = self._calculate_cooling(0, 0, 0)  # TODO implement
-        motor_cooling, motor_cooling_from_coolant = self._calculate_cooling(0, 0, 0)  # TODO implement
-        coolant_cooling = 0  # TODO calculate coolant cooling as a function of fan output
-        coolant_heating = hv_battery_cooling_from_coolant + inverter_cooling_from_coolant + motor_cooling_from_coolant
-
-        hv_battery_open_circuit_voltage = car.hv_battery_open_circuit_voltage(state_in.hv_battery_charge)
-        hv_battery_internal_resistance = (
-            car.hv_battery_internal_resistance(state_in.hv_battery_charge))  # , state_in.hv_battery_temperature))
-
-        observables.line_pressures = [0, 0]
-        observables.motor_torque = 0
-
-        observables.applied_torques = [0, 0, 0, 0]
-        observables.regen_torques = [0, 0, 0, 0]
-        observables.mechanical_brake_torque = [0, 0, 0, 0]
-
-        motor_power_out = 0
-        inverter_power_out = 0
-        hv_battery_power_out = 0
-
-        # Solve for motor torque
-
-        # TODO
-        #   regen
-        #   check residual threshold
-        #   setup necessary car variables
-        #       efficiency maps
-        #           motor
-        #           inverter
-        #           transmission stack (make this a method)
-        #               bearings -> maybe implement bearing class idk
-        #                   mos
-        #                   differential
-        #                   CV joint
-        #                   wheel
-        #               chain
-        #               differential
-        #                   gear mesh
-        #                   frictional torque transfer losses
-        #       cell ACIR maps
-        #       differential torque bias
-        #   docstrings
-        #   unit testing
-        #   diff model
-        #   object structure for all powertrain components
-        #   pass self into methods and reduce number of arguments, assign these values as atributes of ptn model
-        #       do this for regen instead of checking torque polarity over and over
-        #   clean up and match structure to sus model
-
-        #   TODO: setup model description docstrings
-        #       include: current revision/state, limitations, known approximations/inaccuracies,
-        #           areas for improvement, etc...
-
-        #   TODO: Cell Model
-        #       RC model
-        #       various cell limits (associataed dependencies i.e. soc, temp, etc)
-        #           charge(regen)/discharge c rate
-        #           temp derates
-        #           over/under voltage
-        #       cell thermal model
-        #           lumped capacitance vs nodal
-        #           cold plate variants, air cooled variants
-        #
-        #   TODO: Motor Model
-        #       RPM limits
-        #       motor equivalent circuit model
-        #       thermal model
-        #       quad motor
-
-        #   TODO: Differential model
-        #       transient locking behavior
-
-        torReq = controls_in.torque_request
-        leftWheelSpeed = state_in.wheel_angular_velocities[2]
-        rightWheelSpeed = state_in.wheel_angular_velocities[3]
-        motorAngVel = np.average(leftWheelSpeed, rightWheelSpeed)
-        motorRPM = rads_to_rpm(motorAngVel)
-
-        def maxMotorPwrCalc(torque, rpm, car, state_in):
-            ## assumption is that torque-speed curve, efficiency map are symetric about x (speed or RPM) axis
-            # positive power is defined in the direction from battery to motor
-
-            motorAngVel = rpm_to_rads(rpm)
-            motorPwrMech = torque * motorAngVel
-            dcPwrInverter = motorPwrMech / (motorEff(torque, rpm)*inverterEff(torque, rpm))
-            cellTemp = state_in.avgCellTemp
-            soc = state_in.soc
-            cellACIR = car.cellACIR(cellTemp, soc)
-            cellVOC = car.cellVOC(cellTemp, soc)
-
-            def voltSagCalc(v):
-                return v**2 - v*cellVOC + (dcPwrInverter/car.numParallelCells)*cellACIR
-            cellVTerm = optimize.root_scalar(voltSagCalc, cellVOC*.75, cellVOC*1.25)  # initial guess between 125% and 75% of OCV
-                #  need to fuck with this and see what this outputs, see edge cases...
-            packVTerm = cellVTerm * car.numSeriesCells
-            maxPwrRPM = packVTerm / car.motorKv
-
-            if torque >= 0:  # positive torque request
-                power = car.motorMaxTorque * rpm_to_rads(maxPwrRPM)
+            if test_torque >= 0:  # positive torque request
+                power = self.motor_max_torque * self.rpm_to_omega(max_power_rpm)
             else:  # negative torque request; regen
-                power = -(car.motorMaxTorque * motorAngVel)
+                motor_regen_power_limit = (-self.motor_max_torque * motor_ang_vel)
+                battery_charge_power_limit_voltage = (battery_terminal_voltage *
+                                                      (battery_terminal_voltage-(self.cell_ocv*self.s_count))
+                                                      / (self.cell_dcir/1000))
+                battery_charge_power_limit_current = battery_terminal_voltage*self.max_cell_charge_current*self.p_count
+                power = max(motor_regen_power_limit, battery_charge_power_limit_voltage,
+                            battery_charge_power_limit_current)
+                # these should all be negative quantities so take the one closest to zero. i.e. max.
             return power
 
-        ### repeated
-        motorEff = car.motor_efficiency(torReq, motorRPM)
-        inverterEff = car.inverter_efficiency(torReq, motorRPM)
-        maxMotorPwr = maxMotorPwrCalc(torReq, motorRPM)
-        regulatedPwrLimMotor = car.regulatedPwrLimEMeter * motorEff * inverterEff
-        if torReq >=0:
-            totalPwrLim = min(regulatedPwrLimMotor, maxMotorPwr)
-        elif torReq < 0:
-            totalPwrLim = max(-regulatedPwrLimMotor, maxMotorPwr)
-        pwrReq = torReq * motorAngVel
-        ### repeated
+        def total_power_limit_calc(torque_req: float) -> float:
+            phase_current = torque_req / self.motor_kt
+            regulated_power_limit_motor = (self.regulated_power_limit_emeter *
+                                           self.motor_efficiency(np.array([self.motor_rpm, torque_req])) *
+                                           self.inverter_efficiency([phase_current, self.back_emf]))
+            if torque_req >= 0:
+                total_power_limit = min(regulated_power_limit_motor, max_motor_battery_pwr_calc(torque_req))
+            elif torque_req < 0:
+                total_power_limit = max(-regulated_power_limit_motor, max_motor_battery_pwr_calc(torque_req))
+            return total_power_limit
 
+        power_request = torque_request * motor_ang_vel
 
-        if abs(pwrReq) <= abs(totalPwrLim):
-            motorTorque = torReq
-        else:   # field weakening or power regulated, need to solve for torque iteratively
-            stepDir = -(pwrReq/abs(pwrReq))  # step in the direction opposite of current pwr/torque
-            stepSize = 1  # check if this initial step size is too big
-            step = stepSize * stepDir
-            resid = pwrReq - totalPwrLim
-            prevResid = 0
-            torTry = totalPwrLim/motorAngVel
-            residThres = 0.001  # need to check if this is small enough and if it affects the steady state solver
+        if abs(power_request) <= abs(total_power_limit_calc(torque_req=torque_request)):
+            motor_torque = torque_request
 
-            while abs(resid) > residThres:
-                pwrTry = torTry * motorAngVel
-                maxMotorPwr = maxMotorPwrCalc(torTry, motorRPM)
-                motorEff = car.motor_efficiency(torTry, motorRPM)
-                inverterEff = car.inverter_efficiency(torTry, motorRPM)
-                regulatedPwrLimMotor = car.regulatedPwrLimEMeter * motorEff * inverterEff
-                if torReq >= 0:
-                    totalPwrLim = min(regulatedPwrLimMotor, maxMotorPwr)
-                elif torReq < 0:
-                    totalPwrLim = max(-regulatedPwrLimMotor, maxMotorPwr)
-                prevResid = resid
-                resid = pwrTry - totalPwrLim
+        else:   # field weakening, emeter power regulated, or battery power regulated. need to solve for torque
+            # iteratively by trying lower torques (thus lower power; rpm is constant)
 
-                if prevResid*resid < 0:  # overshoot, flip step direction
-                    step *= -0.1
+            def power_residual(torque):
+                # print(torque)
+                pwr_req = torque * motor_ang_vel
+                pwr_limit = total_power_limit_calc(float(torque))
+                return np.abs(pwr_req - pwr_limit)
+                # print('power request:', pwr_req)
+                # print('power limit:', pwr_limit)
 
-                torTry += step
+            motor_torque_result = optimize.minimize(power_residual, x0=torque_request, tol=0.0001)
+            motor_torque = float(motor_torque_result.x)
 
-            # once loop is broken, found possible torque state
-            motorTorque = torTry
+        # evaluate final state
+        state_out = state_in
+        motor_power = motor_torque * motor_ang_vel
+        battery_terminal_power = motor_power/(self.motor_efficiency([self.motor_rpm, motor_torque]) *
+                                              self.inverter_efficiency([motor_torque/self.motor_kt, self.back_emf]))
+        battery_terminal_voltage = self.terminal_voltage_calc(battery_power=battery_terminal_power)
+        battery_current = battery_terminal_power / battery_terminal_voltage
+        battery_power = self.cell_ocv*self.s_count * battery_current
 
+        # assign state out
+        state_out['motor_rpm'] = self.motor_rpm
+        state_out['motor_torque'] = motor_torque
+        state_out['motor_power'] = motor_power
+        state_out['battery_terminal_power'] = battery_terminal_power
+        state_out['battery_terminal_voltage'] = battery_terminal_voltage
+        state_out['battery_current'] = battery_current
+        state_out['battery_power'] = battery_power
 
+        # Solve for wheel torques / differential split
+        # ~ diff model ~
+        def trans_eff():
+            # mos_bearing_eff = 0.995
+            # chain_eff = 0.98
+            # diff_bearing_eff = 0.995**2  # 2 diff bearings
+            mos_bearing_eff = self.mech_efficiencies['mos_bearing']
+            chain_eff = self.mech_efficiencies['chain']
+            diff_bearing_eff = self.mech_efficiencies['diff_bearing']
+            return mos_bearing_eff*chain_eff*diff_bearing_eff  # this is bullshit, will implement later fr
 
-        # Solve for wheel torques / differential split with diff model
+        def diff_to_wheel_eff():
+            # cv_joint_eff = 0.995
+            # wheel_bearing_eff = 0.995
+            cv_joint_eff = self.mech_efficiencies['cv_joint']
+            wheel_bearing_eff = self.mech_efficiencies['wheel_bearing']
+            return cv_joint_eff*wheel_bearing_eff  # this is also bullshit, will implement later fr
 
-        def transEff():
-            mosBearingEff = 0.995
-            chainEff = 0.98
-            diffBearingEff = 0.995**2 # 2 diff bearings
-            return mosBearingEff*chainEff*diffBearingEff  # this is bullshit, will implement later fr
-
-        def diffToWheelEff():
-            cvJointEff = 0.995
-            wheelBearingEff = 0.995**2 # 2 wheel bearings
-            return cvJointEff*wheelBearingEff # this is also bullshit, will implement later fr
-
-        def torMaxDelta(diffTorque, diffing=False):
-            delta = car.diffPreload +\
-                    diffTorque*car.diffBiasPerc  # make sure this definition is consistent between diffs
+        def tor_max_delta(diff_torque, diffing=False):
+            delta = self.diff_preload +\
+                    diff_torque*self.diffBiasPerc  # make sure this definition is consistent between diffs
             if diffing:
-                delta *= car.diffMuRatio  # if diffing, need to use dynamic friction coefficient (not currently used)
+                delta *= self.diffMuRatio  # if diffing, need to use dynamic friction coefficient (not currently used)
             return delta
 
-        diffInTorque = motorTorque*car.gear_ratio*transEff()
-        leftGrip = car.tire_torques[2]
-        rightGrip = car.tire_torques[3]
-        gripDelta = (leftGrip - rightGrip)/diffToWheelEff()     # tire torque delta at diff, not wheel
-        biasDir = gripDelta/abs(gripDelta)  # left is pos (+), right is neg (-)
-        torqueDelta = min(torMaxDelta(diffInTorque), abs(gripDelta))*biasDir  # delta = left minus right
+        diff_in_torque = motor_torque*self.gear_ratio*trans_eff()
+        left_grip = state_in['tire_torques'][2]
+        right_grip = state_in['tire_torques'][3]
+        grip_delta = (left_grip - right_grip)/diff_to_wheel_eff()     # tire torque delta at diff, not tire
+        if np.abs(grip_delta) != 0:
+            bias_dir = grip_delta/np.abs(grip_delta)  # left is pos (+), right is neg (-)
+            torque_delta = min(tor_max_delta(diff_in_torque), np.abs(grip_delta))*bias_dir  # delta = left minus right
+        else:
+            torque_delta = 0
 
-        leftTorque = ((diffInTorque + torqueDelta)/2)*diffToWheelEff()
-        rightTorque = ((diffInTorque - torqueDelta)/2)*diffToWheelEff()
+        left_torque = ((diff_in_torque + torque_delta)/2)*diff_to_wheel_eff()
+        right_torque = ((diff_in_torque - torque_delta)/2)*diff_to_wheel_eff()
 
-        state_out.powertrain_torques = [0, 0, leftTorque, rightTorque]
+        powertrain_torques = [0, 0, left_torque, right_torque]
+        state_out['torques'] = powertrain_torques  # need to implement mechanical braking!!
+        # print('motor torque=', motor_torque)
 
+        return state_out
 
+    def omega_to_rpm(self, omega):
+        return omega * 60 / (2 * np.pi)
 
+    def rpm_to_omega(self, rpm):
+        return rpm * (2 * np.pi) / 60
 
+    def terminal_voltage_calc(self, battery_power):
+        # reminder: all these power figures are in terms of the load the battery is supplying.
+        # the actual power from the battery needs to account for the cell IR.
+        cell_power = battery_power / (self.s_count * self.p_count)
 
+        def terminal_voltage_func(terminal_voltage, power):
+            return terminal_voltage ** 2 - terminal_voltage * self.cell_ocv + power * self.cell_dcir/1000
 
-        if controls_in.torque_request > 0:
-            torque_request = controls_in.torque_request
-            available_voltage = hv_battery_open_circuit_voltage - motor_back_emf
-            available_current = available_voltage / (car.motor_winding_resistance + hv_battery_internal_resistance)
-            rated_torque = car.motor_peak_torque(state_in.motor_rpm)
+        max_power_transfer = self.cell_ocv ** 2 / (4 * self.cell_dcir/1000)
+        if cell_power >= max_power_transfer:
+            cell_terminal_voltage = (max_power_transfer * self.cell_dcir/1000) ** 0.5
+        else:
+            def term_volt_reformatted(v):
+                return terminal_voltage_func(v, power=cell_power)
 
-            possible_current = min(rated_torque / car.motor_kt, car.motor_peak_current, available_current)
-            possible_power = car.hv_battery_nominal_voltage * possible_current
-            available_torque = possible_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
+            cell_terminal_voltage_res = optimize.root(fun=term_volt_reformatted, x0=np.array(self.cell_ocv))
+            cell_terminal_voltage = cell_terminal_voltage_res.x[-1]
 
-            motor_torque = min(torque_request, rated_torque, available_torque)
-            observables.motor_torque = motor_torque
+        if cell_terminal_voltage > self.max_cell_voltage:
+            cell_terminal_voltage = self.max_cell_voltage
 
-            diff_torque = motor_torque * car.gear_ratio * car.diff_efficiency
-            observables.applied_torques = [
-                0,
-                0,
-                diff_torque * car.drivetrain_efficiency / 2,  # TODO add diff lmao
-                diff_torque * car.drivetrain_efficiency / 2,
-            ]
+        pack_terminal_voltage = cell_terminal_voltage * self.s_count
+        return pack_terminal_voltage
 
-            motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
-            inverter_power_out = motor_power_out / motor_efficiency
-            hv_battery_power_out = inverter_power_out / car.inverter_efficiency
-
-        elif controls_in.torque_request < 0 and car.regen_enabled:
-            torque_request = controls_in.torque_request
-            available_voltage = motor_back_emf
-            available_current = available_voltage / (car.motor_winding_resistance + hv_battery_internal_resistance)
-            rated_torque = car.motor_peak_torque(state_in.motor_rpm)
-
-            possible_current = min(rated_torque / car.motor_kt, car.motor_peak_current, available_current)
-            possible_power = car.hv_battery_nominal_voltage * possible_current
-            available_power = min(possible_power, car.power_limit / car.inverter_efficiency / motor_efficiency)
-            available_torque = available_power / rpm_to_rads(state_in.motor_rpm) if state_in.motor_rpm else 1e9
-
-            motor_torque = -min(-torque_request, rated_torque, available_torque)
-            observables.motor_torque = motor_torque
-
-            diff_torque = motor_torque * car.gear_ratio * car.diff_efficiency
-            observables.regen_torques = [
-                0,
-                0,
-                diff_torque * car.drivetrain_efficiency / 2,
-                diff_torque * car.drivetrain_efficiency / 2,
-            ]
-
-            motor_power_out = motor_torque * rpm_to_rads(state_in.motor_rpm)
-            inverter_power_out = motor_power_out * motor_efficiency
-            hv_battery_power_out = inverter_power_out * car.inverter_efficiency
-
-        if controls_in.brake_pct > 0:
-            max_driver_force = car.max_DF
-            pedal_ratio = car.pedal_ratio
-            brake_bias = car.brake_bias
-            master_cylinder_SAs = car.MC_SA
-            caliper_SAs = car.C_SA
-            pad_friction_coefficients = car.mu
-            effective_rotor_radii = car.eff_rotor_radius
-            tire_radii = car.tire_radii
-
-            brake_calcs = self._mech_brake_calcs(DF=max_driver_force, PR=pedal_ratio, BB=brake_bias,
-                                                 MC_SA=master_cylinder_SAs,
-                                                 C_SA=caliper_SAs, mu=pad_friction_coefficients,
-                                                 RR=effective_rotor_radii,
-                                                 TR=tire_radii, brake_pct=controls_in.brake_pct)
-
-            observables.line_pressures = brake_calcs[0]
-            observables.mechanical_brake_torque = brake_calcs[1]
-
-        hv_battery_power_out += car.has_dcdc * (lv_system_power_out / car.dcdc_efficiency)
-        lv_battery_power_out = (not car.has_dcdc) * lv_system_power_out
-
-        hv_battery_current = self._calculate_battery_current(hv_battery_power_out, hv_battery_open_circuit_voltage,
-                                                             hv_battery_internal_resistance)
-        hv_battery_voltage_drop = hv_battery_internal_resistance * hv_battery_current
-        hv_battery_terminal_voltage = hv_battery_open_circuit_voltage - hv_battery_voltage_drop
-
-        lv_battery_open_circuit_voltage = car.lv_battery_open_circuit_voltage(state_in.lv_battery_charge)
-        lv_battery_current = self._calculate_battery_current(lv_battery_power_out, lv_battery_open_circuit_voltage,
-                                                             car.lv_battery_internal_resistance)
-        lv_battery_voltage_drop = car.lv_battery_internal_resistance * lv_battery_current
-        lv_battery_terminal_voltage = lv_battery_open_circuit_voltage - lv_battery_voltage_drop
-
-        hv_battery_heat_loss = hv_battery_voltage_drop * hv_battery_current
-        inverter_heat_loss = hv_battery_power_out - inverter_power_out
-        motor_heat_loss = inverter_power_out - motor_power_out
-
-        state_out.hv_battery_current = hv_battery_current
-        state_out.lv_battery_current = lv_battery_current
-        state_out.hv_battery_net_heat = hv_battery_heat_loss - hv_battery_cooling
-        state_out.inverter_net_heat = inverter_heat_loss - inverter_cooling
-        state_out.motor_net_heat = motor_heat_loss - motor_cooling
-        state_out.coolant_net_heat = coolant_heating - coolant_cooling
-        state_out.powertrain_torques = (np.array(observables.applied_torques) + np.array(observables.regen_torques)
-                                        + np.array(observables.mechanical_brake_torque))
-
-        observables.hv_battery_open_circuit_voltage = hv_battery_open_circuit_voltage
-        observables.hv_battery_terminal_voltage = hv_battery_terminal_voltage
-        observables.lv_battery_open_circuit_voltage = lv_battery_open_circuit_voltage
-        observables.lv_battery_terminal_voltage = lv_battery_terminal_voltage
-        observables.hv_battery_power_out = hv_battery_power_out
-        observables.inverter_power_out = inverter_power_out
-        observables.motor_power_out = motor_power_out
-        # TODO add more observables from the existing variables
-
-    def _calculate_battery_current(self, battery_power: float, battery_open_circuit_voltage: float,
-                                   battery_internal_resistance: float) -> float:
-        """
-        solves for current given power output, open circuit voltage, and internal resistance
-
-        i = p / v
-        v = v_oc - i*r
-        i = p / (v_oc - i*r)
-        (-r)i^2 + (v_oc)i - (p) = 0
-
-        quadratic equation
-
-        i = (-v_oc +/- sqrt(v_oc**2 - 4*r*p)))/(-2r)
-        i = (v_oc +/- sqrt(v_oc**2 - 4*r*p)))/(2r)
-
-        we only want the smaller i, the larger one is extraneous
-        """
-        # TODO rethink this with regen, as power will be negative and some sign changes will be necessary
-
-        discriminant = (battery_open_circuit_voltage * battery_open_circuit_voltage
-                        - 4 * battery_internal_resistance * battery_power)
-        if discriminant < 0:
-            raise Exception("too much current! not sure what to do now. maybe try not flooring it bruh")
-        i = (battery_open_circuit_voltage - math.sqrt(discriminant)) / 2 / battery_internal_resistance
-        return i
-
-    def _calculate_cooling(self, object_temp: float, coolant_temp: float, coolant_area: float) -> (float, float):
-        # TODO cooling calculations!!
-        return 0, 0
-
-    # def _diff_bias_ratio(self, steered_angle, body_slip, diff_torque, wheel_angular_velocities, diff_radius, motor_radius):
-    #     if steered_angle == 0 and body_slip == 0 or diff_torque == 0:
-    #         return [0.5, 0.5]
-
-    #     traction_bias = self.params.diff_fl + self.params.diff_preload/torque_on_diff
-
-    #     if self.state.is_left_diff_bias:
-    #         return np.array([traction_bias, 1 - traction_bias])
-    #     else:
-    #         return np.array([1 - traction_bias, traction_bias])
-
+    # brakes bullshit
     def _mech_brake_calcs(self, DF, PR, BB, MC_SA, C_SA, mu, RR, TR, brake_pct):
         pedal_force = DF * brake_pct
 
@@ -429,14 +300,4 @@ class PowertrainModel(VehicleSystemModel):
 
         return [line_pressures, braking_torques]
 
-    # def _torque_bias_ratio(self, steered_angle, body_slip, torque_on_diff):
-    #     # if on a pure straight, diff doesnt bias. Otherwise it does. BREAKAWAY TORQUE BABY
-    #     if steered_angle == 0 and body_slip == 0 or torque_on_diff == 0:
-    #         return np.array([0.5, 0.5])
 
-    #     traction_bias = self.params.diff_fl + self.params.diff_preload / torque_on_diff
-
-    #     if self.state.is_left_diff_bias:
-    #         return np.array([traction_bias, 1 - traction_bias])
-    #     else:
-    #         return np.array([1 - traction_bias, traction_bias])

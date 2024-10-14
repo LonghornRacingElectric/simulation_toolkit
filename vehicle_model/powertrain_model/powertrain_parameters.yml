@@ -1,0 +1,105 @@
+ ### POWERTRAIN ###
+powertrain:
+ description: powertrain description
+ type: str
+ value: Anqelique's Powertrain
+
+motor:
+ description: motor description
+ type: str
+ value: EMRAX 228 MV LC
+
+inverter:
+ description: inverter description
+ type: str
+ value: Cascadia Motion CM200DZ
+
+cell:
+ description: cell description
+ type: str
+ value: Molicel P45B
+
+motor_max_rpm:
+ description: mechanical max rpm (RPM)
+ type: float
+ value: 6500
+
+s_count:
+ description: battery series count ()
+ type: float
+ value: 140
+
+p_count:
+ description: battery parallel count ()
+ type: float
+ value: 3
+
+motor_kv:
+ description: motor voltage constant relating achievable motor RPM as a fucntion 
+   of DC supply voltage (RPM/Vdc)
+ type: float
+ value: 8.68
+
+motor_kt:
+ description: motor torque constant relating motor torque to phase current (Nm/Arms)
+ type: float
+ value: 0.61
+
+motor_max_torque:
+ description:  maximum motor torque (peak, not continuous) (Nm)
+ type: float
+ value: 220
+
+max_cell_voltage:
+ description: maximum cell terminal voltage (V)
+ type: float
+ value: 4.2
+
+max_cell_charge_current:
+ description: maximum allowable cell charging current (A)
+ type: float
+ value: 13.5
+
+regulated_power_limit_emeter:
+ description: maximum allowable power transmission through emeter
+  (FSAE regulations, EV.3.3.1)
+ type: float
+ value: 80000
+
+mech_efficiencies:
+ description: set of various bearing efficiencies (%)
+ type: dict(dict(float))
+ value: {
+          mos_bearing: 0.995,
+          chain: 0.95,
+          diff_bearing: 0.995,
+          cv_joint: 0.995,
+          wheel_bearing: 0.995,
+ }
+
+diff_preload:
+ description: limited slip differential preload torque (Nm)
+ type: float
+ value: 30
+
+diffBiasPerc:
+ description: maximum proportion of input torque transferable between
+  axles when differential is locked (%)
+ type: float
+ value: 0.51
+
+diffMuRatio:
+ description: ratio of dynamicMu/staticMu related to differential
+  internal friction (%)
+ type: float
+ value: 1 # needs to be fixed
+
+gear_ratio:
+ description: transmission speed gear ratio (input_RPM / output_RPM)
+ type: float
+ value: 3.5
+
+default_parameter:
+ description: parameter description
+ type: None
+ value: None
