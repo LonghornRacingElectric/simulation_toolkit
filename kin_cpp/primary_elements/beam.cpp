@@ -1,19 +1,19 @@
 #include "beam.h"
-using namespace std;
+using namespace blaze;
 
 Beam(Node *inboard, Node *outboard);
 Node *getInboardNode ();
 Node *getOutboardNode ();
-array<double, 2> normalized_transform ();
+StaticVector<double, 2UL> normalized_transform ();
 //calculate intersection points
-array<double, 3> yz_intersection (Beam *);
-array<double, 3> xz_intersection (Beam *);
-void translate (array<double, 3>);
-void flatten_rotate (array<double, 3>); 
+StaticVector<double, 3UL> yz_intersection (Beam *);
+StaticVector<double, 3UL> xz_intersection (Beam *);
+void translate (StaticVector<double, 3UL>);
+void flatten_rotate (StaticVector<double, 3UL>); 
 //coordinates relating to the beam
-array<double, 3> direction () const;
-array<double, 3> center () const;
-array<double, 3> radius () const;
+StaticVector<double, 3UL> direction () const;
+StaticVector<double, 3UL> center () const;
+StaticVector<double, 3UL> radius () const;
 
 double height ();
 /* Beam constructor : 
@@ -40,42 +40,29 @@ Node *Beam::getOutboardNode() {
 /* Calculates the rotations about x and y which result in a vector pointing strictly in z 
    - Gives kpi and caster, respectively, for kingpin
    Returns : 2-element array : [x_rotation, y_rotation] in radians */
-array<double, 2> Beam::normalized_transform () {
-    array<double, 3> origin_transform = {
-                                            elements[1]->position[0] - elements[0]->position[0],
-                                            elements[1]->position[1] - elements[0]->position[1],
-                                            elements[1]->position[2] - elements[0]->position[2]                                        
-                                        }
+StaticVector<double, 3UL> Beam::normalized_transform () {
+    StaticVector<double, 3UL> origin_transform = elements[1]->position - elements[0]->position;
+    return origin_transform;
 }
 
 /* Calculates intersection point between two links in the y-z plane 
    Params : second_beam (Beam *) -- beam intersecting this beam in yz
    Returns 3-element array -- coordinates of intersection (averages x between the links) */
-array<double, 3> Beam::yz_intersection (Beam *second_beam) {
-    array<double, 3> l_1i = inboard_node->position;
-    array<double, 3> l_1o = outboard_node->position;
-    double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[1] - l_1i[1])
-    double x_1, z_1 = l_1o[1], l_1o[2]
+StaticVector<double, 3> Beam::yz_intersection (Beam *second_beam) {
+    StaticVector<double, 3UL> &l_1i = inboard_node->position;
+    StaticVector<double, 3UL> &l_1o = outboard_node->position;
+    double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[1] - l_1i[1]);
+    double x_1 = l_1o[1], z_1 = l_1o[2];
 
-    array<double, 3> l_2i = second_beam->inboard_node->position;
-    array<double, 3> l_2o = second_beam->outboard_node->position;
-    double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[1] - l_2i[1])
-    double x_2, z_2 = l_2o[1], l_2o[2]
+    StaticVector<double, 3UL> &l_2i = second_beam->inboard_node->position;
+    StaticVector<double, 3UL> &l_2o = second_beam->outboard_node->position;
+    double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[1] - l_2i[1]);
+    double x_2 = l_2o[1], z_2 = l_2o[2];
 
-    array<array<int, 1>, 2> a = {{-1 * m_1, 1}, {-1 * m_2, 1}};
-    array<array<int, 1>, 2> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_1}};
+    StaticMatrix<double, 2, 2> a {{-1 * m_1, 1}, {-1 * m_2, 1}};
+    StaticMatrix<double, 2, 1> b {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_1}};
 
     /* NEED LINALG FOR THE FOLLOWING : 
-        a = np.array([
-            [-1 * m_1, 1],
-            [-1 * m_2, 1]
-        ])
-
-        b = np.array([
-            [-1 * m_1 * y_1 + z_1],
-            [-1 * m_2 * y_2 + z_2]
-        ])
-
         y, z = np.linalg.solve(a=a, b=b)
 
         # Calculate x-value
@@ -85,25 +72,25 @@ array<double, 3> Beam::yz_intersection (Beam *second_beam) {
         return np.array([x, y[0], z[0]])
     */
 
-   return nullptr;
+   return StaticVector<double, 3UL>();
 }
 
 /* Calculates intersection point between two links in the x-z plane 
    Params : second_beam (Beam *) -- beam intersecting this beam in xz
    Returns 3-element array -- coordinates of intersection (averages x between the links) */
-array<double, 3> Beam::xz_intersection (Beam *second_beam) {
-    array<double, 3> l_1i = inboard_node->position;
-    array<double, 3> l_1o = outboard_node->position;
+StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
+    StaticVector<double, 3UL> &l_1i = inboard_node->position;
+    StaticVector<double, 3UL> &l_1o = outboard_node->position;
     double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0]);
     double x_1, z_1 = l_1o[0], l_1o[2];
 
-    array<double, 3> l_2i = inboard_node->position;
-    array<double, 3> l_2o = outboard_node->position;
+    StaticVector<double, 3UL> &l_2i = inboard_node->position;
+    StaticVector<double, 3UL> &l_2o = outboard_node->position;
     double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0]);
     double x_2, z_2 = l_2o[0], l_2o[2];
 
-    array<array<double, 2>, 2> a = {{-1 * m_1, 1}, {-1 * m_2, 1}};
-    array<array<double, 1>, 2> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_2}};
+    StaticMatrix<double, 2, 2> a {{-1 * m_1, 1}, {-1 * m_2, 1}};
+    StaticMatrix<double, 2, 1> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_2}};
 
     /* NEED LINALG FOR THE FOLLOWING : 
         y = np.average([l_1o[1], l_2o[1]])
@@ -116,12 +103,12 @@ array<double, 3> Beam::xz_intersection (Beam *second_beam) {
 
         return np.array([x[0], y, z[0]])
     */ 
-   return nullptr;
+   return StaticVector<double, 3UL>();
 }
 
 /* Translates all children (inboard and outboard nodes)
    Params : translation (3-element array) -- translation to apply [x_shift, y_shift, z_shift]*/
-void Beam::translate (array<double, 3> translation) {
+void Beam::translate (StaticVector<double, 3UL> &translation) {
     for (Node *curr : all_elements) {
         curr->translate (translation);
     }
@@ -130,7 +117,7 @@ void Beam::translate (array<double, 3> translation) {
 /* Rotates all children (inboard and outboard nodes)
     - Used to re-orient vehicle so that contact patches intersect xy plane
     Params : angle (3-element array) -- angle in radians of rotation [x_rot, y_rot, z_rot] */
-void Beam::flatten_rotate (array<double, 3> angle) {
+void Beam::flatten_rotate (StaticVector<double, 3UL> &angle) {
     for (Node *curr : all_elements) {
         curr->flatten_rotate (angle);
     }
@@ -138,24 +125,24 @@ void Beam::flatten_rotate (array<double, 3> angle) {
 
 /* Direction attribute of Link
    Returns 3-element array -- direction of link */
-array<double, 3> Beam::direction () const {
+StaticVector<double, 3> Beam::direction () const {
     /* REQUIRE LINALG TO DO : 
         return unit_vec (self.outboard_node, self.inboard_node)*/
 
-    return nullptr;
+    return StaticVector<double, 3UL> ();
 }
 
 /* Center attribute of link 
    Returns 3-element array -- center of beam */
-array<double, 3> Beam::center () const {
-
+StaticVector<double, 3UL> Beam::center () const {
+    return StaticVector<double, 3> ();
 }
 
 /* Radius attribute of Link
    Returns : double --  radius of link */
 double Beam::radius () const {
     const double DIAMETER = 0.015875;
-    return  DIAMETER / 2
+    return DIAMETER / 2
 }
 
 /* Height (length) attribute of link
@@ -164,5 +151,5 @@ double Beam::height () const {
     /* NEED LINALG TO DO : 
         return float(np.linalg.norm(self.inboard_node.position - self.outboard_node.position))
     */
-    return nullptr;
+    return 0.0;
 }

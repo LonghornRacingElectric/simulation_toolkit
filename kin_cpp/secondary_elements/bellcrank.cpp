@@ -4,7 +4,7 @@
 #include "../primary_elements/beam.h"
 using namespace std;
 
-Bellcrank::Bellcrank (Beam *out, Beam *in, Beam *connecting, Node *node, double *BCdirection, doubel *BCangle) {
+Bellcrank::Bellcrank (Beam *out, Beam *in, Beam *connecting, Node *node, double *BCdirection, double *BCangle) {
     bellcrank_pivot = node;
     inboard = in;
     outboard = out;

@@ -4,6 +4,7 @@
 #include <array>
 #include "node.h"
 
+using namespace blaze;
 class Beam {
 public:
     Beam(Node *inboard, Node *outboard);
@@ -11,21 +12,21 @@ public:
     Node *getInboardNode ();
     Node *getOutboardNode ();
     
-    array<double, 2> normalized_transform ();
+    std::array<double, 2> normalized_transform ();
 
     //calculate intersection points
-    array<double, 3> yz_intersection (Beam *);
-    array<double, 3> xz_intersection (Beam *);
+    StaticVector<double, 3> yz_intersection (Beam *);
+    StaticVector<double, 3> xz_intersection (Beam *);
 
-    void translate (array<double, 3>); //parameter : [x_shift, y_shift, z_shift]
-    void flatten_rotate (array<double, 3>); //parameter : [x_rot, y_rot, z_rot]
+    void translate (StaticVector<double, 3> &); //parameter : [x_shift, y_shift, z_shift]
+    void flatten_rotate (StaticVector<double, 3> &); //parameter : [x_rot, y_rot, z_rot]
     
     //coordinates relating to the beam
-    array<double, 3> direction () const;
-    array<double, 3> center () const;
+    StaticVector<double, 3> direction () const;
+    StaticVector<double, 3> center () const;
     double radius () const;
 
-    double height ();
+    double height () const;
 
 private:
     Node *inboard_node;

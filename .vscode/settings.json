@@ -1,6 +1,8 @@
 {
     "cmake.ignoreCMakeListsMissing": true,
     "files.associations": {
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "array": "cpp",
+        "random": "cpp"
     }
 }
