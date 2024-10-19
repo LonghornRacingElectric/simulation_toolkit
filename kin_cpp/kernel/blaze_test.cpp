@@ -3,11 +3,11 @@
 
 int main() {
     // Create a dynamic vector of integers
-    blaze::DynamicVector<int> vecA{1, 2, 3};
-    blaze::DynamicVector<int> vecB{4, 5, 6};
+    blaze::StaticVector<int, 3> vecA{1, 2, 3};
+    blaze::StaticVector<int, 3> vecB{4, 5, 6};
 
     // Perform vector addition
-    blaze::DynamicVector<int> vecC = vecA + vecB;
+    blaze::StaticVector<int, 3> vecC = vecA + vecB;
 
     // Print the result of vector addition
     std::cout << "Vector A: " << vecA << std::endl;

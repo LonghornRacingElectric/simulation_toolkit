@@ -16,7 +16,7 @@ Beam *getAftBeam ();
 double getAngle ();
 array<double, 3> getDirection ();
 
-array<double, 3> position_diff (array<double, 3> pos_out, pos_in);
+array<double, 3> position_diff (array<double, 3>, array<double, 3>);
 
 //Aframe constructor
 Wishbone::Wishbone (Beam *fore_beam, Beam *aft_beam) {
