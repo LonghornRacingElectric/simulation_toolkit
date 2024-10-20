@@ -5,9 +5,9 @@
 using namespace blaze;
 
 void rotate (double angle);
-void flatten_rotate (StaticVector<double, 3> &); 
+void flatten_rotate (const StaticVector<double, 3> &); 
 void set_initial_position ();
-void translate (StaticVector<double, 3> &); 
+void translate (const StaticVector<double, 3> &); 
 StaticVector<double, 6> plane ();
 StaticVector<double, 3> direction_vec ();
 
@@ -44,7 +44,7 @@ void Wishbone::rotate (double new_angle) {
 
 /* Rotates all children - used to reorient vehicle such that contact patches intersect with x-y plane 
     Parameter : angle : (3-element array) -- angle of rotation in radians [x_rot, y_rot, z_rot] */
-void Wishbone::flatten_rotate (StaticVector<double, 3> &angle) {
+void Wishbone::flatten_rotate (const StaticVector<double, 3> &angle) {
     for (Node *curr : all_elements) {
         curr->flatten_rotate (angle);
     }
@@ -59,7 +59,7 @@ void Wishbone::set_initial_position () {
 
 /* Translates all children (inboard and outboard Nodes) 
     Parameter : translation : (3-element array) -- translation [x_shift, y_shift, z_shift] */
-void Wishbone::translate (StaticVector<double, 3> &translation) {
+void Wishbone::translate (const StaticVector<double, 3> &translation) {
     for (Node *curr : all_elements) {
         curr->translate (translation);
     }
@@ -69,10 +69,6 @@ void Wishbone::translate (StaticVector<double, 3> &translation) {
    General equation: a(x - x_{0}) + b(y - y_{0}) + c(z - z_{0}) = 0
    Returns parameters defining plane [a, b, c, x_0, y_0, z_0] */
 StaticVector<double, 6> Wishbone::plane () const {
-    // StaticVector<double, 3> PQ = all_elements[1]->position - all_elements[0]->position;
-    // StaticVector<double, 3> PR = all_elements[1]->position - all_elements[2]->position;
-    // //need linalg library for : a, b, c = np.cross(PQ, PR);
-    // int x_0 = all_elements[1]->position[0], x_1 = all_elements[1]->position[1], x_2 = all_elements[1]->position[2];
     StaticMatrix<double, 3, 3> point_vecs;
     column(point_vecs, 0) = all_elements[0]->position;
     column(point_vecs, 0) = all_elements[1]->position;

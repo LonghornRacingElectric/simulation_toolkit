@@ -1,19 +1,19 @@
 #include "beam.h"
 using namespace blaze;
 
-Beam(Node *inboard, Node *outboard);
-Node *getInboardNode ();
-Node *getOutboardNode ();
-StaticVector<double, 2UL> normalized_transform ();
-//calculate intersection points
-StaticVector<double, 3UL> yz_intersection (Beam *);
-StaticVector<double, 3UL> xz_intersection (Beam *);
-void translate (StaticVector<double, 3UL>);
-void flatten_rotate (StaticVector<double, 3UL>); 
-//coordinates relating to the beam
-StaticVector<double, 3UL> direction ();
-StaticVector<double, 3UL> center ();
-StaticVector<double, 3UL> radius ();
+// void Beam(Node *inboard, Node *outboard);
+// Node *getInboardNode ();
+// Node *getOutboardNode ();
+// StaticVector<double, 2UL> normalized_transform ();
+// //calculate intersection points
+// StaticVector<double, 3UL> yz_intersection (Beam *);
+// StaticVector<double, 3UL> xz_intersection (Beam *);
+// void translate (StaticVector<double, 3UL>);
+// void flatten_rotate (StaticVector<double, 3UL>); 
+// //coordinates relating to the beam
+// StaticVector<double, 3UL> direction ();
+// StaticVector<double, 3UL> center ();
+// StaticVector<double, 3UL> radius ();
 
 double height ();
 /* Beam constructor : 
@@ -82,12 +82,12 @@ StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
     StaticVector<double, 3UL> &l_1i = inboard_node->position;
     StaticVector<double, 3UL> &l_1o = outboard_node->position;
     double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0]);
-    double x_1, z_1 = l_1o[0], l_1o[2];
+    double x_1 = l_1o[0], z_1 = l_1o[2];
 
     StaticVector<double, 3UL> &l_2i = inboard_node->position;
     StaticVector<double, 3UL> &l_2o = outboard_node->position;
     double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0]);
-    double x_2, z_2 = l_2o[0], l_2o[2];
+    double x_2 = l_2o[0], z_2 = l_2o[2];
 
     StaticMatrix<double, 2, 2> a {{-1 * m_1, 1}, {-1 * m_2, 1}};
     StaticMatrix<double, 2, 1> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_2}};
@@ -108,7 +108,7 @@ StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
 
 /* Translates all children (inboard and outboard nodes)
    Params : translation (3-element array) -- translation to apply [x_shift, y_shift, z_shift]*/
-void Beam::translate (StaticVector<double, 3UL> &translation) {
+void Beam::translate (const StaticVector<double, 3UL> &translation) {
     for (Node *curr : all_elements) {
         curr->translate (translation);
     }
@@ -117,7 +117,7 @@ void Beam::translate (StaticVector<double, 3UL> &translation) {
 /* Rotates all children (inboard and outboard nodes)
     - Used to re-orient vehicle so that contact patches intersect xy plane
     Params : angle (3-element array) -- angle in radians of rotation [x_rot, y_rot, z_rot] */
-void Beam::flatten_rotate (StaticVector<double, 3UL> &angle) {
+void Beam::flatten_rotate (const StaticVector<double, 3UL> &angle) {
     for (Node *curr : all_elements) {
         curr->flatten_rotate (angle);
     }
@@ -142,7 +142,7 @@ StaticVector<double, 3UL> Beam::center () const {
    Returns : double --  radius of link */
 double Beam::radius () const {
     const double DIAMETER = 0.015875;
-    return DIAMETER / 2
+    return DIAMETER / 2;
 }
 
 /* Height (length) attribute of link
