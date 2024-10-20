@@ -1,4 +1,5 @@
 #include "beam.h"
+#include <blaze/Math.h>
 using namespace blaze;
 
 // void Beam(Node *inboard, Node *outboard);
@@ -89,8 +90,8 @@ StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
     double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0]);
     double x_2 = l_2o[0], z_2 = l_2o[2];
 
-    StaticMatrix<double, 2, 2> a {{-1 * m_1, 1}, {-1 * m_2, 1}};
-    StaticMatrix<double, 2, 1> b = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_2}};
+    StaticMatrix<double, 2, 2> A {{-1 * m_1, 1}, {-1 * m_2, 1}};
+    StaticMatrix<double, 2, 1> B = {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_2}};
 
     /* NEED LINALG FOR THE FOLLOWING : 
         y = np.average([l_1o[1], l_2o[1]])
@@ -103,7 +104,15 @@ StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
 
         return np.array([x[0], y, z[0]])
     */ 
-   return StaticVector<double, 3UL>();
+   double y = (l_1o[1] + l_2o[1]) / 2;
+   StaticMatrix<double, 2, 2> X;
+   try {    
+        X = solve(A, B);
+   } catch (...) {
+        return StaticVector<double, 3UL> {1e9, y, 0};
+   }
+
+   return StaticVector<double, 3UL>{X(0, 0), y, X(1, 0)};
 }
 
 /* Translates all children (inboard and outboard nodes)

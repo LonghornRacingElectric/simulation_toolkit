@@ -4,8 +4,8 @@
 using namespace blaze;
 
 void reset ();
-void translate(StaticVector<double, 3UL>);
-void flatten_rotate(StaticVector<double, 3UL>);
+void translate(const StaticVector<double, 3UL>);
+void flatten_rotate(const StaticVector<double, 3UL>);
 
 /* constructor for Node object 
    Parameters : pos (3-element array) -- x, y, z*/
@@ -33,8 +33,4 @@ void Node::flatten_rotate(const StaticVector<double, 3UL> &rotation) {
     // This is due to the nature of matrix multiplication: transformations are applied from right to left, meaning
     // z_rot * y_rot * x_rot * position will rotate the position vector first by the x-axis, then y-axis, then z-axis.
     position = z_rot * (y_rot * (x_rot * position));
-
-
-
-    
 }
