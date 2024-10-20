@@ -24,4 +24,11 @@ private:
     double *bellcrank_angle;
     double *bellcrank_direction;
 
+    Beam *inboard;
+    Beam *outboard;
+    Beam *connecting_beam;
+    double *direction;
+    double *angle;
+
 };
+#endif //BELLCRANK_H

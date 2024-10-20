@@ -3,29 +3,25 @@
 
 #include <iostream>
 #include "../primary_elements/beam.h"
-
+#include "kingpin.h"
 class Tie {
 public: 
-    Tie(Beam *beam);
-
-    // Functions for getting inboard and outboard
-    Node *getInboardNode();
-    Node *getOutboardNode();
-
+    Tie(Beam *, Kingpin *);
     // Functions for getting length and angle
     double getLength() const;
     double getAngle() const;
-    
-
+    StaticVector<double, 3UL> _steering_pickup_to_kingpin() const;
+    void update();
+    void rotate(double angle);
+    void set_initial_position();
+    double calculateLength();
 private:
-    Node *inboard_node;
-    Node *outboard_node;
-    Node *elements[2];
-    Node *all_elements[2];
+    Beam *tie_beam;
+    Kingpin *kingpin;
     double length;
+    double initial_length;
     double angle;
-
-    double calculateLength() const;
+    StaticVector<double, 3UL> steering_pickup_to_kingpin;
 };
 
 #endif
