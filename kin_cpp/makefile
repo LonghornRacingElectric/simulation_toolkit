@@ -1,32 +1,31 @@
-# Name of the executable
-TARGET = kin_model
-
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I./third_party/blaze -I./third_party/gmm/gmm -I./third_party/scilab/include
-LDFLAGS = -L./third_party/scilab/lib -lscilab
+CXXFLAGS = -Wall -Wextra -std=c++17 -I./third_party/blaze/ -I./third_party/gmm/gmm -I./third_party/scilab/include
 
 # Find all .cpp files recursively
-SRC = $(shell find . -name '*.cpp')
+SRCS = $(shell find . -path ./third_party -prune -o -name '*.cpp')
+OBJS = $(SRCS:.cpp=.o)
+OBJS_FILTERED = $(shell find . -name '*.o')
+
+# Executable name
+EXEC = kin_model
 
 # Generate object files in the same directories as the source files
-OBJ = $(SRC:.cpp=.o)
 
 # Default target
-all: $(TARGET)
+all: $(EXEC)
 
 # Link object files into the final executable
-$(TARGET): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$(EXEC): $(OBJS_FILTERED)
+	$(CXX) $(CXXFLAGS) $(OBJS_FILTERED) -o $(EXEC)
 
 # Compile each .cpp file into a .o file
 %.o: %.cpp
-	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Clean up the build
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(OBJ) $(EXEC)
 
 # Phony targets
 .PHONY: all clean
