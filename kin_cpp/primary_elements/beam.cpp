@@ -2,20 +2,6 @@
 #include <blaze/Math.h>
 using namespace blaze;
 
-// void Beam(Node *inboard, Node *outboard);
-// Node *getInboardNode ();
-// Node *getOutboardNode ();
-// StaticVector<double, 2UL> normalized_transform ();
-// //calculate intersection points
-// StaticVector<double, 3UL> yz_intersection (Beam *);
-// StaticVector<double, 3UL> xz_intersection (Beam *);
-// void translate (StaticVector<double, 3UL>);
-// void flatten_rotate (StaticVector<double, 3UL>); 
-// //coordinates relating to the beam
-// StaticVector<double, 3UL> direction ();
-// StaticVector<double, 3UL> center ();
-// StaticVector<double, 3UL> radius ();
-
 double height ();
 /* Beam constructor : 
    Params : in (Beam *), out (Beam *) : inboard and outboard ends of linkage*/
@@ -131,8 +117,8 @@ void Beam::flatten_rotate (const StaticVector<double, 3UL> &angle) {
 /* Direction attribute of Link
    Returns 3-element array -- direction of link */
 StaticVector<double, 3> Beam::direction () const {
-    double norm = norm(outboard_node->position - inboard_node->position);
-    return (outboard_node->position - inboard_node->position) / norm;
+    double height = norm(outboard_node->position - inboard_node->position);
+    return (outboard_node->position - inboard_node->position) / height;
     //returns unit vector
 }
 
