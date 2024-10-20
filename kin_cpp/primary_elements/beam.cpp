@@ -131,10 +131,9 @@ void Beam::flatten_rotate (const StaticVector<double, 3UL> &angle) {
 /* Direction attribute of Link
    Returns 3-element array -- direction of link */
 StaticVector<double, 3> Beam::direction () const {
-    /* REQUIRE LINALG TO DO : 
-        return unit_vec (self.outboard_node, self.inboard_node)*/
-
-    return StaticVector<double, 3UL> ();
+    double norm = norm(outboard_node->position - inboard_node->position);
+    return (outboard_node->position - inboard_node->position) / norm;
+    //returns unit vector
 }
 
 /* Center attribute of link 
@@ -153,8 +152,5 @@ double Beam::radius () const {
 /* Height (length) attribute of link
    Returns : float -- length of link */
 double Beam::height () const {
-    /* NEED LINALG TO DO : 
-        return float(np.linalg.norm(self.inboard_node.position - self.outboard_node.position))
-    */
-    return 0.0;
+    return (norm(inboard_node->position - outboard_node->position));
 }
