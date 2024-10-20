@@ -7,7 +7,7 @@ using namespace blaze;
     - unit_vec(3D StaticVector) -- unit vector to apply rotation around. 
     - theta(double) -- rotation angle (radians)
    Return value : 3x3 rotation StaticMatrix. */
-StaticMatrix<double, 3UL, 3UL> rotation_matrix(StaticVector<double, 3UL> &unit_vec, double theta) {
+StaticMatrix<double, 3UL, 3UL> rotation_matrix(const StaticVector<double, 3UL> &unit_vec, double theta) {
     /* Sanitize inputs to 3D space */
     assert (size(unit_vec) == 3);
     /* Extract coordinates */

@@ -18,8 +18,8 @@ public:
     StaticVector<double, 3UL> yz_intersection (Beam *);
     StaticVector<double, 3UL> xz_intersection (Beam *);
 
-    void translate (StaticVector<double, 3> &); //parameter : [x_shift, y_shift, z_shift]
-    void flatten_rotate (StaticVector<double, 3> &); //parameter : [x_rot, y_rot, z_rot]
+    void translate (const StaticVector<double, 3> &); //parameter : [x_shift, y_shift, z_shift]
+    void flatten_rotate (const StaticVector<double, 3> &); //parameter : [x_rot, y_rot, z_rot]
     
     //coordinates relating to the beam
     StaticVector<double, 3UL> direction () const;
