@@ -84,6 +84,6 @@ class AeroModel:
             new_pitch = pitch
             new_yaw = body_slip
             new_roll = roll
-            results[i] = interpolator(new_roll, new_yaw, new_pitch)
+            results[i] = interpolator(new_roll, new_pitch, new_yaw)
         return results[0:3]*self.air_density*0.5*speed**2, results[3:]*self.air_density*0.5*speed**2
 

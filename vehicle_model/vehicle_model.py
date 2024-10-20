@@ -117,8 +117,8 @@ class VehicleModel:
             plotter=self.suspension_plotter)
         
     def initialize_aero(self) -> None:
-        self.aero_model = AeroModel('/Users/gautambhaskar/Desktop/VMOD/simulation_toolkit/vehicle_model/aero_model/aeromap_new.csv',1.225)
-        forces, CoP = self.aero_model.eval(0.5,0.5,0.5,0,15)
+        self.aero_model = AeroModel('/Users/gautambhaskar/Desktop/VMOD/simulation_toolkit/vehicle_model/aero_model/aeromap_new_preconditioned.csv',1.225)
+        forces, CoP = self.aero_model.eval(0,0.5,0,0,15)
 
         print("Forces: " + str(forces))
         print("CoP: " + str(CoP))
