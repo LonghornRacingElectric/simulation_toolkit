@@ -36,9 +36,9 @@ Wishbone::Wishbone (Beam *fore_beam, Beam *aft_beam) {
    Parameter : new_angle : float - Angle of rotation in radians */
 void Wishbone::rotate (double new_angle) {
     set_initial_position ();
-    //need linalg library for : rot_mat = rotation_matrix (direction, angle)
-    StaticVector<double, 3> outboard_point = all_elements[1]->position - all_elements[0]->position;
-    //need linalg library for all_elements[0]->position = np.matmul (rot_mat, outboard_point) + inpos
+    StaticMatrix<double, 3UL, 3UL> rot_mat = rotation_matrix(direction, angle);
+    StaticVector<double, 3UL> outboard_point = all_elements[1]->position - all_elements[0]->position;
+    all_elements[1]->position = (rot_mat * outboard_point) + all_elements[0]->position;
     angle = new_angle; 
 }
 
@@ -52,9 +52,9 @@ void Wishbone::flatten_rotate (const StaticVector<double, 3> &angle) {
 
 /* Resets position of wishbone to initial position */
 void Wishbone::set_initial_position () {
-    //need linalg library for : rot_mat = rotation_matrix (direction, -1 * angle)
+    StaticMatrix<double, 3UL, 3UL> rot_mat = rotation_matrix(direction, -1 * angle);
     StaticVector<double, 3> outboard_point = all_elements[1]->position - all_elements[0]->position;
-    //need linalg library for : fore_link.outboard_node.position = np.matmul(self.rot_mat, outboard_point) + self.fore_link.inboard_node.position
+    all_elements[1]->position = (rot_mat * outbpard_point) + all_elements[0]->position;
 }
 
 /* Translates all children (inboard and outboard Nodes) 
@@ -71,8 +71,8 @@ void Wishbone::translate (const StaticVector<double, 3> &translation) {
 StaticVector<double, 6> Wishbone::plane () const {
     StaticMatrix<double, 3, 3> point_vecs;
     column(point_vecs, 0) = all_elements[0]->position;
-    column(point_vecs, 0) = all_elements[1]->position;
-    column(point_vecs, 0) = all_elements[2]->position;
+    column(point_vecs, 1) = all_elements[1]->position;
+    column(point_vecs, 2) = all_elements[2]->position;
     return ::plane(point_vecs);
 }
 
@@ -80,7 +80,9 @@ StaticVector<double, 6> Wishbone::plane () const {
    Returns unit vector (inboard aft to inboard fore)*/
 StaticVector<double, 3> Wishbone::direction_vec () const {
     //need to implement unit_vec for : return unit_vec(self.fore_link.inboard_node, self.aft_link.inboard_node)
-    return StaticVector<double, 3> ();
+    StaticVector<double, 3UL> difference = all_elements[0]->position - all_elements[2]->position
+    double norm = norm(diff);
+    return difference / norm;
 }
 
 /* GETTER : Aft beam beam*/
