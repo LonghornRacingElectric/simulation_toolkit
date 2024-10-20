@@ -61,7 +61,7 @@ StaticVector<double, 3> Beam::yz_intersection (Beam *second_beam) {
     double x_2 = l_2o[1], z_2 = l_2o[2];
 
     StaticMatrix<double, 2, 2> a {{-1 * m_1, 1}, {-1 * m_2, 1}};
-    StaticVector<double, 2> b {-1 * m_1 * x_1 + z_1, -1 * m_2 * x_2 + z_1};
+    StaticVector<double, 2> b {-1 * m_1 * x_1 + z_1, -1 * m_2 * x_2 + z_2};
 
     // Computing solution to x
     StaticVector<double, 2> yz;   
@@ -81,8 +81,8 @@ StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
     double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0]);
     double x_1 = l_1o[0], z_1 = l_1o[2];
 
-    StaticVector<double, 3UL> &l_2i = inboard_node->position;
-    StaticVector<double, 3UL> &l_2o = outboard_node->position;
+    StaticVector<double, 3UL> &l_2i = second_beam->inboard_node->position;
+    StaticVector<double, 3UL> &l_2o = second_beam->outboard_node->position;
     double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0]);
     double x_2 = l_2o[0], z_2 = l_2o[2];
 
