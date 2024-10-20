@@ -12,18 +12,18 @@ public:
     Node *getInboardNode ();
     Node *getOutboardNode ();
     
-    std::array<double, 2> normalized_transform ();
+    StaticVector<double, 2UL> normalized_transform ();
 
     //calculate intersection points
-    StaticVector<double, 3> yz_intersection (Beam *);
-    StaticVector<double, 3> xz_intersection (Beam *);
+    StaticVector<double, 3UL> yz_intersection (Beam *);
+    StaticVector<double, 3UL> xz_intersection (Beam *);
 
     void translate (StaticVector<double, 3> &); //parameter : [x_shift, y_shift, z_shift]
     void flatten_rotate (StaticVector<double, 3> &); //parameter : [x_rot, y_rot, z_rot]
     
     //coordinates relating to the beam
-    StaticVector<double, 3> direction () const;
-    StaticVector<double, 3> center () const;
+    StaticVector<double, 3UL> direction () const;
+    StaticVector<double, 3UL> center () const;
     double radius () const;
 
     double height () const;

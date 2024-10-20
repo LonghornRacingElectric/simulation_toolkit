@@ -11,7 +11,7 @@ public:
     Wishbone (Beam *fore, Beam *aft);
     void rotate (double angle);
     void flatten_rotate (StaticVector<double, 3> &); //angle : [x_rot, y_rot, z_rot]
-    void _set_initial_position ();
+    void set_initial_position ();
     void translate (StaticVector<double, 3> &); //translation : [x_shift, y_shift, z_shift]
     StaticVector<double, 6> plane () const;
     StaticVector<double, 3> direction_vec () const;

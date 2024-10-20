@@ -11,9 +11,9 @@ StaticVector<double, 3UL> xz_intersection (Beam *);
 void translate (StaticVector<double, 3UL>);
 void flatten_rotate (StaticVector<double, 3UL>); 
 //coordinates relating to the beam
-StaticVector<double, 3UL> direction () const;
-StaticVector<double, 3UL> center () const;
-StaticVector<double, 3UL> radius () const;
+StaticVector<double, 3UL> direction ();
+StaticVector<double, 3UL> center ();
+StaticVector<double, 3UL> radius ();
 
 double height ();
 /* Beam constructor : 
@@ -40,7 +40,7 @@ Node *Beam::getOutboardNode() {
 /* Calculates the rotations about x and y which result in a vector pointing strictly in z 
    - Gives kpi and caster, respectively, for kingpin
    Returns : 2-element array : [x_rotation, y_rotation] in radians */
-StaticVector<double, 3UL> Beam::normalized_transform () {
+StaticVector<double, 2UL> Beam::normalized_transform () {
     StaticVector<double, 3UL> origin_transform = elements[1]->position - elements[0]->position;
     return origin_transform;
 }

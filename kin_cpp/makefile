@@ -3,7 +3,7 @@ TARGET = kin_model
 
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17
+CXXFLAGS = -Wall -Wextra -std=c++17 -I./third_party/blaze
 
 # Find all .cpp files recursively
 SRC = $(shell find . -name '*.cpp')
