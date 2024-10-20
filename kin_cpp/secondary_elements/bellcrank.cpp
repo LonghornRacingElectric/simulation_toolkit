@@ -11,9 +11,9 @@ Bellcrank::Bellcrank (Beam *out, Beam *in, Beam *connecting, Node *node, double 
     connecting_beam = connecting;
     direction = BCdirection;
     angle = BCangle;
-    elements[0] = all_elements[0] = outboard;
-    elements[1] = all_elements[1] = inboard;
-    elements[2] = all_elements[2] = connecting;
+    elements[0] = all_elements[0] = (Node *) outboard;
+    elements[1] = all_elements[1] = (Node *) inboard;
+    elements[2] = all_elements[2] = (Node *) connecting;
     elements[3] = all_elements[3] = node;
 
 }
