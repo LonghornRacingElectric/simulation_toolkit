@@ -9,7 +9,7 @@ using namespace std;
 Pushrod::Pushrod(Beam *beam) {
     inboard_node = beam->getInboardNode();
     outboard_node = beam->getOutboardNode();
-    length = calculateLength();
+    length = calculateLength()
     angle = 0.0;
 }
 
@@ -46,3 +46,4 @@ double Pushrod::calculateLength() const {
     // Calculate the distance 
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) + pow(z2 - z1, 2));
 }
+
