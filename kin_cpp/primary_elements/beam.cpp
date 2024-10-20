@@ -1,4 +1,5 @@
 #include "beam.h"
+#include <blaze/Math.h>
 using namespace blaze;
 
 Beam(Node *inboard, Node *outboard);
@@ -62,17 +63,12 @@ StaticVector<double, 3> Beam::yz_intersection (Beam *second_beam) {
     StaticMatrix<double, 2, 2> a {{-1 * m_1, 1}, {-1 * m_2, 1}};
     StaticMatrix<double, 2, 1> b {{-1 * m_1 * x_1 + z_1}, {-1 * m_2 * x_2 + z_1}};
 
-    /* NEED LINALG FOR THE FOLLOWING : 
-        y, z = np.linalg.solve(a=a, b=b)
+    // Computing solution to x
+    StaticVector<double, 2> yz = solve(a, b);  
+    double x = (l_1o[0] + l_2o[0]) / 2.0;
 
-        # Calculate x-value
-        # I'll average between left and right halves for KinRC
-        x = np.average([l_1o[0], l_2o[0]])
-
-        return np.array([x, y[0], z[0]])
-    */
-
-   return StaticVector<double, 3UL>();
+    // return intersecting coordinates {x, y, z} 
+    return StaticVector<double, 3UL>{x, yz[0], yz[1]}; 
 }
 
 /* Calculates intersection point between two links in the x-z plane 
