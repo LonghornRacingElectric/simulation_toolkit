@@ -195,8 +195,8 @@ class DoubleWishbone:
         self.jounce(jounce=0)
 
         # Create function for wheelrate
-        # wheelrate_lst = [self.spring_rate / MR**2 for MR in motion_ratio_lst]
-        wheelrate_lst = [self.spring_rate / MR**2 for MR in [1.3 for x in motion_ratio_lst]]
+        wheelrate_lst = [self.spring_rate / MR**2 for MR in motion_ratio_lst]
+        # wheelrate_lst = [self.spring_rate / MR**2 for MR in [1.3 for x in motion_ratio_lst]]
         self.wheelrate_function = CubicSpline(x=jounce_sweep, y=wheelrate_lst)
 
         # plt.plot(jounce_sweep, self.motion_ratio_function(jounce_sweep))

@@ -17,11 +17,14 @@ class VehicleModel:
         File path to vehicle definition yaml
     tir_file_path : str
         File path to tire .tir file (assume all tires are the same for now)
+    aero_map_path: str
+        File path to aero map in .csv format
     """
-    def __init__(self, defn_file_path: str, tir_file_path: str) -> None:
+    def __init__(self, defn_file_path: str, tir_file_path: str, aero_map_path: str) -> None:
         self.processor = Processor(file_path=defn_file_path)
         self.params = self.processor.params
         self.tir_file_path = tir_file_path
+        self.aero_map_path = aero_map_path
 
         self.initialize_suspension()
         self.initialize_aero()
@@ -116,14 +119,7 @@ class VehicleModel:
             show_ICs=False,
             plotter=self.suspension_plotter)
         
-    def initialize_aero(self) -> None:
-        self.aero_model = AeroModel('/Users/gautambhaskar/Desktop/VMOD/simulation_toolkit/vehicle_model/aero_model/aeromap_new_preconditioned.csv',1.225)
-        forces, CoP = self.aero_model.eval(0,0.5,0,0,15)
-
-        print("Forces: " + str(forces))
-        print("CoP: " + str(CoP))
-
-        # self.suspension.generate_kin()
+        self.suspension.generate_kin()
         # self.suspension.generate_report()
 
         # self.suspension.generate_kin_plots(steer_sweep=np.linspace(-1.5, 1.5, 26) * 0.0254, 
@@ -139,3 +135,6 @@ class VehicleModel:
         # self.suspension_plotter.add_slider(func=self.suspension.steer_slider, title="Steer", bounds=[-0.0508, 0.0508], pos=[[0.75, 0.475], [0.98, 0.475]])
 
         # self.suspension_plotter.show()
+
+    def initialize_aero(self) -> None:
+        self.aero_model = AeroModel(self.aero_map_path,1.225)
