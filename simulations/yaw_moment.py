@@ -392,7 +392,7 @@ class YMD:
 
         aero_forces = aero_loads[:3]
         aero_FAP = aero_loads[3:]
-
+        print(roll,pitch,beta)
         print(aero_forces)
         print(aero_FAP)
 

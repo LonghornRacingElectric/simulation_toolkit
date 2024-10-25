@@ -17,6 +17,10 @@ class AeroModel:
         self.air_density = air_density
         self.aero_map = pd.read_csv(csv_path)
 
+        self.roll_array = self.aero_map['Roll'].to_numpy()
+        self.pitch_array = self.aero_map['Pitch'].to_numpy()
+        self.yaw_array = self.aero_map['Yaw'].to_numpy()
+
     def eval(self, roll: float, pitch: float, body_slip: float, heave: float, velocity: float):
         """
         ## Aero Evaluation
@@ -57,13 +61,26 @@ class AeroModel:
         return np.array([F_x, F_y, F_z, x_CoP * 0.0254, y_CoP * 0.0254, z_CoP * 0.0254])
 
     def _get_loads(self, speed: float, body_slip: float, heave: float, pitch: float, roll: float):
+
+        if roll > self.roll_array.max():
+            roll = self.roll_array.max() - 0.0001
+        if roll < self.roll_array.min():
+            roll = self.roll_array.min() + 0.0001
+        if pitch > self.pitch_array.max():
+            pitch = self.pitch_array.max() - 0.0001
+        if pitch < self.pitch_array.min():
+            pitch = self.pitch_array.min() + 0.0001
+        if body_slip > self.yaw_array.max():
+            body_slip = self.yaw_array.max() - 0.0001
+        if body_slip < self.yaw_array.min():
+            body_slip = self.yaw_array.min() + 0.0001
         
         coeffs = ['cx','cy','cz','mx','my','mz']
         results = np.zeros(len(coeffs))
-        points = np.array([self.aero_map['Roll'].to_numpy(),self.aero_map['Pitch'].to_numpy(),self.aero_map['Yaw'].to_numpy()]).T  # Shape should be (n, 3) where n is the number of samples
+        points = np.array([self.roll_array, self.pitch_array, self.yaw_array]).T  # Shape should be (n, 3) where n is the number of samples
         for i,coeff in enumerate(coeffs):
             # Create the interpolator object
-            interpolator = LinearNDInterpolator(points, self.aero_map[coeff].to_numpy())
+            interpolator = LinearNDInterpolator(points, self.aero_map[coeff].to_numpy(), fill_value=0.00001)
             # Now you can use this interpolator to find cx for new pitch, yaw, roll values
             new_pitch = pitch
             new_yaw = body_slip
