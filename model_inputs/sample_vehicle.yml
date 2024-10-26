@@ -39,17 +39,17 @@ Mass Properties:
     Description: Mass of front wheel assemblies + half the front suspension linkages
     Type: float
     Unit: kg
-    Value: 16.328
+    Value: 14.94587
   RrUM:
     Description: Mass of rear wheel assemblies + half the rear suspension linkages
     Type: float
     Unit: kg
-    Value: 18.611
+    Value: 14.94587
   SM:
     Description: Sprung mass = Total mass - driver mass - unsprung mass
     Type: float
     Unit: kg
-    Value: 170
+    Value: 137
   SI:
     Description: Sprung mass inertia tensor
     Type: list[list[float], list[float], list[float]]
@@ -59,7 +59,7 @@ Mass Properties:
     Description: CG bias forward
     Type: float
     Unit: (-)
-    Value: 0.25
+    Value: 0.50
   CGBY:
     Description: CG bias leftward
     Type: float

@@ -18,27 +18,31 @@ class  interp4d:
         points = (self.x, self.y, self.z, self.w)
         values = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z), len(self.w)))
 
-        if x > max(self.x):
+        if (x > max(self.x)) or (str(x) == 'nan'):
             x = max(self.x)
-        elif x < min(self.x):
+        elif (x < min(self.x)) or (str(x) == '-nan'):
             x = min(self.x)
 
-        if y > max(self.y):
+        if (y > max(self.y)) or (str(y) == 'nan'):
             y = max(self.y)
-        elif y < min(self.y):
+        elif (y < min(self.y)) or (str(y) == '-nan'):
             y = min(self.y)
 
-        if z > max(self.z):
+        if (z > max(self.z)) or (str(z) == 'nan'):
             z = max(self.z)
-        elif z < min(self.z):
+        elif (z < min(self.z)) or (str(z) == '-nan'):
             z = min(self.z)
 
-        if w > max(self.w):
+        if (w > max(self.w)) or (str(w) == 'nan'):
             w = max(self.w)
-        elif w < min(self.w):
+        elif (w < min(self.w)) or (str(w) == '-nan'):
             w = min(self.w)
 
-        return interpn(points=points, values=values, xi=(x, y, z, w))
+        try:
+            return interpn(points=points, values=values, xi=(x, y, z, w), method='linear')
+        
+        except:
+            return interpn(points=points, values=values, xi=(x, y, z, w), method='nearest')
 
 class  interp3d:
     def __init__(self, x: Sequence[Sequence[float]], y: Sequence[Sequence[float]], \

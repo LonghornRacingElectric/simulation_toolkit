@@ -1,13 +1,12 @@
 from vehicle_model.suspension_model.suspension_elements.tertiary_elements.double_wishbone import DoubleWishbone
 from vehicle_model.suspension_model.suspension_model import SuspensionModel
 from vehicle_model._assets.misc_linalg import rotation_matrix
-from vehicle_model._assets.misc_linalg import plane_eval
 from vehicle_model.vehicle_model import VehicleModel
 from LHR_tire_toolkit.MF52 import MF52
 from typing import Sequence, Tuple
-from scipy.optimize import minimize
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
 import time
 
@@ -19,6 +18,8 @@ class YMD:
 
         self.delta_sweep = np.linspace(-25 * 3.50 / 360 * 0.0254, 25 * 3.50 / 360 * 0.0254, mesh)
         self.beta_sweep = np.linspace(-12 * np.pi / 180, 12 * np.pi / 180, mesh)
+
+        self.suspension = self.vehicle.suspension
     
     def generate_constant_velocity_YMD(self, velocity: float) -> None:
         self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
@@ -99,6 +100,18 @@ class YMD:
         RR_Fx_aligned_lst = []
         RR_Fy_aligned_lst = []
         RR_Fz_aligned_lst = []
+        new_heave_lst = []
+        new_pitch_lst = []
+        new_roll_lst = []
+        new_delta_lst = []
+        new_beta_lst = []
+        ax_lst = []
+        ay_lst = []
+        new_yaw_ddot_lst = []
+        FL_cp_pos_lst = []
+        FR_cp_pos_lst = []
+        RL_cp_pos_lst = []
+        RR_cp_pos_lst = []
 
         for pair in zip(x_ddot_lst, y_ddot_lst, yaw_ddot_lst, heave_lst, pitch_lst, roll_lst, delta_lst, beta_lst):
             output = self._residual_eval(x = pair[:6], args = [*pair[6:], 25])
@@ -133,98 +146,152 @@ class YMD:
             RR_Fx_aligned_lst.append(output[27])
             RR_Fy_aligned_lst.append(output[28])
             RR_Fz_aligned_lst.append(output[29])
+            new_heave_lst.append(output[30])
+            new_pitch_lst.append(output[31])
+            new_roll_lst.append(output[32])
+            new_delta_lst.append(output[33])
+            new_beta_lst.append(output[34])
+            ax_lst.append(output[35])
+            ay_lst.append(output[36])
+            new_yaw_ddot_lst.append(output[37])
+            FL_cp_pos_lst.append(output[38])
+            FR_cp_pos_lst.append(output[39])
+            RL_cp_pos_lst.append(output[40])
+            RR_cp_pos_lst.append(output[41])
 
-        fig = plt.figure(figsize=plt.figaspect(2.))
-        fig.suptitle('YMD Debug Shit')
+        output_dict = {"x_ddot": ax_lst,
+                       "y_ddot": ay_lst,
+                       "yaw_ddot": yaw_ddot_lst,
+                       "delta": [x * 180 / np.pi / (3.50 / (2 * np.pi) * 0.0254) for x in delta_lst],
+                       "beta": [x * 180 / np.pi for x in beta_lst],
+                       "FL_cp_pos": FL_cp_pos_lst,
+                       "FR_cp_pos": FR_cp_pos_lst,
+                       "RL_cp_pos": RL_cp_pos_lst,
+                       "RR_cp_pos": RR_cp_pos_lst,
+                       "FL_SA": [x * 180 / np.pi for x in FL_alpha_lst],
+                       "FR_SA": [x * 180 / np.pi for x in FR_alpha_lst],
+                       "RL_SA": [x * 180 / np.pi for x in RL_alpha_lst],
+                       "RR_SA": [x * 180 / np.pi for x in RR_alpha_lst],
+                       "heave": [x / 0.0254 for x in heave_lst],
+                       "pitch": [x * 180 / np.pi for x in pitch_lst],
+                       "roll": [x * 180 / np.pi for x in roll_lst],
+                       "FL jounce": [x / 0.0254 for x in FL_jounce_lst],
+                       "FR jounce": [x / 0.0254 for x in FR_jounce_lst],
+                       "RL jounce": [x / 0.0254 for x in RL_jounce_lst],
+                       "RR jounce": [x / 0.0254 for x in RR_jounce_lst],
+                       "FL gamma": [x * 180 / np.pi for x in FL_gamma_lst],
+                       "FR gamma": [x * 180 / np.pi for x in FR_gamma_lst],
+                       "RL gamma": [x * 180 / np.pi for x in RL_gamma_lst],
+                       "RR gamma": [x * 180 / np.pi for x in RR_gamma_lst],
+                       "FL_Fx": FL_Fx_aligned_lst,
+                       "FL_Fy": FL_Fy_aligned_lst,
+                       "FL_Fz": FL_Fz_aligned_lst,
+                       "FR_Fx": FR_Fx_aligned_lst,
+                       "FR_Fy": FR_Fy_aligned_lst,
+                       "FR_Fz": FR_Fz_aligned_lst,
+                       "RL_Fx": RL_Fx_aligned_lst,
+                       "RL_Fy": RL_Fy_aligned_lst,
+                       "RL_Fz": RL_Fz_aligned_lst,
+                       "RR_Fx": RR_Fx_aligned_lst,
+                       "RR_Fy": RR_Fy_aligned_lst,
+                       "RR_Fz": RR_Fz_aligned_lst,
+                       }
+            
+        df = pd.DataFrame(output_dict)
 
-        # y_ddot vs yaw_ddot vs x_ddot
-        ax = fig.add_subplot(4, 3, 1, projection='3d')
+        df.to_csv("./debugging.csv")
 
-        ax.scatter(y_ddot_lst, yaw_ddot_lst, x_ddot_lst)
-        ax.set_xlabel("y_ddot")
-        ax.set_ylabel("yaw_ddot")
-        ax.set_zlabel("x_ddot")
+        # fig = plt.figure(figsize=plt.figaspect(2.))
+        # fig.suptitle('YMD Debug Shit')
 
-        # YMD
-        ax = fig.add_subplot(4, 3, 2)
-        ax.scatter(y_ddot_lst, yaw_ddot_lst)
-        ax.set_xlabel("y_ddot")
-        ax.set_ylabel("yaw_ddot")
+        # # y_ddot vs yaw_ddot vs x_ddot
+        # ax = fig.add_subplot(4, 3, 1, projection='3d')
 
-        # FL alpha vs gamma vs Fy
-        ax = fig.add_subplot(4, 3, 3, projection='3d')
+        # ax.scatter(y_ddot_lst, yaw_ddot_lst, x_ddot_lst)
+        # ax.set_xlabel("y_ddot")
+        # ax.set_ylabel("yaw_ddot")
+        # ax.set_zlabel("x_ddot")
 
-        ax.scatter(FL_alpha_lst, FL_gamma_lst, FL_Fy_aligned_lst)
-        ax.set_xlabel("alpha")
-        ax.set_ylabel("gamma")
-        ax.set_zlabel("Fy")
+        # # YMD
+        # ax = fig.add_subplot(4, 3, 2)
+        # ax.scatter(y_ddot_lst, yaw_ddot_lst)
+        # ax.set_xlabel("y_ddot")
+        # ax.set_ylabel("yaw_ddot")
 
-        # FL jounce vs Fz
-        ax = fig.add_subplot(4, 3, 4)
+        # # FL alpha vs gamma vs Fy
+        # ax = fig.add_subplot(4, 3, 3, projection='3d')
 
-        ax.scatter(FL_jounce_lst, FL_Fz_aligned_lst)
-        ax.scatter(FR_jounce_lst, FR_Fz_aligned_lst)
-        ax.scatter(RL_jounce_lst, RL_Fz_aligned_lst)
-        ax.scatter(RR_jounce_lst, RR_Fz_aligned_lst)
-        ax.legend(["FL", "FR", "RL", "RR"])
-        ax.set_xlabel("jounce")
-        ax.set_ylabel("Fz")
+        # ax.scatter(FL_alpha_lst, FL_gamma_lst, FL_Fy_aligned_lst)
+        # ax.set_xlabel("alpha")
+        # ax.set_ylabel("gamma")
+        # ax.set_zlabel("Fy")
 
-        # FL jounce vs Fz
-        ax = fig.add_subplot(4, 3, 5, projection='3d')
+        # # FL jounce vs Fz
+        # ax = fig.add_subplot(4, 3, 4)
 
-        ax.scatter(FL_alpha_lst, FL_Fz_aligned_lst, FL_Fy_aligned_lst)
-        ax.set_xlabel("alpha")
-        ax.set_ylabel("Fz")
-        ax.set_zlabel("Fy")
-
-        # Fz signals
-        ax = fig.add_subplot(4, 3, 6)
-
-        param = [x for x in range(len(FL_Fz_aligned_lst))]
-
-        ax.plot(param, FL_Fz_aligned_lst)
-        ax.plot(param, FR_Fz_aligned_lst)
-        ax.plot(param, RL_Fz_aligned_lst)
-        ax.plot(param, RR_Fz_aligned_lst)
-        ax.legend(["FL", "FR", "RL", "RR"])
-        ax.set_xlabel("Param")
-        ax.set_ylabel("Fz")
-
-        # alpha signals
-        ax = fig.add_subplot(4, 3, 7)
-
-        param = [x for x in range(len(FL_Fz_aligned_lst))]
-
-        ax.plot(param, FL_alpha_lst)
-        ax.plot(param, FR_alpha_lst)
-        ax.plot(param, RL_alpha_lst)
-        ax.plot(param, RR_alpha_lst)
-        ax.legend(["FL", "FR", "RL", "RR"])
-        ax.set_xlabel("Param")
-        ax.set_ylabel("alpha")
-
-        # Fy signals
-        ax = fig.add_subplot(4, 3, 8)
-
-        param = [x for x in range(len(FL_Fz_aligned_lst))]
-
-        ax.plot(param, FL_Fy_aligned_lst)
-        ax.plot(param, FR_Fy_aligned_lst)
-        ax.plot(param, RL_Fy_aligned_lst)
-        ax.plot(param, RR_Fy_aligned_lst)
-        ax.legend(["FL", "FR", "RL", "RR"])
-        ax.set_xlabel("Param")
-        ax.set_ylabel("Fy")
-
-        ax = fig.add_subplot(4, 3, 9)
-
-        param = [x for x in range(len(FL_Fz_aligned_lst))]
-
-        ax.scatter(FL_alpha_lst, delta_lst)
+        # ax.scatter(FL_jounce_lst, FL_Fz_aligned_lst)
+        # ax.scatter(FR_jounce_lst, FR_Fz_aligned_lst)
+        # ax.scatter(RL_jounce_lst, RL_Fz_aligned_lst)
+        # ax.scatter(RR_jounce_lst, RR_Fz_aligned_lst)
         # ax.legend(["FL", "FR", "RL", "RR"])
-        ax.set_xlabel("alpha")
-        ax.set_ylabel("delta")
+        # ax.set_xlabel("jounce")
+        # ax.set_ylabel("Fz")
+
+        # # FL jounce vs Fz
+        # ax = fig.add_subplot(4, 3, 5, projection='3d')
+
+        # ax.scatter(FL_alpha_lst, FL_Fz_aligned_lst, FL_Fy_aligned_lst)
+        # ax.set_xlabel("alpha")
+        # ax.set_ylabel("Fz")
+        # ax.set_zlabel("Fy")
+
+        # # Fz signals
+        # ax = fig.add_subplot(4, 3, 6)
+
+        # param = [x for x in range(len(FL_Fz_aligned_lst))]
+
+        # ax.plot(param, FL_Fz_aligned_lst)
+        # ax.plot(param, FR_Fz_aligned_lst)
+        # ax.plot(param, RL_Fz_aligned_lst)
+        # ax.plot(param, RR_Fz_aligned_lst)
+        # ax.legend(["FL", "FR", "RL", "RR"])
+        # ax.set_xlabel("Param")
+        # ax.set_ylabel("Fz")
+
+        # # alpha signals
+        # ax = fig.add_subplot(4, 3, 7)
+
+        # param = [x for x in range(len(FL_Fz_aligned_lst))]
+
+        # ax.plot(param, FL_alpha_lst)
+        # ax.plot(param, FR_alpha_lst)
+        # ax.plot(param, RL_alpha_lst)
+        # ax.plot(param, RR_alpha_lst)
+        # ax.legend(["FL", "FR", "RL", "RR"])
+        # ax.set_xlabel("Param")
+        # ax.set_ylabel("alpha")
+
+        # # Fy signals
+        # ax = fig.add_subplot(4, 3, 8)
+
+        # param = [x for x in range(len(FL_Fz_aligned_lst))]
+
+        # ax.plot(param, FL_Fy_aligned_lst)
+        # ax.plot(param, FR_Fy_aligned_lst)
+        # ax.plot(param, RL_Fy_aligned_lst)
+        # ax.plot(param, RR_Fy_aligned_lst)
+        # ax.legend(["FL", "FR", "RL", "RR"])
+        # ax.set_xlabel("Param")
+        # ax.set_ylabel("Fy")
+
+        # ax = fig.add_subplot(4, 3, 9)
+
+        # param = [x for x in range(len(FL_Fz_aligned_lst))]
+
+        # ax.scatter(FL_alpha_lst, delta_lst)
+        # # ax.legend(["FL", "FR", "RL", "RR"])
+        # ax.set_xlabel("alpha")
+        # ax.set_ylabel("delta")
 
         # ax.plot(t1, f(t1), 'bo',
         # t2, f(t2), 'k--', markerfacecolor='green')
@@ -232,7 +299,7 @@ class YMD:
         # ax.set_ylabel('Damped oscillation')
 
         # plt.plot(Ay_lst, delta_lst)
-        plt.show()
+        # plt.show()
         self.plot()
 
     def _residual_function(self, x: Sequence[float], args: Sequence[float]) -> Sequence[float]:
@@ -281,7 +348,7 @@ class YMD:
         yaw_rate = 0 if ntb_accel[1] == 0 else ntb_accel[1] / np.linalg.norm(imf_velocity)
 
         # Store suspension objects
-        suspension = self.vehicle.suspension
+        suspension: SuspensionModel = self.suspension
 
         # Store tire objects
         FL_tire = self.vehicle.FL_tire
@@ -297,9 +364,9 @@ class YMD:
         sus_corners: Sequence[DoubleWishbone] = [FL_double_wishbone, FR_double_wishbone, RL_double_wishbone, RR_double_wishbone]
 
         # Get CG position
-        cgx = self.vehicle.suspension.cgx_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        cgy = self.vehicle.suspension.cgy_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        cgz = self.vehicle.suspension.cgz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        cgx = suspension.cgx_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        cgy = suspension.cgy_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        cgz = suspension.cgz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
         
         self.cg_pos = np.array([cgx, cgy, cgz])
 
@@ -309,23 +376,23 @@ class YMD:
         self.RL_Cp_wrt_cg = RL_double_wishbone.contact_patch.position - self.cg_pos
         self.RR_Cp_wrt_cg = RR_double_wishbone.contact_patch.position - self.cg_pos
         
-        FL_jounce = self.vehicle.suspension.FL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        FR_jounce = self.vehicle.suspension.FR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RL_jounce = self.vehicle.suspension.RL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RR_jounce = self.vehicle.suspension.RR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FL_jounce = suspension.FL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FR_jounce = suspension.FR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RL_jounce = suspension.RL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RR_jounce = suspension.RR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
         sus_corners_jounce: Sequence[float] = [FL_jounce, FR_jounce, RL_jounce, RR_jounce]
 
         # Inclination angles
-        FL_gamma = self.vehicle.suspension.FL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        FR_gamma = self.vehicle.suspension.FR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RL_gamma = self.vehicle.suspension.RL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RR_gamma = self.vehicle.suspension.RR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FL_gamma = suspension.FL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FR_gamma = suspension.FR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RL_gamma = suspension.RL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RR_gamma = suspension.RR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
 
         # Toe angles
-        FL_toe = self.vehicle.suspension.FL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        FR_toe = self.vehicle.suspension.FR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RL_toe = self.vehicle.suspension.RL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RR_toe = self.vehicle.suspension.RR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FL_toe = suspension.FL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FR_toe = suspension.FR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RL_toe = suspension.RL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RR_toe = suspension.RR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
 
         # Wheel velocities
         FL_velocity = imf_velocity + np.cross(np.array([0, 0, yaw_rate]), self.FL_Cp_wrt_cg)
@@ -334,14 +401,14 @@ class YMD:
         RR_velocity = imf_velocity + np.cross(np.array([0, 0, yaw_rate]), self.RR_Cp_wrt_cg)
 
         # Slip angles
-        FL_alpha = FL_toe - np.arctan(FL_velocity[1]/FL_velocity[0])
-        FR_alpha = FR_toe - np.arctan(FR_velocity[1]/FR_velocity[0])
-        RL_alpha = RL_toe - np.arctan(RL_velocity[1]/RL_velocity[0])
-        RR_alpha = RR_toe - np.arctan(RR_velocity[1]/RR_velocity[0])
+        FL_alpha = FL_toe - np.arctan2(FL_velocity[1], FL_velocity[0])
+        FR_alpha = FR_toe - np.arctan2(FR_velocity[1], FR_velocity[0])
+        RL_alpha = RL_toe - np.arctan2(RL_velocity[1], RL_velocity[0])
+        RR_alpha = RR_toe - np.arctan2(RR_velocity[1], RR_velocity[0])
 
         # Normal loads from springs
         Fz_lst = []
-        
+
         for i in range(len(sus_corners)):
             if sus_corners_jounce[i] >= 0:
                 Fz_lst.append(sus_corners[i].weight + sus_corners[i].wheelrate_function.integrate(0, sus_corners_jounce[i]))
@@ -358,31 +425,31 @@ class YMD:
         self.RL_forces = RL_tire.tire_eval(FZ=RL_Fz, alpha=RL_alpha, kappa=0, gamma=RL_gamma)[0:3]
         self.RR_forces = RR_tire.tire_eval(FZ=RR_Fz, alpha=RR_alpha, kappa=0, gamma=RR_gamma)[0:3]
 
-        self.FL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_toe), self.FL_forces)
-        self.FR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_toe), self.FR_forces)
-        self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_toe), self.RL_forces)
-        self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_toe), self.RR_forces)
+        self.FL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_alpha), self.FL_forces)
+        self.FR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_alpha), self.FR_forces)
+        self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_alpha), self.RL_forces)
+        self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_alpha), self.RR_forces)
 
         self.FL_moments = FL_tire.tire_eval(FZ=FL_Fz, alpha=FL_alpha, kappa=0, gamma=FL_gamma)[3:]
         self.FR_moments = FR_tire.tire_eval(FZ=FR_Fz, alpha=FR_alpha, kappa=0, gamma=FR_gamma)[3:]
         self.RL_moments = RL_tire.tire_eval(FZ=RL_Fz, alpha=RL_alpha, kappa=0, gamma=RL_gamma)[3:]
         self.RR_moments = RR_tire.tire_eval(FZ=RR_Fz, alpha=RR_alpha, kappa=0, gamma=RR_gamma)[3:]
 
-        self.FL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_toe), self.FL_moments)
-        self.FR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_toe), self.FR_moments)
-        self.RL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_toe), self.RL_moments)
-        self.RR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_toe), self.RR_moments)
+        self.FL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_alpha), self.FL_moments)
+        self.FR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_alpha), self.FR_moments)
+        self.RL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_alpha), self.RL_moments)
+        self.RR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_alpha), self.RR_moments)
 
         ###############################################
         ########### Aero Forces and Moments ###########
         ###############################################
 
-        # aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
+        aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
 
-        # aero_forces = aero_loads[:3]
-        # aero_FAP = aero_loads[3:]
+        aero_forces = aero_loads[:3]
+        aero_FAP = aero_loads[3:]
 
-        # CG_wrt_CoP = aero_FAP - self.cg_pos
+        CG_wrt_CoP = aero_FAP - self.cg_pos
 
         ###############################################
         ######## Calculate Forces and Moments #########
@@ -392,13 +459,11 @@ class YMD:
 
         suspension_forces = self.FL_forces_aligned + self.FR_forces_aligned + self.RL_forces_aligned + self.RR_forces_aligned
         suspension_moments = np.cross(self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
-                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned)
+                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned) + \
+                             self.FL_moments_aligned + self.FR_moments_aligned + self.RL_moments_aligned + self.RR_moments_aligned
         
-        # aero_forces = aero_forces
-        # aero_moments = np.cross(CG_wrt_CoP, aero_forces)
-
-        aero_forces = 0
-        aero_moments = 0
+        aero_forces = aero_forces
+        aero_moments = np.cross(CG_wrt_CoP, aero_forces)
 
         vehicle_centric_forces = -1 * gravity_force + suspension_forces + aero_forces
         vehicle_centric_moments = suspension_moments + aero_moments
@@ -472,7 +537,7 @@ class YMD:
         yaw_rate = 0 if ntb_accel[1] == 0 else ntb_accel[1] / np.linalg.norm(imf_velocity)
 
         # Store suspension objects
-        suspension = self.vehicle.suspension
+        suspension: SuspensionModel = self.suspension
 
         # Store tire objects
         FL_tire = self.vehicle.FL_tire
@@ -488,9 +553,9 @@ class YMD:
         sus_corners: Sequence[DoubleWishbone] = [FL_double_wishbone, FR_double_wishbone, RL_double_wishbone, RR_double_wishbone]
 
         # Get CG position
-        cgx = self.vehicle.suspension.cgx_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        cgy = self.vehicle.suspension.cgy_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        cgz = self.vehicle.suspension.cgz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        cgx = suspension.cgx_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        cgy = suspension.cgy_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        cgz = suspension.cgz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
         
         self.cg_pos = np.array([cgx, cgy, cgz])
 
@@ -500,23 +565,23 @@ class YMD:
         self.RL_Cp_wrt_cg = RL_double_wishbone.contact_patch.position - self.cg_pos
         self.RR_Cp_wrt_cg = RR_double_wishbone.contact_patch.position - self.cg_pos
         
-        FL_jounce = self.vehicle.suspension.FL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        FR_jounce = self.vehicle.suspension.FR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RL_jounce = self.vehicle.suspension.RL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RR_jounce = self.vehicle.suspension.RR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FL_jounce = suspension.FL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FR_jounce = suspension.FR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RL_jounce = suspension.RL_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RR_jounce = suspension.RR_jounce_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
         sus_corners_jounce: Sequence[float] = [FL_jounce, FR_jounce, RL_jounce, RR_jounce]
 
         # Inclination angles
-        FL_gamma = self.vehicle.suspension.FL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        FR_gamma = self.vehicle.suspension.FR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RL_gamma = self.vehicle.suspension.RL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RR_gamma = self.vehicle.suspension.RR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FL_gamma = suspension.FL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FR_gamma = suspension.FR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RL_gamma = suspension.RL_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RR_gamma = suspension.RR_gamma_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
 
         # Toe angles
-        FL_toe = self.vehicle.suspension.FL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        FR_toe = self.vehicle.suspension.FR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RL_toe = self.vehicle.suspension.RL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        RR_toe = self.vehicle.suspension.RR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FL_toe = suspension.FL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        FR_toe = suspension.FR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RL_toe = suspension.RL_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        RR_toe = suspension.RR_toe_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
 
         # Wheel velocities
         FL_velocity = imf_velocity + np.cross(np.array([0, 0, yaw_rate]), self.FL_Cp_wrt_cg)
@@ -525,10 +590,10 @@ class YMD:
         RR_velocity = imf_velocity + np.cross(np.array([0, 0, yaw_rate]), self.RR_Cp_wrt_cg)
 
         # Slip angles
-        FL_alpha = FL_toe - np.arctan(FL_velocity[1]/FL_velocity[0])
-        FR_alpha = FR_toe - np.arctan(FR_velocity[1]/FR_velocity[0])
-        RL_alpha = RL_toe - np.arctan(RL_velocity[1]/RL_velocity[0])
-        RR_alpha = RR_toe - np.arctan(RR_velocity[1]/RR_velocity[0])
+        FL_alpha = FL_toe - np.arctan2(FL_velocity[1], FL_velocity[0])
+        FR_alpha = FR_toe - np.arctan2(FR_velocity[1], FR_velocity[0])
+        RL_alpha = RL_toe - np.arctan2(RL_velocity[1], RL_velocity[0])
+        RR_alpha = RR_toe - np.arctan2(RR_velocity[1], RR_velocity[0])
 
         # Normal loads from springs
         Fz_lst = []
@@ -547,31 +612,31 @@ class YMD:
         self.RL_forces = RL_tire.tire_eval(FZ=RL_Fz, alpha=RL_alpha, kappa=0, gamma=RL_gamma)[0:3]
         self.RR_forces = RR_tire.tire_eval(FZ=RR_Fz, alpha=RR_alpha, kappa=0, gamma=RR_gamma)[0:3]
 
-        self.FL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_toe), self.FL_forces)
-        self.FR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_toe), self.FR_forces)
-        self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_toe), self.RL_forces)
-        self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_toe), self.RR_forces)
+        self.FL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_alpha), self.FL_forces)
+        self.FR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_alpha), self.FR_forces)
+        self.RL_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_alpha), self.RL_forces)
+        self.RR_forces_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_alpha), self.RR_forces)
 
         self.FL_moments = FL_tire.tire_eval(FZ=FL_Fz, alpha=FL_alpha, kappa=0, gamma=FL_gamma)[3:]
         self.FR_moments = FR_tire.tire_eval(FZ=FR_Fz, alpha=FR_alpha, kappa=0, gamma=FR_gamma)[3:]
         self.RL_moments = RL_tire.tire_eval(FZ=RL_Fz, alpha=RL_alpha, kappa=0, gamma=RL_gamma)[3:]
         self.RR_moments = RR_tire.tire_eval(FZ=RR_Fz, alpha=RR_alpha, kappa=0, gamma=RR_gamma)[3:]
 
-        self.FL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_toe), self.FL_moments)
-        self.FR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_toe), self.FR_moments)
-        self.RL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_toe), self.RL_moments)
-        self.RR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_toe), self.RR_moments)
+        self.FL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FL_alpha), self.FL_moments)
+        self.FR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=FR_alpha), self.FR_moments)
+        self.RL_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RL_alpha), self.RL_moments)
+        self.RR_moments_aligned = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=RR_alpha), self.RR_moments)
 
         ###############################################
         ########### Aero Forces and Moments ###########
         ###############################################
 
-        # aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
+        aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
 
-        # aero_forces = aero_loads[:3]
-        # aero_FAP = aero_loads[3:]
+        aero_forces = aero_loads[:3]
+        aero_FAP = aero_loads[3:]
 
-        # CG_wrt_CoP = aero_FAP - self.cg_pos
+        CG_wrt_CoP = aero_FAP - self.cg_pos
 
         ###############################################
         ######## Calculate Forces and Moments #########
@@ -583,11 +648,8 @@ class YMD:
         suspension_moments = np.cross(self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
                              np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned) 
 
-        # aero_forces = aero_forces
-        # aero_moments = np.cross(CG_wrt_CoP, aero_forces)
-
-        aero_forces = 0
-        aero_moments = 0
+        aero_forces = aero_forces
+        aero_moments = np.cross(CG_wrt_CoP, aero_forces)
 
         vehicle_centric_forces = -1 * gravity_force + suspension_forces + aero_forces
         vehicle_centric_moments = suspension_moments + aero_moments
@@ -606,7 +668,7 @@ class YMD:
         force_residuals = vehicle_centric_forces - sum_force
         moment_residuals = vehicle_centric_moments - sum_moment
 
-        residuals = np.array([*force_residuals, *moment_residuals, FL_jounce, FR_jounce, RL_jounce, RR_jounce, FL_gamma, FR_gamma, RL_gamma, RR_gamma, FL_alpha, FR_alpha, RL_alpha, RR_alpha, *[float(x) for x in self.FL_forces_aligned], *[float(x) for x in self.FR_forces_aligned], *[float(x) for x in self.RL_forces_aligned], *[float(x) for x in self.RR_forces_aligned]])
+        residuals = [*force_residuals, *moment_residuals, FL_jounce, FR_jounce, RL_jounce, RR_jounce, FL_gamma, FR_gamma, RL_gamma, RR_gamma, FL_alpha, FR_alpha, RL_alpha, RR_alpha, *[float(x) for x in self.FL_forces_aligned], *[float(x) for x in self.FR_forces_aligned], *[float(x) for x in self.RL_forces_aligned], *[float(x) for x in self.RR_forces_aligned], heave, pitch, roll, delta, beta, ax, ay, yaw_ddot, self.FL_Cp_wrt_cg, self.FR_Cp_wrt_cg, self.RL_Cp_wrt_cg, self.RR_Cp_wrt_cg]
 
         return residuals
 
