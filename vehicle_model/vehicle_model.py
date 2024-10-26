@@ -1,6 +1,6 @@
 from vehicle_model.suspension_model.suspension_model import SuspensionModel
-from vehicle_model.aero_model.new_aero_model import AeroModel
 from vehicle_model.suspension_model.assets.plotter import Plotter
+from vehicle_model.aero_model.aero_model import AeroModel
 from vehicle_model._assets.processor import Processor
 from LHR_tire_toolkit.MF52 import MF52
 import numpy as np
@@ -137,4 +137,4 @@ class VehicleModel:
         # self.suspension_plotter.show()
 
     def initialize_aero(self) -> None:
-        self.aero_model = AeroModel(self.aero_map_path,1.225)
+        self.aero_model = AeroModel(self.aero_map_path, 1.225)

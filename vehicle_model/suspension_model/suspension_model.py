@@ -2,9 +2,9 @@ from vehicle_model.suspension_model.suspension_elements.tertiary_elements.double
 from vehicle_model.suspension_model.suspension_elements.quinary_elements.full_suspension import FullSuspension
 from vehicle_model.suspension_model.suspension_elements.quaternary_elements.axle import Axle
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.cg import CG
-from vehicle_model.suspension_model.assets.interp import interp4d
 from vehicle_model._assets.pickle_helpers import pickle_import
 from matplotlib.backends.backend_pdf import PdfPages
+from vehicle_model._assets.interp import interp4d
 from typing import Callable, Sequence, Tuple
 from matplotlib.figure import Figure
 from collections import OrderedDict

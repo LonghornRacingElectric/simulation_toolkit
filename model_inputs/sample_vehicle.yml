@@ -59,7 +59,7 @@ Mass Properties:
     Description: CG bias forward
     Type: float
     Unit: (-)
-    Value: 0.50
+    Value: 0.25
   CGBY:
     Description: CG bias leftward
     Type: float
