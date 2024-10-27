@@ -42,7 +42,7 @@ class SteeringLink(Link):
         return np.linalg.norm(self.inboard_node.position - self.outboard_node.position)
 
     @property
-    def _steering_pickup_to_kingpin(self) -> float:
+    def _steering_pickup_to_kingpin(self) -> Sequence[float]:
         """
         ## Steering Pikcup to Kingpin
 
