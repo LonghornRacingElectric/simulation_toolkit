@@ -79,12 +79,17 @@ class KinOptimization:
         self.RR_LFO = self.RR_dw.lower_fore_link.outboard_node
         self.RR_SO = self.RR_dw.steering_link.outboard_node
 
+        self.FL_FAP_Z = []
+        self.FR_FAP_Z = []
+        self.RL_FAP_Z = []
+        self.RR_FAP_Z = []
+
+        pitch = 0
+
         FL_gamma_outputs = []
         FR_gamma_outputs = []
         RL_gamma_outputs = []
         RR_gamma_outputs = []
-
-        pitch = 0
 
         for heave in self.heave_sweep:
             # for pitch in self.pitch_sweep:
@@ -99,6 +104,11 @@ class KinOptimization:
                 self.FR_dw.jounce(jounce=FR_jounce)
                 self.RL_dw.jounce(jounce=RL_jounce)
                 self.RR_dw.jounce(jounce=RR_jounce)
+
+                self.FL_FAP_Z.append(self.FL_dw.FV_FAP_position[2])
+                self.FR_FAP_Z.append(self.FR_dw.FV_FAP_position[2])
+                self.RL_FAP_Z.append(self.RL_dw.FV_FAP_position[2])
+                self.RR_FAP_Z.append(self.RR_dw.FV_FAP_position[2])
 
                 FL_gamma_outputs.append(self.FL_dw.inclination_angle * 180 / np.pi + roll)
                 FR_gamma_outputs.append(self.FR_dw.inclination_angle * 180 / np.pi + roll)
@@ -153,30 +163,81 @@ class KinOptimization:
         self.mu_y_med = np.median(mu_y)
         self.mu_y_std = np.std(mu_y)
 
-        gamma_initial_pos_2d = [self.FL_UFI.position, self.FL_UAI.position, self.FL_LFI.position, self.FL_LAI.position, self.FL_SI.position, self.FL_UFO.position[0:2], self.FL_LFO.position[0:2], self.FL_SO.position, \
-                       self.RL_UFI.position, self.RL_UAI.position, self.RL_LFI.position, self.RL_LAI.position, self.RL_SI.position, self.RL_UFO.position[0:2], self.RL_LFO.position[0:2], self.RL_SO.position]
+        gamma_initial_pos_2d = [self.FL_UFI.position, 
+                                self.FL_UAI.position, 
+                                self.FL_LFI.position, 
+                                self.FL_LAI.position, 
+                                self.FL_SI.position, 
+                                self.FL_UFO.position[0:3], 
+                                self.FL_LFO.position[0:3], 
+                                self.FL_SO.position,
+                                self.RL_UFI.position,
+                                self.RL_UAI.position,
+                                self.RL_LFI.position,
+                                self.RL_LAI.position,
+                                self.RL_SI.position,
+                                self.RL_UFO.position[0:3],
+                                self.RL_LFO.position[0:3],
+                                self.RL_SO.position]
         
         toe_initial_pos = [self.FL_SI.position, self.FL_SO.position,
                            self.RL_SI.position, self.RL_SO.position]
         
-        gamma_initial_pos = []
-        
-        for arr in gamma_initial_pos_2d:
-            gamma_initial_pos += list(arr)
+        gamma_initial_pos = np.array(gamma_initial_pos_2d).flatten()
 
-        gamma_initial_pos = np.array(gamma_initial_pos)
-
-        print(gamma_initial_pos)
         toe_initial_pos = np.array(toe_initial_pos).flatten()
 
         toe_resid_bounds = []
-        gamma_resid_bounds = []
-
-        for val in gamma_initial_pos:
-            lower = val - 1 * 0.0254
-            upper = val + 1 * 0.0254
-            gamma_resid_bounds.append([lower, upper])
-
+        gamma_resid_bounds = [[-1 * 0.0254 + self.FL_UFI.position[0], 1 * 0.0254 + self.FL_UFI.position[0]], # FL_UFI
+                              [-1 * 0.0254 + self.FL_UFI.position[1], 1 * 0.0254 + self.FL_UFI.position[1]], #
+                              [-1 * 0.0254 + self.FL_UFI.position[2], 1 * 0.0254 + self.FL_UFI.position[2]], #
+                              [-1 * 0.0254 + self.FL_UAI.position[0], 1 * 0.0254 + self.FL_UAI.position[0]], # FL_UAI
+                              [-1 * 0.0254 + self.FL_UAI.position[1], 1 * 0.0254 + self.FL_UAI.position[1]], #
+                              [-1 * 0.0254 + self.FL_UAI.position[2], 1 * 0.0254 + self.FL_UAI.position[2]], #
+                              [-1 * 0.0254 + self.FL_LFI.position[0], 1 * 0.0254 + self.FL_LFI.position[0]], # FL_LFI
+                              [-1 * 0.0254 + self.FL_LFI.position[1], 1 * 0.0254 + self.FL_LFI.position[1]], #
+                              [-1 * 0.0254 + self.FL_LFI.position[2], 1 * 0.0254 + self.FL_LFI.position[2]], #
+                              [-1 * 0.0254 + self.FL_LAI.position[0], 1 * 0.0254 + self.FL_LAI.position[0]], # FL_LAI
+                              [-1 * 0.0254 + self.FL_LAI.position[1], 1 * 0.0254 + self.FL_LAI.position[1]], #
+                              [-1 * 0.0254 + self.FL_LAI.position[2], 1 * 0.0254 + self.FL_LAI.position[2]], #
+                              [-1 * 0.0254 + self.FL_SI.position[0], 1 * 0.0254 + self.FL_SI.position[0]], # FL_SI
+                              [-0.00001 + self.FL_SI.position[1], 0.00001 + self.FL_SI.position[1]], #
+                              [0 + self.FL_SI.position[2], 1 * 0.0254 + self.FL_SI.position[2]], #
+                              [-0.5 * 0.0254 + self.FL_UFO.position[0], 0.5 * 0.0254 + self.FL_UFO.position[0]], # FL_UFO
+                              [-1 * 0.0254 + self.FL_UFO.position[1], 1 * 0.0254 + self.FL_UFO.position[1]], #
+                              [-1 * 0.0254 + self.FL_UFO.position[2], 0 + self.FL_UFO.position[2]], #
+                              [-0.25 * 0.0254 + self.FL_LFO.position[0], -0.25 * 0.0254 + self.FL_LFO.position[0]], # FL_LFO
+                              [-1 * 0.0254 + self.FL_LFO.position[1], 1 * 0.0254 + self.FL_LFO.position[1]], #
+                              [0 + self.FL_LFO.position[2], 1 * 0.0254 + self.FL_LFO.position[2]], #
+                              [-0.25 * 0.0254 + self.FL_SO.position[0], 0.25 * 0.0254 + self.FL_SO.position[0]], # FL_SO
+                              [-0.25 * 0.0254 + self.FL_SO.position[1], 0.125 * 0.0254 + self.FL_SO.position[1]], #
+                              [-0.5 * 0.0254 + self.FL_SO.position[2], 0.5 * 0.0254 + self.FL_SO.position[2]], #
+                              [-1 * 0.0254 + self.RL_UFI.position[0], 1 * 0.0254 + self.RL_UFI.position[0]], # RL_UFI
+                              [-1 * 0.0254 + self.RL_UFI.position[1], 1 * 0.0254 + self.RL_UFI.position[1]], #
+                              [-1 * 0.0254 + self.RL_UFI.position[2], 1 * 0.0254 + self.RL_UFI.position[2]], #
+                              [-1 * 0.0254 + self.RL_UAI.position[0], 1 * 0.0254 + self.RL_UAI.position[0]], # RL_UAI
+                              [-1 * 0.0254 + self.RL_UAI.position[1], 1 * 0.0254 + self.RL_UAI.position[1]], #
+                              [-1 * 0.0254 + self.RL_UAI.position[2], 1 * 0.0254 + self.RL_UAI.position[2]], #
+                              [-1 * 0.0254 + self.RL_LFI.position[0], 1 * 0.0254 + self.RL_LFI.position[0]], # RL_LFI
+                              [-1 * 0.0254 + self.RL_LFI.position[1], 1 * 0.0254 + self.RL_LFI.position[1]], #
+                              [-1 * 0.0254 + self.RL_LFI.position[2], 1 * 0.0254 + self.RL_LFI.position[2]], #
+                              [-1 * 0.0254 + self.RL_LAI.position[0], 1 * 0.0254 + self.RL_LAI.position[0]], # RL_LAI
+                              [-1 * 0.0254 + self.RL_LAI.position[1], 1 * 0.0254 + self.RL_LAI.position[1]], #
+                              [-1 * 0.0254 + self.RL_LAI.position[2], 1 * 0.0254 + self.RL_LAI.position[2]], #
+                              [-1 * 0.0254 + self.RL_SI.position[0], 1 * 0.0254 + self.RL_SI.position[0]], # RL_SI
+                              [-0.00001 + self.RL_SI.position[1], 0.00001 + self.RL_SI.position[1]], #
+                              [0 + self.RL_SI.position[2], 1 * 0.0254 + self.RL_SI.position[2]], #
+                              [-0.5 * 0.0254 + self.RL_UFO.position[0], 0.5 * 0.0254 + self.RL_UFO.position[0]], # RL_UFO
+                              [-1 * 0.0254 + self.RL_UFO.position[1], 1 * 0.0254 + self.RL_UFO.position[1]], #
+                              [-1 * 0.0254 + self.RL_UFO.position[2], 0 + self.RL_UFO.position[2]], #
+                              [-0.25 * 0.0254 + self.RL_LFO.position[0], -0.25 * 0.0254 + self.RL_LFO.position[0]], # RL_LFO
+                              [-1 * 0.0254 + self.RL_LFO.position[1], 1 * 0.0254 + self.RL_LFO.position[1]], #
+                              [0 + self.RL_LFO.position[2], 1 * 0.0254 + self.RL_LFO.position[2]], #
+                              [-0.50 * 0.0254 + self.RL_SO.position[0], 0 * 0.0254 + self.RL_SO.position[0]], # RL_SO
+                              [-0.25 * 0.0254 + self.RL_SO.position[1], 0.125 * 0.0254 + self.RL_SO.position[1]], #
+                              [-0.5 * 0.0254 + self.RL_SO.position[2], 0.5 * 0.0254 + self.RL_SO.position[2]], #
+                              ]
+        
         for val in toe_initial_pos:
             lower = val - 1 * 0.0254
             upper = val + 1 * 0.0254
@@ -192,10 +253,13 @@ class KinOptimization:
             else:
                 initial_guess.append(val)
 
+        print(len(gamma_initial_pos))
+        print(len(gamma_resid_bounds))
+
         self.counter = 0
         self.suspension.full_suspension.reset_position()
-        # hdpt_locations = minimize(self.gamma_resid_func, x0=gamma_initial_pos, bounds=gamma_resid_bounds, method='Nelder-Mead').x
-        hdpt_locations = minimize(self.bump_steer_resid_func, x0=toe_initial_pos, constraints=toe_resid_bounds, method='Nelder-Mead').x
+        hdpt_locations = minimize(self.gamma_resid_func, x0=gamma_initial_pos, bounds=gamma_resid_bounds, method='Nelder-Mead').x
+        # hdpt_locations = minimize(self.gamma_resid_func, x0=toe_initial_pos, constraints=toe_resid_bounds, method='Nelder-Mead').x
         print([float(x) for x in list(hdpt_locations)])
     
     def bump_steer_resid_func(self, x):
@@ -294,13 +358,41 @@ class KinOptimization:
         RL_gamma_outputs = []
         RR_gamma_outputs = []
 
+        counter = 0
+        total_count = len(self.heave_sweep)**3
+        pitch = 0
+
+        for heave in self.heave_sweep:
+            # for pitch in self.pitch_sweep:
+            for roll in self.roll_sweep:
+                # print(f"Plotting Progress: {round(counter / total_count * 100, 2)}", end="\r")
+                FL_jounce = heave + (self.FL_cg_x * np.sin(pitch * np.pi / 180) + self.FL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                FR_jounce = heave + (self.FR_cg_x * np.sin(pitch * np.pi / 180) + self.FR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                RL_jounce = heave + (self.RL_cg_x * np.sin(pitch * np.pi / 180) + self.RL_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+                RR_jounce = heave + (self.RR_cg_x * np.sin(pitch * np.pi / 180) + self.RR_cg_y * np.cos(pitch * np.pi / 180) * np.sin(roll * np.pi / 180)) / (np.cos(pitch * np.pi / 180) * np.cos(roll * np.pi / 180))
+
+                self.FL_dw.jounce(jounce=FL_jounce)
+                self.FR_dw.jounce(jounce=FR_jounce)
+                self.RL_dw.jounce(jounce=RL_jounce)
+                self.RR_dw.jounce(jounce=RR_jounce)
+
+                FL_gamma_outputs.append(self.FL_dw.FV_FAP_position[2])
+                FR_gamma_outputs.append(self.FR_dw.FV_FAP_position[2])
+                RL_gamma_outputs.append(self.RL_dw.FV_FAP_position[2])
+                RR_gamma_outputs.append(self.RR_dw.FV_FAP_position[2])
+
+        self.counter += 1
+
+        IC_residuals = FL_gamma_outputs + FR_gamma_outputs + RL_gamma_outputs + RR_gamma_outputs
+
+        base_residuals = self.FL_FAP_Z + self.FR_FAP_Z + self.RL_FAP_Z + self.RR_FAP_Z
+
+        IC_resids = [x / y for x, y in zip(IC_residuals, base_residuals)]
+
         FL_toe_outputs = []
         FR_toe_outputs = []
         RL_toe_outputs = []
         RR_toe_outputs = []
-        counter = 0
-        total_count = len(self.heave_sweep)**3
-        pitch = 0
 
         for heave in self.heave_sweep:
             # for pitch in self.pitch_sweep:
@@ -376,9 +468,10 @@ class KinOptimization:
         mu_y_med = np.median(mu_y)
         mu_y_std = np.std(mu_y)
         
-        residual = self.mu_x_med / mu_x_med + self.mu_y_med / mu_y_med + mu_x_std / self.mu_x_std + mu_y_std / self.mu_y_std + np.linalg.norm([*FL_toe_outputs, *FR_toe_outputs, *RL_toe_outputs, *RR_toe_outputs])
+        mu_resid = self.mu_x_med / mu_x_med + self.mu_y_med / mu_y_med + mu_x_std / self.mu_x_std + mu_y_std / self.mu_y_std
 
-        print(f"Current Residual: {residual}")
+        residual = np.linalg.norm(IC_resids) + mu_resid
+        print(f"Current Residual: {np.linalg.norm(residual)}")
         
         return residual
     

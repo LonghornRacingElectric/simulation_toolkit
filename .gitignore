@@ -155,7 +155,10 @@ dmypy.json
 cython_debug/
 
 # Vscode
-*.Vscode
+.vscode
 
 # Cpp compiled files
 *.o
+
+# MacOS
+.DS_Store
