@@ -1,39 +1,72 @@
-# Name of the executable
-EXEC = kin_cpp
+# # Compiler and flags
+# CXX = g++
+# CXXFLAGS = -Wall -Wextra -std=c++17 -Ithird_party/blaze
+
+# # Directories
+# SRC_DIRS = kernel primary_elements secondary_elements tertiary_elements assets
+# BUILD_DIR = build
+
+# # Find all .cpp and corresponding .o files
+# SRC_FILES := $(shell find $(SRC_DIRS) -name '*.cpp')
+# OBJ_FILES := $(patsubst %, $(BUILD_DIR)/%, $(SRC_FILES:.cpp=.o))
+
+# # Target executable
+# TARGET = program
+
+# # Default target
+# all: $(TARGET)
+
+# # Build the program
+# $(TARGET): $(OBJ_FILES)
+# 	$(CXX) $(CXXFLAGS) -o $@ $^
+
+# # Compile .cpp files into .o files
+# $(BUILD_DIR)/%.o: %.cpp | create_dirs
+# 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# # Ensure build directories exist
+# create_dirs:
+# 	@mkdir -p $(patsubst %, $(BUILD_DIR)/%, $(SRC_DIRS))
+
+# # Clean the build
+# clean:
+# 	rm -rf $(BUILD_DIR) $(TARGET)
+
+# .PHONY: all clean create_dirs
 
 # Compiler and flags
-CXX = clang++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I./third_party/blaze -I./third_party/gmm/gmm -I./third_party/scilab/include -I/opt/homebrew/opt/lapack/include
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++17 -Ithird_party/blaze -llapack -lblas
 
-# LDFLAGS = -L./third_party/scilab/lib -lscilab
+# Directories
+SRC_DIRS = kernel primary_elements secondary_elements tertiary_elements assets
+BUILD_DIR = build
 
-# LDFLAGS = -L/opt/homebrew/opt/lapack/lib
-LAPACK_LIBS = -L/opt/homebrew/opt/lapack/lib -llapack -lblas
+# Find all .cpp and corresponding .o files
+SRC_FILES := $(shell find $(SRC_DIRS) -name '*.cpp')
+OBJ_FILES := $(patsubst %, $(BUILD_DIR)/%, $(SRC_FILES:.cpp=.o))
 
-# Find all .cpp files recursively
-# SRC = $(shell find . -path ./third_party -prune -o -name '*.cpp')
-SRC = $(shell find . -path ./third_party -prune -o -name '*.cpp' -print)
-
-# Generate object files in the same directories as the source files
-OBJ = $(SRC:.cpp=.o)
+# Target executable
+TARGET = program
 
 # Default target
-all: $(EXEC)
+all: $(TARGET)
 
-# Link object files into the final executable
-$(EXEC): $(OBJ)
-    $(CXX) $(CXXFLAGS) -o $(EXEC) $(OBJ) $(LAPACK_LIBS) $@ $^
+# Build the program
+$(TARGET): $(OBJ_FILES)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# Compile each .cpp file into a .o file
-# %.o: %.cpp
-#   @mkdir -p $(dir $@)
-#   $(CXX) $(CXXFLAGS) -c $< -o $@
-%.o: %.cpp
-    $(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean up the build
+# Compile .cpp files into .o files
+$(BUILD_DIR)/%.o: %.cpp | create_dirs
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Ensure build directories exist
+create_dirs:
+	@mkdir -p $(patsubst %, $(BUILD_DIR)/%, $(SRC_DIRS))
+
+# Clean the build
 clean:
-    rm -f $(OBJ) $(EXEC)
+	rm -rf $(BUILD_DIR) $(TARGET)
 
-# Phony targets
-.PHONY: all clean
+.PHONY: all clean create_dirs
