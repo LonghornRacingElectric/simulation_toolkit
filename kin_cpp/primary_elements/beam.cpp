@@ -58,44 +58,45 @@ StaticVector<double, 3> Beam::yz_intersection (Beam *second_beam) {
     return StaticVector<double, 3UL>{x, yz[0], yz[1]}; 
 }
 
-/* Calculates intersection point between two links in the x-z plane 
-   Params : second_beam (Beam *) -- beam intersecting this beam in xz
-   Returns 3-element array -- coordinates of intersection (averages x between the links) */
-StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
-    StaticVector<double, 3UL> &l_1i = inboard_node->position;
-    StaticVector<double, 3UL> &l_1o = outboard_node->position;
-    double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0]);
-    double x_1 = l_1o[0], z_1 = l_1o[2];
+/* NOTE: DEPRECATED
+    Calculates intersection point between two links in the x-z plane 
+    Params : second_beam (Beam *) -- beam intersecting this beam in xz
+    Returns 3-element array -- coordinates of intersection (averages x between the links) */
+// StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {
+//     StaticVector<double, 3UL> &l_1i = inboard_node->position;
+//     StaticVector<double, 3UL> &l_1o = outboard_node->position;
+//     double m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0]);
+//     double x_1 = l_1o[0], z_1 = l_1o[2];
 
-    StaticVector<double, 3UL> &l_2i = second_beam->inboard_node->position;
-    StaticVector<double, 3UL> &l_2o = second_beam->outboard_node->position;
-    double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0]);
-    double x_2 = l_2o[0], z_2 = l_2o[2];
+//     StaticVector<double, 3UL> &l_2i = second_beam->inboard_node->position;
+//     StaticVector<double, 3UL> &l_2o = second_beam->outboard_node->position;
+//     double m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0]);
+//     double x_2 = l_2o[0], z_2 = l_2o[2];
 
-    StaticMatrix<double, 2, 2> A {{-1 * m_1, 1}, {-1 * m_2, 1}};
-    StaticVector<double, 2> B = {-1 * m_1 * x_1 + z_1, -1 * m_2 * x_2 + z_2};
+//     StaticMatrix<double, 2, 2> A {{-1 * m_1, 1}, {-1 * m_2, 1}};
+//     StaticVector<double, 2> B = {-1 * m_1 * x_1 + z_1, -1 * m_2 * x_2 + z_2};
 
-    /* NEED LINALG FOR THE FOLLOWING : 
-        y = np.average([l_1o[1], l_2o[1]])
+//     /* NEED LINALG FOR THE FOLLOWING : 
+//         y = np.average([l_1o[1], l_2o[1]])
 
-        try:
-            x, z = np.linalg.solve(a=a, b=b)
-        except:
-            y = np.average([l_1o[1], l_2o[1]])
-            return [1e9, y, 0]
+//         try:
+//             x, z = np.linalg.solve(a=a, b=b)
+//         except:
+//             y = np.average([l_1o[1], l_2o[1]])
+//             return [1e9, y, 0]
 
-        return np.array([x[0], y, z[0]])
-    */ 
-   double y = (l_1o[1] + l_2o[1]) / 2;
-   StaticVector<double, 2> X;
-   try {    
-        solve(A, X, B);
-   } catch (...) {
-        return StaticVector<double, 3UL> {1e9, y, 0};
-   }
+//         return np.array([x[0], y, z[0]])
+//     */ 
+//    double y = (l_1o[1] + l_2o[1]) / 2;
+//    StaticVector<double, 2> X;
+//    try {    
+//         solve(A, X, B);
+//    } catch (...) {
+//         return StaticVector<double, 3UL> {1e9, y, 0};
+//    }
 
-    return StaticVector<double, 3UL>{X[0], y, X[1]};
-}
+//     return StaticVector<double, 3UL>{X[0], y, X[1]};
+// }
 
 /* Translates all children (inboard and outboard nodes)
    Params : translation (3-element array) -- translation to apply [x_shift, y_shift, z_shift]*/
