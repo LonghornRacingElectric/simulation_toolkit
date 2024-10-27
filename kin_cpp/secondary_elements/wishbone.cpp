@@ -73,6 +73,7 @@ StaticVector<double, 6> Wishbone::plane () const {
     column(point_vecs, 0) = all_elements[0]->position;
     column(point_vecs, 1) = all_elements[1]->position;
     column(point_vecs, 2) = all_elements[2]->position;
+
     return ::plane(point_vecs);
 }
 

@@ -1,11 +1,10 @@
 #ifndef DOUBLE_WISHBONE_H
 #define DOUBLE_WISHBONE_H
 #include "../secondary_elements/cg.h"
-#include "tire.h"
 #include "../secondary_elements/tie.h"
-#include "push_pull_rod.h"
 #include "../secondary_elements/wishbone.h"
-
+#include "push_pull_rod.h"
+#include "tire.h"
 class DoubleWishbone
 {
 private:
@@ -21,49 +20,54 @@ private:
     double steered_angle;
     double induced_steer;
 
-    Beam upper_fore_link;
-    Beam upper_aft_link;
-    Beam lower_fore_link;
-    Beam lower_aft_link;
+    CG *cg;
 
-    Wishbone upper_wishbone;
-    Wishbone lower_wishbone;
+    Beam *upper_fore_link;
+    Beam *upper_aft_link;
+    Beam *lower_fore_link;
+    Beam *lower_aft_link;
 
-    Kingpin kingpin;
-    Tie steering_link;
+    Wishbone *upper_wishbone;
+    Wishbone *lower_wishbone;
 
-    Node upper_outboard;
-    Node lower_outboard;
-    Node tie_outboard;
-    Node contact_patch;
+    Kingpin *kingpin;
+    Tie *steering_link;
+
+    Node *upper_outboard;
+    Node *lower_outboard;
+    Node *tie_outboard;
+    Node *contact_patch;
     
-    Tire tire;
+    Tire *tire;
 
-    Node FVIC;
-    Beam FVIC_link;
-    Node SVIC;
-    Beam SVIC_link;
+    Node *FVIC;
+    Beam *FVIC_link;
+    Node *SVIC;
+    Beam *SVIC_link;
 
-    Node FV_FAP;
-    Node SV_FAP;
+    Node *FV_FAP;
+    Node *SV_FAP;
 
-    Node rod_inboard;
-    Node rod_outboard;
-    Node bellcrank_pivot;
+    Node *rod_inboard;
+    Node *rod_outboard;
+    Node *bellcrank_pivot;
     StaticVector<double, 3UL> bellcrank_direction;
-    Node shock_outboard;
-    Node shock_inboard;
+    Node *shock_outboard;
+    Node *shock_inboard;
 
-    PushPullRod rod;
+    PushPullRod *rod;
     bool upper;
+
+    Node *elements[10];
+    Node *all_elements[9];
 
     /* TODO -- NEED TO FIND SUITABLE FUNCTION FOR scipy.interpolate.CubicSpline:
        motion_ratio_function = CubicSpline (x=jounce_sweep, y=motion_ratio_lst)
        wheelrate_function = CubicSpline (x=jounce_sweep, y=wheelrate_lst) */
 public:
-    DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 6UL> &outboard_points, 
+    DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 4UL> &outboard_points, 
                    StaticMatrix<double, 3UL, 4UL> &bellcrank_params, double spring_rate, double weight, CG *cent_grav, 
-                   bool upper, StaticVector<double, 3UL> contact_patch, double inclination_angle, double toe, double tire_radius, 
+                   bool upper, StaticVector<double, 3UL> &contact_patch, double inclination_angle, double toe, double tire_radius, 
                    double tire_width, bool show_ICs);
     void _fixed_unsprung_geom ();
     StaticVector<double, 2UL>_jounce_resid_func (StaticVector<double, 3UL> &x, double jounce);
