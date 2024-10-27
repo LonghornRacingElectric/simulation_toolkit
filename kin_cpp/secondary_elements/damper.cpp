@@ -9,6 +9,9 @@ Damper::Damper(Beam *beam) {
     angle = 0.0;
 }
 
+Beam *Damper::getBeam() {
+    return damper_beam;
+}
 /* Getter function for length */
 double Damper::getLength() const {
     return length;

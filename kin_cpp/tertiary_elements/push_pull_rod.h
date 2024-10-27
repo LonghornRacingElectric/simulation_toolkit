@@ -1,39 +1,39 @@
 #ifndef PUSHPULLROD_H
 #define PUSHPULLROD_H
-#include <iostream>
+#include "../primary_elements/beam.h"
 #include "../secondary_elements/bellcrank.h"
-#include "../secondary_elements/pushrod.h"
 #include "../secondary_elements/damper.h"
 
-class PushPullRod {
-public:
-    PushPullRod(Node *inboard, Node *outboard, Node *bellcrank_pivot, 
-                double bellcrank_direction, Node *shock_inboard, Node *shock_outboard);
-    
-    Beam *getInboardBeam();
-    Beam *getOutboardbeam();
-    Beam *getShockInboard();
-    Beam *getShockOutboard();
+using namespace blaze;
 
-    Node *getBellcrankPivot();
-    double *getBellcrankDirection();
-
+class PushPullRod
+{
 private:
-    // Class members
-    Beam::rod;  // Link object for rod
+    Beam *rod;
+    Damper *damper;
+    Bellcrank *Bellcrank;
+    double bellcrank_angle;
+    double wishbone_angle;
     double initial_rod_length;
-
-    Beam::spring_damper_rod;  // Link for spring/damper rod (if bellcrank is used)
     double initial_spring_damper_length;
+    Node *bellcrank_pivot;
+    StaticVector<double, 3UL> bellcrank_direction;
 
-    Node* bellcrank_pivot;  // Pivot point of the bellcrank (optional)
-    StaticVector<double> bellcrank_direction;  // Direction vector for bellcrank rotation
-
-    double bellcrank_angle;  // Bellcrank angle
-    double wishbone_angle;   // Wishbone angle
-
-    Beam::elements;  // Elements in the PushPullRod
-    Beam::all_elements;  // All elements (rod, bellcrank, etc.)
+    bool bc_exists;
+    Node *elements[3];
+    Node *all_elements[3];
+public:
+    PushPullRod (Node *inboard, Node *outboard, bool upper, bool bellcrank, Node *bellcrank_pivot, StaticVector<double, 3UL> &bc_direction, Node *shock_outboard, Node *shock_inboard);
+    void rotate_rod (StaticVector<double, 3UL> &axis, Node *origin, double angle);
+    void rotate_bellcrank (double angle);
+    double rod_length () const;
+    double spring_damper_length () const;
+    void update ();
+    double _bellcrank_resid_func (double x);
+    void _reset_bellcrank_position ();
+    void _set_initial_position ();
+    void translate (StaticVector<double, 3UL> &translation);
+    void flatten_rotate(StaticVector<double, 3UL>& angle);
 };
 
 #endif

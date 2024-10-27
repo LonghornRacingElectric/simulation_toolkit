@@ -8,6 +8,8 @@ class Pushrod {
 public:
     Pushrod(Beam *beam);
 
+    Beam *getBeam();
+
     // Functions for accessing length and angle
     double getAngle() const;
     double getLength() const;

@@ -8,6 +8,7 @@ class Damper {
 public:
     Damper(Beam *beam);
 
+    Beam *getBeam ();
     // Functions for accessing length and angle
     double getAngle() const;
     double getLength() const;
