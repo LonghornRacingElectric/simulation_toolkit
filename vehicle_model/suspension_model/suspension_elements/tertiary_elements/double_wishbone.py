@@ -41,14 +41,6 @@ class DoubleWishbone:
         CG object defining the center of gravity
     upper : bool
         True if push/pull rod mounts to upper wishbone
-    bellcrank_pivot : Sequence[float]
-        Position of bellcrank pivot
-    bellcrank_direction: Sequence[float]
-        Vector bellcrank rotates about
-    shock_outboard : Sequence[float]
-        Point where shock linkage meets bellcrank
-    shock_outboard : Sequence[float]
-        Point where shock linkage meets frame
     contact_patch : Sequence[float]
         Coordinates of contact patch
     inclination_angle : float
@@ -481,7 +473,7 @@ class DoubleWishbone:
         for element in self.all_elements:
             element.translate(translation=translation)
     
-    def flatten_rotate(self, angle: Sequence[float]):
+    def flatten_rotate(self, angle: Sequence[float]) -> None:
         """
         ## Flatten Rotate
 
