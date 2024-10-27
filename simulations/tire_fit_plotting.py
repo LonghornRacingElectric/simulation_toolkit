@@ -189,19 +189,20 @@ class TirePlotting:
 ### This is dumb, but the script is located in the same file as the class
 ### I'll eventually move this to the tire analysis package
 
-tire = MF52(tire_name='test', file_path='model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir')
-tire_plotter = TirePlotting(tire=tire)
+if __name__ == "__main__":
+    tire = MF52(tire_name='test', file_path='model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir')
+    tire_plotter = TirePlotting(tire=tire)
 
-# Fit plot parameters
-FZ_sweep = np.linspace(10, 1000, 50)
-kappa_sweep_mesh = np.linspace(-0.25, 0.25, 50)
-alpha_sweep_mesh = np.linspace(-25 * np.pi / 180, 25 * np.pi / 180, 50)
+    # Fit plot parameters
+    FZ_sweep = np.linspace(10, 1000, 50)
+    kappa_sweep_mesh = np.linspace(-0.25, 0.25, 50)
+    alpha_sweep_mesh = np.linspace(-25 * np.pi / 180, 25 * np.pi / 180, 50)
 
-# Friction ellipse parameters
-kappa_sweep = np.linspace(-0.10, 0.10, 30)
-alpha_sweep = np.linspace(-10 * np.pi / 180, 10 * np.pi / 180, 30)
+    # Friction ellipse parameters
+    kappa_sweep = np.linspace(-0.10, 0.10, 30)
+    alpha_sweep = np.linspace(-10 * np.pi / 180, 10 * np.pi / 180, 30)
 
-mesh_plots = tire_plotter.get_mesh_fig(Fz_nomin=654, gamma=0 * np.pi / 180, Fz_sweep=FZ_sweep, kappa_sweep=kappa_sweep_mesh, alpha_sweep=alpha_sweep_mesh)
-ellipse_plot = tire_plotter.get_friction_ellipse_fig(Fz_nomin=654, gamma=0, kappa_sweep=kappa_sweep, alpha_sweep=alpha_sweep)
+    mesh_plots = tire_plotter.get_mesh_fig(Fz_nomin=654, gamma=0 * np.pi / 180, Fz_sweep=FZ_sweep, kappa_sweep=kappa_sweep_mesh, alpha_sweep=alpha_sweep_mesh)
+    ellipse_plot = tire_plotter.get_friction_ellipse_fig(Fz_nomin=654, gamma=0, kappa_sweep=kappa_sweep, alpha_sweep=alpha_sweep)
 
-tire_plotter.save_pdf(figs=[mesh_plots, ellipse_plot], save_path="./outputs/Tire_Fit_Plots.pdf")
+    tire_plotter.save_pdf(figs=[mesh_plots, ellipse_plot], save_path="./outputs/Tire_Fit_Plots.pdf")

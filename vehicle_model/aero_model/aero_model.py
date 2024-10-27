@@ -1,135 +1,95 @@
-from sim.system_models.vehicle_systems.vehicle_system_model import VehicleSystemModel
-
-from sim.model_parameters.cars.car import Car
-from sim.system_models.vectors.controls_vector import ControlsVector
-from sim.system_models.vectors.observables_vector import ObservablesVector
-from sim.system_models.vectors.state_vector import StateVector
-from sim.system_models.vectors.state_dot_vector import StateDotVector
-
+from vehicle_model._assets.interp import interp3d
+import pandas as pd
 import numpy as np
 
 
-# TODO robert pls implement <3
+class AeroModel:
+    """
+    ## Aero Model
 
-class AeroModel(VehicleSystemModel):
-    def __init__(self):
-        super().__init__()
+    Designed to model aerodynamic forces based on sprung-mass state and environment
 
-        self.controls_in = [
-        ]
+    ###### Note, all conventions comply with SAE-J670 Z-up
 
-        self.state_in = [
-            "speed",
-            "heave",
-            "pitch",
-            "roll",
-            "body_slip"
-        ]
+    Parameters
+    ----------
+    csv_path : str
+        File path to aero map .csv
+    air_density : float
+        Density of air in kg/m^3
+    """
+    def __init__(self, csv_path: str, air_density: float) -> None:
+            
+        self.parameters = locals().copy()
+        del self.parameters['self']
 
-        self.state_out = [
-            "aero_forces",
-            "aero_moments"
-        ]
+        self.aero_map = pd.read_csv(csv_path)
+        self.air_density = air_density
 
-        self.observables_out = [
-        ]
-
-    def eval(self, vehicle_parameters: Car, controls_vector: ControlsVector, state_in_vector: StateVector,
-             state_out_vector: StateDotVector, observables_vector: ObservablesVector):
+        # Inputs
+        self.roll_vals = np.array(self.aero_map['Roll'])
+        self.pitch_vals = np.array(self.aero_map['Pitch'])
+        self.yaw_vals = np.array(self.aero_map['Yaw'])
         
-        velocity = state_in_vector.speed
-        body_slip = state_in_vector.body_slip
-        heave = state_in_vector.heave
-        pitch = state_in_vector.pitch
-        roll = state_in_vector.roll
-
-        aero_forces, aero_moments = self._get_loads(vehicle_parameters, velocity, body_slip, heave, pitch, roll)
-
-        state_out_vector.aero_forces = aero_forces
-        state_out_vector.aero_moments = aero_moments
-
-    def _get_loads(self, vehicle_parameters: Car, speed: float, body_slip: float, heave: float, pitch: float, roll: float):
-        if not vehicle_parameters.aero:
-            return np.array([0, 0, 0]), np.array([0, 0, 0])
-
-        # Conversion factors
-        rad_to_deg = 180 / np.pi
-
-        # Convert angles to degrees for sensitivity calcs
-        body_slip *= rad_to_deg
-        pitch *= rad_to_deg
-        roll *= rad_to_deg
-
-        # Gets aero coefficients for each component
-        ClA = vehicle_parameters.ClA_tot * np.array(vehicle_parameters.ClA_dist)
-        CdA = vehicle_parameters.CdA_tot * np.array(vehicle_parameters.CdA_dist)
-        CsA = vehicle_parameters.CsA_tot * np.array(vehicle_parameters.CsA_dist)
-
-        # Converts from CAD origin to IMF
-        CoP_IMF = np.array(vehicle_parameters.CoP)
-        CoP_IMF[:,0] += vehicle_parameters.cg_bias * vehicle_parameters.wheelbase
-
-        coeffs = np.array([ClA, CdA, CsA])
-
-        p_dir = 1 if pitch <= 0 else 0
-        psens = np.array(vehicle_parameters.p_sens)[:,:,p_dir]
-
-        angles = np.array([abs(body_slip), abs(pitch), abs(roll)])
-        angle_sens = np.array([vehicle_parameters.bs_sens, psens, vehicle_parameters.r_sens])
-        angle_sens /= 100   # convert from percentages
-
-        s_dir = -1
-        if body_slip < 0:
-            s_dir = 1
-
-        # Multiply each sensitivity by the corresponding angle
-        # repeat -> reshape turns angles array into 3x3x3 array with angles in
-        # the right place for element-wise multiplication
-        angle_sens *= np.reshape(np.repeat(angles,9),(3,3,3))
-
-        # add 1 to turn percent increases into multiplication factor
-        angle_sens += 1
-
-        # multiply all sensitivities for given part and force together
-        angle_sens = np.prod(angle_sens, axis = 0)
-
-        # multiply lift, drag, and sideforce coefficients by sensitivities
-        coeffs = angle_sens * coeffs.T
-
-        # heave sensitivities
-        heave_sens = self._get_heave_sens(vehicle_parameters, heave)
-        coeffs *= heave_sens
-
-        # calculate force arrays for each direction: F_part = [front, undertray, rear]
-        Fl_part = 0.5 * vehicle_parameters.air_density * coeffs[:,0] * speed ** 2
-        Fd_part = 0.5 * vehicle_parameters.air_density * coeffs[:,1] * speed ** 2
-        Fs_part = 0.5 * vehicle_parameters.air_density * coeffs[:,2] * (speed * np.tan(body_slip/rad_to_deg)) ** 2 * s_dir
-
-        # drag is x, sideforce is y, lift is z
-        part_force = np.array([-Fd_part, Fs_part, -Fl_part])
-
-        # forces are sum of forces on each part
-        forces = np.array([-np.sum(Fd_part), np.sum(Fs_part), -np.sum(Fl_part)])
-
-        # sum moments from front, undertray, and rear
-        moments = np.cross(CoP_IMF[0], part_force.T[0]) \
-                + np.cross(CoP_IMF[1], part_force.T[1]) \
-                + np.cross(CoP_IMF[2], part_force.T[2])
-
-        # account for drag and sideforce from rest of car
-        drag_no_aero = 0.5 * vehicle_parameters.air_density * vehicle_parameters.CdA0 * speed ** 2
-        sideforce_no_aero = 0.5 * vehicle_parameters.air_density * vehicle_parameters.CsA0 * (speed * np.tan(body_slip/rad_to_deg)) ** 2 * s_dir
-        forces += np.array([-drag_no_aero, sideforce_no_aero, 0])
-
-        return forces, moments
-    
-    def _get_heave_sens(self, vehicle_parameters: Car, heave: float):
-        cl_heave_sens = np.polyval(vehicle_parameters.h_sens_coefficients[0], heave)
-        cd_heave_sens = np.polyval(vehicle_parameters.h_sens_coefficients[1], heave)
+        # Force outputs
+        self.CxA_vals = np.array(self.aero_map['CxA'])
+        self.CyA_vals = np.array(self.aero_map['CyA'])
+        self.CzA_vals = np.array(self.aero_map['CzA'])
         
-        # sens for undertraying, using it as an estimate for front wing
-        heave_sens = np.array([[cl_heave_sens, cd_heave_sens, 1],
-                              [cl_heave_sens, cd_heave_sens, 1],
-                              [1, 1, 1]])
-        
-        return heave_sens
+        # Moment outputs
+        self.MxA_vals = np.array(self.aero_map['MxA'])
+        self.MyA_vals = np.array(self.aero_map['MyA'])
+        self.MzA_vals = np.array(self.aero_map['MzA'])
+
+        # Output interpolation objects
+
+        # Forces
+        self.CxA = interp3d(x=self.roll_vals, y=self.pitch_vals, z=self.yaw_vals, v=self.CxA_vals)
+        self.CyA = interp3d(x=self.roll_vals, y=self.pitch_vals, z=self.yaw_vals, v=self.CyA_vals)
+        self.CzA = interp3d(x=self.roll_vals, y=self.pitch_vals, z=self.yaw_vals, v=self.CzA_vals)
+
+        # Moments
+        self.MxA = interp3d(x=self.roll_vals, y=self.pitch_vals, z=self.yaw_vals, v=self.MxA_vals)
+        self.MyA = interp3d(x=self.roll_vals, y=self.pitch_vals, z=self.yaw_vals, v=self.MyA_vals)
+        self.MzA = interp3d(x=self.roll_vals, y=self.pitch_vals, z=self.yaw_vals, v=self.MzA_vals)
+
+    def force_props(self, roll: float, pitch: float, body_slip: float, heave: float, velocity: float):
+        """
+        ## Force Properties
+
+        Calculate the force properties (forces and force application point) from aerodynamic effects
+
+        Parameters
+        ----------
+        roll : float
+            vehicle roll in radians
+        pitch : float
+            vehicle pitch in radians
+        body_slip : float
+            vehicle body slip in radians
+        heave : float
+            vehicle heave in meters
+        velocity : float
+            vehicle velocity in m/s
+
+        Returns
+        -------
+        np.ndarray
+            Numpy array of the form [Fx, Fy, Fz, CoPx, CoPy, CoPz] (N and m, respectively)
+        """
+
+        p_dyn = 1/2 * self.air_density * velocity**2
+
+        Fx = self.CxA(x=roll, y=pitch, z=body_slip) * p_dyn
+        Fy = self.CyA(x=roll, y=pitch, z=body_slip) * p_dyn
+        Fz = self.CzA(x=roll, y=pitch, z=body_slip) * p_dyn
+
+        Mx = self.MxA(x=roll, y=pitch, z=body_slip) * p_dyn
+        My = self.MyA(x=roll, y=pitch, z=body_slip) * p_dyn
+        Mz = self.MzA(x=roll, y=pitch, z=body_slip) * p_dyn
+
+        CoPz = (Mz * Fz) / (Fx * Fy)
+        CoPx = (CoPz * Fx - My) / Fz
+        CoPy = (Mx + CoPz * Fy) / Fz
+
+        return np.array([Fx, Fy, Fz, CoPx, CoPy, CoPz])
