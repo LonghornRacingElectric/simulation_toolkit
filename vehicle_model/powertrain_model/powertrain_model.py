@@ -70,6 +70,8 @@ class PowertrainModel:
         self.diffBiasPerc = params['diffBiasPerc']['value']
         self.diffMuRatio = params['diffMuRatio']['value']
         self.gear_ratio = params['gear_ratio']['value']
+        self.tracker = {}
+        self.regening = False
 
         # for par in list(params.keys()):
         #     try:
@@ -105,6 +107,8 @@ class PowertrainModel:
         """
 
         torque_request = controls['torque_request']
+        if torque_request < 0:
+            self.regening = True
         left_wheel_speed = state_in['wheel_angular_velocities'][2]
         right_wheel_speed = state_in['wheel_angular_velocities'][3]
         motor_ang_vel = np.average([left_wheel_speed, right_wheel_speed])*self.gear_ratio  # differential imposed constraint
@@ -115,8 +119,7 @@ class PowertrainModel:
         self.cell_ocv = self.cell_ocv_lu([self.soc])  # add f(cell temp)
         self.cell_dcir = self.cell_dcir_lu([self.soc])  # add f(cell temp, frequency)... 2 RC model later
 
-        def max_motor_battery_pwr_calc(test_torque: float) -> float:
-            # assumption is that torque-speed curve, efficiency map are symetric about x (speed or RPM) axis
+        def max_motor_pwr_calc(test_torque: float) -> float:
             # positive (+) power is defined in the direction from battery to motor
             # this calc uses some assumed torque and rpm to evaluate the maximum power the motor can output and is
             # later compared to the requested power to determine actual output
@@ -128,34 +131,45 @@ class PowertrainModel:
             motor_ang_vel = self.rpm_to_omega(self.motor_rpm)
             motor_pwr_mech = test_torque * motor_ang_vel
             phase_current = test_torque / self.motor_kt
-            dc_pwr_inverter = motor_pwr_mech / (self.motor_efficiency([self.motor_rpm, test_torque]) *
-                                                self.inverter_efficiency([phase_current, self.back_emf]))
-            battery_terminal_voltage = self.terminal_voltage_calc(battery_power=dc_pwr_inverter)
-            # print('voltage:', battery_terminal_voltage)
-            max_power_rpm = battery_terminal_voltage * self.motor_kv
+            motor_eff = self.motor_efficiency([self.motor_rpm, np.abs(test_torque)])
+            inverter_eff = self.inverter_efficiency([phase_current, self.back_emf])
 
-            if test_torque >= 0:  # positive torque request
-                power = self.motor_max_torque * self.rpm_to_omega(max_power_rpm)
+            dc_pwr_inverter = motor_pwr_mech / (motor_eff * inverter_eff)
+            #  assumes motor efficiency map is symetric about x axis, thus use abs(torque)
+            battery_terminal_voltage = self.terminal_voltage_calc(inverter_power=dc_pwr_inverter)
+
+            if not self.regening:  # positive torque request
+                max_power_rpm = battery_terminal_voltage * self.motor_kv
+                power = self.motor_max_torque * self.rpm_to_omega(max_power_rpm)  # mechanical power output from motor
             else:  # negative torque request; regen
-                motor_regen_power_limit = (-self.motor_max_torque * motor_ang_vel)
-                battery_charge_power_limit_voltage = (battery_terminal_voltage *
-                                                      (battery_terminal_voltage-(self.cell_ocv*self.s_count))
-                                                      / (self.cell_dcir/1000))
+                motor_regen_power_limit = (self.motor_max_torque * motor_ang_vel)
+                # battery_charge_power_limit_voltage = (battery_terminal_voltage *
+                #                                       ((battery_terminal_voltage-(self.cell_ocv*self.s_count))
+                #                                        / (self.cell_dcir*self.s_count/self.p_count)))
+                battery_charge_power_limit_voltage = ((battery_terminal_voltage *
+                                                       (self.max_cell_voltage*self.s_count - battery_terminal_voltage))
+                                                      / (self.cell_dcir*self.s_count/self.p_count))
                 battery_charge_power_limit_current = battery_terminal_voltage*self.max_cell_charge_current*self.p_count
-                power = max(motor_regen_power_limit, battery_charge_power_limit_voltage,
-                            battery_charge_power_limit_current)
-                # these should all be negative quantities so take the one closest to zero. i.e. max.
-            return power
+                total_battery_power_limit = min(battery_charge_power_limit_voltage, battery_charge_power_limit_current)\
+                    / (motor_eff * inverter_eff)  # motor power limit constrained by battery. divide by eff because of
+#                                                  power flow direction
+                power = float(-min(motor_regen_power_limit, total_battery_power_limit))
+
+            return power  # power at motor shaft
 
         def total_power_limit_calc(torque_req: float) -> float:
+            #  account for emeter 80kW ceiling regulation
             phase_current = torque_req / self.motor_kt
-            regulated_power_limit_motor = (self.regulated_power_limit_emeter *
-                                           self.motor_efficiency(np.array([self.motor_rpm, torque_req])) *
-                                           self.inverter_efficiency([phase_current, self.back_emf]))
-            if torque_req >= 0:
-                total_power_limit = min(regulated_power_limit_motor, max_motor_battery_pwr_calc(torque_req))
-            elif torque_req < 0:
-                total_power_limit = max(-regulated_power_limit_motor, max_motor_battery_pwr_calc(torque_req))
+            max_power_motor = max_motor_pwr_calc(torque_req)
+            motor_inverter_eff = (self.motor_efficiency(np.array([self.motor_rpm, np.abs(torque_req)])) *
+                                  self.inverter_efficiency([phase_current, self.back_emf]))
+            if not self.regening:
+                regulated_power_limit_motor = self.regulated_power_limit_emeter * motor_inverter_eff
+                total_power_limit = float(min(regulated_power_limit_motor, max_power_motor))
+            else:
+                regulated_power_limit_motor = -(self.regulated_power_limit_emeter / motor_inverter_eff)
+                total_power_limit = float(max(regulated_power_limit_motor, max_power_motor))
+            # print('pwr limit:', total_power_limit)
             return total_power_limit
 
         power_request = torque_request * motor_ang_vel
@@ -166,25 +180,44 @@ class PowertrainModel:
         else:   # field weakening, emeter power regulated, or battery power regulated. need to solve for torque
             # iteratively by trying lower torques (thus lower power; rpm is constant)
 
+            self.tracker['torque_iter'] = np.array([])
+            self.tracker['pwr_lim'] = np.array([])
+            self.tracker['pwr_req'] = np.array([])
+
             def power_residual(torque):
-                # print(torque)
+                self.tracker['torque_iter'] = np.append(self.tracker['torque_iter'], torque)
+                # print('torque:', torque)
                 pwr_req = torque * motor_ang_vel
                 pwr_limit = total_power_limit_calc(float(torque))
+                self.tracker['pwr_lim'] = np.append(self.tracker['pwr_lim'], pwr_limit)
+                self.tracker['pwr_req'] = np.append(self.tracker['pwr_req'], pwr_req)
                 return np.abs(pwr_req - pwr_limit)
-                # print('power request:', pwr_req)
-                # print('power limit:', pwr_limit)
 
-            motor_torque_result = optimize.minimize(power_residual, x0=torque_request, tol=0.0001)
+            bound = np.sort([(0, torque_request)])
+
+            guess = total_power_limit_calc(float(torque_request))/motor_ang_vel
+            motor_torque_result = optimize.minimize(power_residual, x0=guess, tol=0.01, bounds=
+            bound)
             motor_torque = float(motor_torque_result.x)
+            # print('final resid:', power_residual(motor_torque))
 
+
+
+        # print('final torque:', motor_torque)
         # evaluate final state
         state_out = state_in
         motor_power = motor_torque * motor_ang_vel
-        battery_terminal_power = motor_power/(self.motor_efficiency([self.motor_rpm, motor_torque]) *
-                                              self.inverter_efficiency([motor_torque/self.motor_kt, self.back_emf]))
-        battery_terminal_voltage = self.terminal_voltage_calc(battery_power=battery_terminal_power)
+        motor_efficiency = self.motor_efficiency([self.motor_rpm, np.abs(motor_torque)])
+        inverter_efficiency = self.inverter_efficiency([motor_torque/self.motor_kt, self.back_emf])
+        if not self.regening:
+            battery_terminal_power = motor_power/(motor_efficiency * inverter_efficiency)
+        else:
+            battery_terminal_power = motor_power*(motor_efficiency * inverter_efficiency)
+        battery_terminal_voltage = self.terminal_voltage_calc(inverter_power=battery_terminal_power)
+        battery_ocv = self.cell_ocv*self.s_count
         battery_current = battery_terminal_power / battery_terminal_voltage
-        battery_power = self.cell_ocv*self.s_count * battery_current
+        battery_power = battery_ocv * battery_current
+        battery_efficiency = 1 - (battery_terminal_voltage-battery_ocv)/battery_terminal_voltage
 
         # assign state out
         state_out['motor_rpm'] = self.motor_rpm
@@ -192,8 +225,12 @@ class PowertrainModel:
         state_out['motor_power'] = motor_power
         state_out['battery_terminal_power'] = battery_terminal_power
         state_out['battery_terminal_voltage'] = battery_terminal_voltage
+        state_out['battery_ocv'] = self.cell_ocv*self.s_count
         state_out['battery_current'] = battery_current
         state_out['battery_power'] = battery_power
+        state_out['motor_efficiency'] = motor_efficiency
+        state_out['inverter_efficiency'] = inverter_efficiency
+        state_out['battery_efficiency'] = battery_efficiency
 
         # Solve for wheel torques / differential split
         # ~ diff model ~
@@ -234,7 +271,7 @@ class PowertrainModel:
         right_torque = ((diff_in_torque - torque_delta)/2)*diff_to_wheel_eff()
 
         powertrain_torques = [0, 0, left_torque, right_torque]
-        state_out['torques'] = powertrain_torques  # need to implement mechanical braking!!
+        state_out['powertrain_torques'] = powertrain_torques  # need to implement mechanical braking!!
         # print('motor torque=', motor_torque)
 
         return state_out
@@ -245,31 +282,41 @@ class PowertrainModel:
     def rpm_to_omega(self, rpm):
         return rpm * (2 * np.pi) / 60
 
-    def terminal_voltage_calc(self, battery_power):
-        # reminder: all these power figures are in terms of the load the battery is supplying.
+    def terminal_voltage_calc(self, inverter_power):
+        # reminder: all these power figures are in terms of the load the battery is supplying (i.e. inverter power)
         # the actual power from the battery needs to account for the cell IR.
-        cell_power = battery_power / (self.s_count * self.p_count)
+        cell_power = inverter_power / (self.s_count * self.p_count)  # cell power output at terminals (after IR loss)
 
-        def terminal_voltage_func(terminal_voltage, power):
-            return terminal_voltage ** 2 - terminal_voltage * self.cell_ocv + power * self.cell_dcir/1000
+        def terminal_voltage_func(terminal_voltage, terminal_power):
+            return terminal_voltage ** 2 - terminal_voltage * self.cell_ocv + terminal_power * self.cell_dcir
 
-        max_power_transfer = self.cell_ocv ** 2 / (4 * self.cell_dcir/1000)
+        max_power_transfer = self.cell_ocv ** 2 / (4 * self.cell_dcir)
         if cell_power >= max_power_transfer:
-            cell_terminal_voltage = (max_power_transfer * self.cell_dcir/1000) ** 0.5
+            # cell_terminal_voltage = (max_power_transfer * self.cell_dcir) ** 0.5  # this is a huge approximation
+            # # that is pretty wrong. need to rethink this implementation of the constraint placed on the system
+            # # due to cell resistance.
+            cell_terminal_voltage = 0  # if cell power is above maximum theoretically possible, just return 0 ocv
+            # which will make the max power possible at motor given the input torque request and vehicle state
+            # = 0kW. this will make the minimizing function
+
         else:
             def term_volt_reformatted(v):
-                return terminal_voltage_func(v, power=cell_power)
+                return terminal_voltage_func(v, terminal_power=cell_power)
 
             cell_terminal_voltage_res = optimize.root(fun=term_volt_reformatted, x0=np.array(self.cell_ocv))
             cell_terminal_voltage = cell_terminal_voltage_res.x[-1]
+            # print(f"ocv: {self.cell_ocv} | terminal: {cell_terminal_voltage} | cell_pwr: {cell_power}")
 
         if cell_terminal_voltage > self.max_cell_voltage:
-            cell_terminal_voltage = self.max_cell_voltage
+            cell_terminal_voltage = 4.2
+#           the voltage limited power constraint in the max_power_calc function will enforce CV charging if
+#               overvolting
 
         pack_terminal_voltage = cell_terminal_voltage * self.s_count
         return pack_terminal_voltage
 
-    # brakes bullshit
+
+    # brakes
     def _mech_brake_calcs(self, DF, PR, BB, MC_SA, C_SA, mu, RR, TR, brake_pct):
         pedal_force = DF * brake_pct
 

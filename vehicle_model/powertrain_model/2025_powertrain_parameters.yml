@@ -1,8 +1,8 @@
- ### POWERTRAIN ###
+### POWERTRAIN ###
 powertrain:
  description: powertrain description
  type: str
- value: Anqelique's Powertrain
+ value: 2025 Powertrain
 
 motor:
  description: motor description
@@ -17,7 +17,7 @@ inverter:
 cell:
  description: cell description
  type: str
- value: Molicel P45B
+ value: Molicel P30B
 
 motor_max_rpm:
  description: mechanical max rpm (RPM)
@@ -25,14 +25,14 @@ motor_max_rpm:
  value: 6500
 
 s_count:
- description: battery series count ()
+ description: battery series count (#)
  type: float
  value: 140
 
 p_count:
- description: battery parallel count ()
+ description: battery parallel count (#)
  type: float
- value: 3
+ value: 4
 
 motor_kv:
  description: motor voltage constant relating achievable motor RPM as a fucntion 
@@ -58,7 +58,7 @@ max_cell_voltage:
 max_cell_charge_current:
  description: maximum allowable cell charging current (A)
  type: float
- value: 13.5
+ value: 9
 
 regulated_power_limit_emeter:
  description: maximum allowable power transmission through emeter
@@ -97,7 +97,7 @@ diffMuRatio:
 gear_ratio:
  description: transmission speed gear ratio (input_RPM / output_RPM)
  type: float
- value: 4
+ value: 3.5
 
 default_parameter:
  description: parameter description
