@@ -789,10 +789,11 @@ class SuspensionModel:
         ackermann_dict["Steer Steer"]["FR"] = []
 
         for heave in [0.0001]:
-            self.heave(heave=heave)
-
             for steer in self.steer_sweep:
+                self.full_suspension.hard_reset()
+                
                 self.steer(rack_displacement=steer)
+                self.heave(heave=heave)
 
                 ackermann_dict["Steer Steer"]["FL"].append(float(self.FL_dw.toe * 180 / np.pi))
                 ackermann_dict["Steer Steer"]["FR"].append(float(self.FR_dw.toe * 180 / np.pi))
@@ -816,7 +817,7 @@ class SuspensionModel:
 
         ax_1[1, 1].set_ylim([min(ackermann_lst) * 5, max(ackermann_lst) * 5])
 
-        plt.show()
+        # plt.show()
     
     def generate_kin_plots(self, steer_sweep: np.ndarray, heave_sweep: np.ndarray, pitch_sweep: np.ndarray, roll_sweep: np.ndarray) -> None:
         self.steer_sweep = steer_sweep
@@ -897,11 +898,14 @@ class SuspensionModel:
             "Roll Kw Cached": {"FL": [], "FR": [], "RL": [], "RR": []},
             "Roll Kr Cached": {"FL": [], "FR": [], "RL": [], "RR": []},
             "Roll Kp Cached": {"FL": [], "FR": [], "RL": [], "RR": []},
-
+            "Steer Camber Full": {"FL": [], "FR": [], "RL": [], "RR": []}, 
+            "Steer Toe Full": {"FL": [], "FR": [], "RL": [], "RR": []},
+            "Steer Caster Full": {"FL": [], "FR": [], "RL": [], "RR": []}
         }
         
         # Simplified Kinematics
         for heave in self.heave_sweep:
+            self.full_suspension.hard_reset()
             self.generate_kin_helper(steer=0, heave=heave, pitch=0, roll=0)
             kin_dict["Bump Camber Lite"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi)
             kin_dict["Bump Camber Lite"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi)
@@ -959,6 +963,7 @@ class SuspensionModel:
             kin_dict["Bump Kp Lite"]["RR"].append(self.full_suspension.pitch_stiffness)
         
         for roll in self.roll_sweep:
+            self.full_suspension.hard_reset()
             self.generate_kin_helper(steer=0, heave=0, pitch=0, roll=roll)
             kin_dict["Roll Camber Lite"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi - roll * 180 / np.pi)
             kin_dict["Roll Camber Lite"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi + roll * 180 / np.pi)
@@ -1018,6 +1023,7 @@ class SuspensionModel:
         # Full Kinematics
         # self.full_suspension.hard_reset()
         for heave in self.heave_sweep:
+            self.full_suspension.hard_reset()
             self.heave(heave=heave)
             kin_dict["Bump Camber Full"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi)
             kin_dict["Bump Camber Full"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi)
@@ -1076,6 +1082,7 @@ class SuspensionModel:
         
         # self.full_suspension.hard_reset()
         for roll in self.roll_sweep:
+            self.full_suspension.hard_reset()
             self.roll(roll=roll * 180 / np.pi)
             kin_dict["Roll Camber Full"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi)
             kin_dict["Roll Camber Full"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi)
@@ -1131,6 +1138,26 @@ class SuspensionModel:
             kin_dict["Roll Kp Full"]["FR"].append(self.full_suspension.pitch_stiffness)
             kin_dict["Roll Kp Full"]["RL"].append(self.full_suspension.pitch_stiffness)
             kin_dict["Roll Kp Full"]["RR"].append(self.full_suspension.pitch_stiffness)
+
+        for steer in self.steer_sweep:
+            self.full_suspension.hard_reset()
+            self.steer(rack_displacement=steer)
+            kin_dict["Steer Camber Full"]["FL"].append(-self.FL_dw.inclination_angle * 180 / np.pi)
+            kin_dict["Steer Camber Full"]["FR"].append(self.FR_dw.inclination_angle * 180 / np.pi)
+            kin_dict["Steer Camber Full"]["RL"].append(-self.RL_dw.inclination_angle * 180 / np.pi)
+            kin_dict["Steer Camber Full"]["RR"].append(self.RR_dw.inclination_angle * 180 / np.pi)
+
+            kin_dict["Steer Toe Full"]["FL"].append(-self.FL_dw.toe * 180 / np.pi)
+            kin_dict["Steer Toe Full"]["FR"].append(self.FR_dw.toe * 180 / np.pi)
+            kin_dict["Steer Toe Full"]["RL"].append(-self.RL_dw.toe * 180 / np.pi)
+            kin_dict["Steer Toe Full"]["RR"].append(self.RR_dw.toe * 180 / np.pi)
+
+            kin_dict["Steer Caster Full"]["FL"].append(self.FL_dw.caster * 180 / np.pi)
+            kin_dict["Steer Caster Full"]["FR"].append(self.FR_dw.caster * 180 / np.pi)
+            kin_dict["Steer Caster Full"]["RL"].append(self.RL_dw.caster * 180 / np.pi)
+            kin_dict["Steer Caster Full"]["RR"].append(self.RR_dw.caster * 180 / np.pi)
+
+        self.full_suspension.hard_reset()
 
         # Cached Kinematics
         for heave in self.heave_sweep:
@@ -1993,8 +2020,87 @@ class SuspensionModel:
         ax_22[1, 1].plot(self.roll_sweep * 180 / np.pi, kin_dict["Roll Kp Cached"]["RR"])
         fig_22.legend(["Lite Model", "Full Model", "Cached Model"])
 
+        fig_23, ax_23 = plt.subplots(nrows=2, ncols=2)
+        fig_23.set_size_inches(w=11, h=8.5)
+        fig_23.suptitle("Steer Camber")
+        fig_23.subplots_adjust(wspace=0.2, hspace=0.4)
+        
+        ax_23[0, 0].set_xlabel("Steer (m)")
+        ax_23[0, 0].set_ylabel("Camber (deg)")
+        ax_23[0, 0].set_title("FL Steer Camber")
+        ax_23[0, 0].plot(self.steer_sweep, kin_dict["Steer Camber Full"]["FL"])
+
+        ax_23[0, 1].set_xlabel("Steer (m)")
+        ax_23[0, 1].set_ylabel("Camber (deg)")
+        ax_23[0, 1].set_title("FR Steer Camber")
+        ax_23[0, 1].plot(self.steer_sweep, kin_dict["Steer Camber Full"]["FR"])
+
+        ax_23[1, 0].set_xlabel("Steer (m)")
+        ax_23[1, 0].set_ylabel("Camber (deg)")
+        ax_23[1, 0].set_title("RL Steer Camber")
+        ax_23[1, 0].plot(self.steer_sweep, kin_dict["Steer Camber Full"]["RL"])
+
+        ax_23[1, 1].set_xlabel("Steer (m)")
+        ax_23[1, 1].set_ylabel("Camber (deg)")
+        ax_23[1, 1].set_title("RR Steer Camber")
+        ax_23[1, 1].plot(self.steer_sweep, kin_dict["Steer Camber Full"]["RR"])
+        fig_23.legend(["Full Model"])
+
+        fig_24, ax_24 = plt.subplots(nrows=2, ncols=2)
+        fig_24.set_size_inches(w=11, h=8.5)
+        fig_24.suptitle("Steer Toe")
+        fig_24.subplots_adjust(wspace=0.2, hspace=0.4)
+        
+        ax_24[0, 0].set_xlabel("Steer (m)")
+        ax_24[0, 0].set_ylabel("Toe (deg)")
+        ax_24[0, 0].set_title("FL Steer Toe")
+        ax_24[0, 0].plot(self.steer_sweep, kin_dict["Steer Toe Full"]["FL"])
+
+        ax_24[0, 1].set_xlabel("Steer (m)")
+        ax_24[0, 1].set_ylabel("Toe (deg)")
+        ax_24[0, 1].set_title("FR Steer Toe")
+        ax_24[0, 1].plot(self.steer_sweep, kin_dict["Steer Toe Full"]["FR"])
+
+        ax_24[1, 0].set_xlabel("Steer (m)")
+        ax_24[1, 0].set_ylabel("Toe (deg)")
+        ax_24[1, 0].set_title("RL Steer Toe")
+        ax_24[1, 0].plot(self.steer_sweep, kin_dict["Steer Toe Full"]["RL"])
+
+        ax_24[1, 1].set_xlabel("Steer (m)")
+        ax_24[1, 1].set_ylabel("Toe (deg)")
+        ax_24[1, 1].set_title("RR Steer Toe")
+        ax_24[1, 1].plot(self.steer_sweep, kin_dict["Steer Toe Full"]["RR"])
+        fig_24.legend(["Full Model"])
+
+        fig_25, ax_25 = plt.subplots(nrows=2, ncols=2)
+        fig_25.set_size_inches(w=11, h=8.5)
+        fig_25.suptitle("Steer Caster")
+        fig_25.subplots_adjust(wspace=0.2, hspace=0.4)
+        
+        ax_25[0, 0].set_xlabel("Steer (m)")
+        ax_25[0, 0].set_ylabel("Caster (deg)")
+        ax_25[0, 0].set_title("FL Steer Caster")
+        ax_25[0, 0].plot(self.steer_sweep, kin_dict["Steer Caster Full"]["FL"])
+
+        ax_25[0, 1].set_xlabel("Steer (m)")
+        ax_25[0, 1].set_ylabel("Caster (deg)")
+        ax_25[0, 1].set_title("FR Steer Caster")
+        ax_25[0, 1].plot(self.steer_sweep, kin_dict["Steer Caster Full"]["FR"])
+
+        ax_25[1, 0].set_xlabel("Steer (m)")
+        ax_25[1, 0].set_ylabel("Caster (deg)")
+        ax_25[1, 0].set_title("RL Steer Caster")
+        ax_25[1, 0].plot(self.steer_sweep, kin_dict["Steer Caster Full"]["RL"])
+
+        ax_25[1, 1].set_xlabel("Steer (m)")
+        ax_25[1, 1].set_ylabel("Caster (deg)")
+        ax_25[1, 1].set_title("RR Steer Caster")
+        ax_25[1, 1].plot(self.steer_sweep, kin_dict["Steer Caster Full"]["RR"])
+        fig_25.legend(["Full Model"])
+
         self.plot(figs=[fig_1, fig_2, fig_3, fig_4, fig_5, fig_6, fig_7, fig_8, fig_9, fig_10, fig_11,
-                        fig_12, fig_13, fig_14, fig_15, fig_16, fig_17, fig_18, fig_19, fig_20, fig_21, fig_22])
+                        fig_12, fig_13, fig_14, fig_15, fig_16, fig_17, fig_18, fig_19, fig_20, fig_21, 
+                        fig_22, fig_23, fig_24, fig_25])
     
     def generate_kin_helper(self, steer: float, heave: float, pitch: float, roll: float, reset: bool = False):
         dist_vecs = {"FL": {"CGx": None, "CGy": None},

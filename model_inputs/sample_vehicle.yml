@@ -9,7 +9,7 @@ Description:
     Description: Internal version number for vehicle
     Type: string
     Unit: N/A
-    Value: 1.0.2
+    Value: 1.0.4
 
 Environment:
   G:
@@ -39,17 +39,17 @@ Mass Properties:
     Description: Mass of front wheel assemblies + half the front suspension linkages
     Type: float
     Unit: kg
-    Value: 14.94587
+    Value: 16.328
   RrUM:
     Description: Mass of rear wheel assemblies + half the rear suspension linkages
     Type: float
     Unit: kg
-    Value: 14.94587
+    Value: 18.611
   SM:
     Description: Sprung mass = Total mass - driver mass - unsprung mass
     Type: float
     Unit: kg
-    Value: 137
+    Value: 170
   SI:
     Description: Sprung mass inertia tensor
     Type: list[list[float], list[float], list[float]]
@@ -79,22 +79,22 @@ Geometric Properties:
     Type: list[list[float]]
     Unit: m
     Value: [
-      [1.12369212e-01, 2.53996084e-01, 2.14875584e-01],   
-      [-1.11609500e-01, 2.54773012e-01, 2.15108512e-01],
-      [1.12728471e-01, 1.96997607e-01, 7.38748634e-02],
-      [-1.12818028e-01, 1.97783520e-01, 7.37866576e-02],
-      [0.05715, 0.19685, 0.1049274],
+      [0.11226939, 0.2032, 0.18],
+      [-0.11150572, 0.2032, 0.18],
+      [0.11277651, 0.2032, 0.08],
+      [-0.11277471, 0.2032, 0.08],
+      [0.05715005, 0.18288, 0.10490047],
       [0, 0.27638715, 0.08312027]]
   FLOP:
     Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.05656435e-06, 5.55967813e-01, 0.293498081278],
-      [-1.05656435e-06, 5.55967813e-01, 0.293498081278], 
-      [-3.88041026e-07, 5.81988425e-01, 0.106808081278], 
-      [-3.88041026e-07, 5.81988425e-01, 0.106808081278],
-      [0.05543225261, 0.57796814937, 0.155080408152],
+      [-0.00634805, 0.582, 2.93622819e-01],
+      [-0.00634805, 0.582, 2.93622819e-01],
+      [0, 0.572, 0.10693398],
+      [0, 0.572, 0.10693398],
+      [0.05537382, 0.57785109, 0.15519324],
       [-0.00002554, 0.51228060, 0.25244758]]
   FL_Up:
     Description: True if push/pull rod mounts to upper wishbone
@@ -120,22 +120,22 @@ Geometric Properties:
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.41914532e+00, 3.01603274e-01, 2.17437154e-01], 
-      [-1.75799856e+00, 3.01677333e-01, 2.18509911e-01],
-      [-1.42078371e+00, 2.68668508e-01, 7.21717706e-02],
-      [-1.70916334e+00, 2.67109393e-01, 7.37495767e-02],
-      [-1.4101318, 0.2851404, 0.1451864],
+      [-1.2715281, 0.30480452, 0.15925674],
+      [-1.49097773, 0.30480245, 0.18262592],
+      [-1.29540043, 0.26670052, 0.06197495],
+      [-1.5110603, 0.26670074, 0.06197576],
+      [-1.39521968, 0.30251581, 0.1262375],
       [-1.47573900, 0.30957935, 0.11471471]]
   RLOP:
     Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.55133049e+00, 5.12610611e-01, 0.2959862],
-      [-1.55133049e+00, 5.12610611e-01, 0.2959862],
-      [-1.54620799e+00, 5.66149180e-01, 0.1029462],
-      [-1.54620799e+00, 5.66149180e-01, 0.1029462],
-      [-1.4605508, 0.5583682, 0.2051558],
+      [-1.5501596, 0.56490145, 0.29641726],
+      [-1.5501596, 0.56490145, 0.29641726],
+      [-1.554986, 0.5775969, 0.11099801],
+      [-1.554986, 0.5775969, 0.11099801],
+      [-1.45744993, 0.58648783, 0.20447093],
       [-1.55040452, 0.51228235, 0.29667004]]
   RL_Up:
     Description: True if push/pull rod mounts to upper wishbone

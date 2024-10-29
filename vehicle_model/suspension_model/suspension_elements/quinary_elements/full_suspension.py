@@ -342,6 +342,11 @@ class FullSuspension:
         -------
         None
         """
+        self.steer(rack_displacement=0.000001)
+        self.heave(heave=0.000001)
+        self.pitch(angle=0.000001)
+        self.roll(angle=0.000001)
+
         self.self = FullSuspension(**self.parameters)
 
     def flatten(self) -> None:

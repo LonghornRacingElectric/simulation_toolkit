@@ -54,6 +54,8 @@ class  interp3d:
         self.v = v
 
     def __call__(self, x: float, y: float, z: float) -> float:
+        points = (self.x, self.y, self.z)
+        values = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z)))
 
         if x > max(self.x):
             x = max(self.x)

@@ -16,7 +16,7 @@ class YMD:
         self.vehicle = vehicle
         self.mesh = mesh
 
-        self.delta_sweep = np.linspace(-25 * 3.50 / 360 * 0.0254, 25 * 3.50 / 360 * 0.0254, mesh)
+        self.delta_sweep = np.linspace(-35 * 3.50 / 360 * 0.0254, 25 * 3.50 / 360 * 0.0254, mesh)
         self.beta_sweep = np.linspace(-12 * np.pi / 180, 12 * np.pi / 180, mesh)
 
         self.suspension = self.vehicle.suspension
@@ -113,93 +113,93 @@ class YMD:
         RL_cp_pos_lst = []
         RR_cp_pos_lst = []
 
-        for pair in zip(x_ddot_lst, y_ddot_lst, yaw_ddot_lst, heave_lst, pitch_lst, roll_lst, delta_lst, beta_lst):
-            output = self._residual_eval(x = pair[:6], args = [*pair[6:], 25])
+        # for pair in zip(x_ddot_lst, y_ddot_lst, yaw_ddot_lst, heave_lst, pitch_lst, roll_lst, delta_lst, beta_lst):
+        #     output = self._residual_eval(x = pair[:6], args = [*pair[6:], 25])
 
-            Fx_res_lst.append(output[0])
-            Fy_res_lst.append(output[1])
-            Fz_res_lst.append(output[2])
-            Mx_res_lst.append(output[3])
-            My_res_lst.append(output[4])
-            Mz_res_lst.append(output[5])
-            FL_jounce_lst.append(output[6])
-            FR_jounce_lst.append(output[7])
-            RL_jounce_lst.append(output[8])
-            RR_jounce_lst.append(output[9])
-            FL_gamma_lst.append(output[10])
-            FR_gamma_lst.append(output[11])
-            RL_gamma_lst.append(output[12])
-            RR_gamma_lst.append(output[13])
-            FL_alpha_lst.append(output[14])
-            FR_alpha_lst.append(output[15])
-            RL_alpha_lst.append(output[16])
-            RR_alpha_lst.append(output[17])
-            FL_Fx_aligned_lst.append(output[18])
-            FL_Fy_aligned_lst.append(output[19])
-            FL_Fz_aligned_lst.append(output[20])
-            FR_Fx_aligned_lst.append(output[21])
-            FR_Fy_aligned_lst.append(output[22])
-            FR_Fz_aligned_lst.append(output[23])
-            RL_Fx_aligned_lst.append(output[24])
-            RL_Fy_aligned_lst.append(output[25])
-            RL_Fz_aligned_lst.append(output[26])
-            RR_Fx_aligned_lst.append(output[27])
-            RR_Fy_aligned_lst.append(output[28])
-            RR_Fz_aligned_lst.append(output[29])
-            new_heave_lst.append(output[30])
-            new_pitch_lst.append(output[31])
-            new_roll_lst.append(output[32])
-            new_delta_lst.append(output[33])
-            new_beta_lst.append(output[34])
-            ax_lst.append(output[35])
-            ay_lst.append(output[36])
-            new_yaw_ddot_lst.append(output[37])
-            FL_cp_pos_lst.append(output[38])
-            FR_cp_pos_lst.append(output[39])
-            RL_cp_pos_lst.append(output[40])
-            RR_cp_pos_lst.append(output[41])
+        #     Fx_res_lst.append(output[0])
+        #     Fy_res_lst.append(output[1])
+        #     Fz_res_lst.append(output[2])
+        #     Mx_res_lst.append(output[3])
+        #     My_res_lst.append(output[4])
+        #     Mz_res_lst.append(output[5])
+        #     FL_jounce_lst.append(output[6])
+        #     FR_jounce_lst.append(output[7])
+        #     RL_jounce_lst.append(output[8])
+        #     RR_jounce_lst.append(output[9])
+        #     FL_gamma_lst.append(output[10])
+        #     FR_gamma_lst.append(output[11])
+        #     RL_gamma_lst.append(output[12])
+        #     RR_gamma_lst.append(output[13])
+        #     FL_alpha_lst.append(output[14])
+        #     FR_alpha_lst.append(output[15])
+        #     RL_alpha_lst.append(output[16])
+        #     RR_alpha_lst.append(output[17])
+        #     FL_Fx_aligned_lst.append(output[18])
+        #     FL_Fy_aligned_lst.append(output[19])
+        #     FL_Fz_aligned_lst.append(output[20])
+        #     FR_Fx_aligned_lst.append(output[21])
+        #     FR_Fy_aligned_lst.append(output[22])
+        #     FR_Fz_aligned_lst.append(output[23])
+        #     RL_Fx_aligned_lst.append(output[24])
+        #     RL_Fy_aligned_lst.append(output[25])
+        #     RL_Fz_aligned_lst.append(output[26])
+        #     RR_Fx_aligned_lst.append(output[27])
+        #     RR_Fy_aligned_lst.append(output[28])
+        #     RR_Fz_aligned_lst.append(output[29])
+        #     new_heave_lst.append(output[30])
+        #     new_pitch_lst.append(output[31])
+        #     new_roll_lst.append(output[32])
+        #     new_delta_lst.append(output[33])
+        #     new_beta_lst.append(output[34])
+        #     ax_lst.append(output[35])
+        #     ay_lst.append(output[36])
+        #     new_yaw_ddot_lst.append(output[37])
+        #     FL_cp_pos_lst.append(output[38])
+        #     FR_cp_pos_lst.append(output[39])
+        #     RL_cp_pos_lst.append(output[40])
+        #     RR_cp_pos_lst.append(output[41])
 
-        output_dict = {"x_ddot": ax_lst,
-                       "y_ddot": ay_lst,
-                       "yaw_ddot": yaw_ddot_lst,
-                       "delta": [x * 180 / np.pi / (3.50 / (2 * np.pi) * 0.0254) for x in delta_lst],
-                       "beta": [x * 180 / np.pi for x in beta_lst],
-                       "FL_cp_pos": FL_cp_pos_lst,
-                       "FR_cp_pos": FR_cp_pos_lst,
-                       "RL_cp_pos": RL_cp_pos_lst,
-                       "RR_cp_pos": RR_cp_pos_lst,
-                       "FL_SA": [x * 180 / np.pi for x in FL_alpha_lst],
-                       "FR_SA": [x * 180 / np.pi for x in FR_alpha_lst],
-                       "RL_SA": [x * 180 / np.pi for x in RL_alpha_lst],
-                       "RR_SA": [x * 180 / np.pi for x in RR_alpha_lst],
-                       "heave": [x / 0.0254 for x in heave_lst],
-                       "pitch": [x * 180 / np.pi for x in pitch_lst],
-                       "roll": [x * 180 / np.pi for x in roll_lst],
-                       "FL jounce": [x / 0.0254 for x in FL_jounce_lst],
-                       "FR jounce": [x / 0.0254 for x in FR_jounce_lst],
-                       "RL jounce": [x / 0.0254 for x in RL_jounce_lst],
-                       "RR jounce": [x / 0.0254 for x in RR_jounce_lst],
-                       "FL gamma": [x * 180 / np.pi for x in FL_gamma_lst],
-                       "FR gamma": [x * 180 / np.pi for x in FR_gamma_lst],
-                       "RL gamma": [x * 180 / np.pi for x in RL_gamma_lst],
-                       "RR gamma": [x * 180 / np.pi for x in RR_gamma_lst],
-                       "FL_Fx": FL_Fx_aligned_lst,
-                       "FL_Fy": FL_Fy_aligned_lst,
-                       "FL_Fz": FL_Fz_aligned_lst,
-                       "FR_Fx": FR_Fx_aligned_lst,
-                       "FR_Fy": FR_Fy_aligned_lst,
-                       "FR_Fz": FR_Fz_aligned_lst,
-                       "RL_Fx": RL_Fx_aligned_lst,
-                       "RL_Fy": RL_Fy_aligned_lst,
-                       "RL_Fz": RL_Fz_aligned_lst,
-                       "RR_Fx": RR_Fx_aligned_lst,
-                       "RR_Fy": RR_Fy_aligned_lst,
-                       "RR_Fz": RR_Fz_aligned_lst,
-                       }
+        # output_dict = {"x_ddot": ax_lst,
+        #                "y_ddot": ay_lst,
+        #                "yaw_ddot": yaw_ddot_lst,
+        #                "delta": [x * 180 / np.pi / (3.50 / (2 * np.pi) * 0.0254) for x in delta_lst],
+        #                "beta": [x * 180 / np.pi for x in beta_lst],
+        #                "FL_cp_pos": FL_cp_pos_lst,
+        #                "FR_cp_pos": FR_cp_pos_lst,
+        #                "RL_cp_pos": RL_cp_pos_lst,
+        #                "RR_cp_pos": RR_cp_pos_lst,
+        #                "FL_SA": [x * 180 / np.pi for x in FL_alpha_lst],
+        #                "FR_SA": [x * 180 / np.pi for x in FR_alpha_lst],
+        #                "RL_SA": [x * 180 / np.pi for x in RL_alpha_lst],
+        #                "RR_SA": [x * 180 / np.pi for x in RR_alpha_lst],
+        #                "heave": [x / 0.0254 for x in heave_lst],
+        #                "pitch": [x * 180 / np.pi for x in pitch_lst],
+        #                "roll": [x * 180 / np.pi for x in roll_lst],
+        #                "FL jounce": [x / 0.0254 for x in FL_jounce_lst],
+        #                "FR jounce": [x / 0.0254 for x in FR_jounce_lst],
+        #                "RL jounce": [x / 0.0254 for x in RL_jounce_lst],
+        #                "RR jounce": [x / 0.0254 for x in RR_jounce_lst],
+        #                "FL gamma": [x * 180 / np.pi for x in FL_gamma_lst],
+        #                "FR gamma": [x * 180 / np.pi for x in FR_gamma_lst],
+        #                "RL gamma": [x * 180 / np.pi for x in RL_gamma_lst],
+        #                "RR gamma": [x * 180 / np.pi for x in RR_gamma_lst],
+        #                "FL_Fx": FL_Fx_aligned_lst,
+        #                "FL_Fy": FL_Fy_aligned_lst,
+        #                "FL_Fz": FL_Fz_aligned_lst,
+        #                "FR_Fx": FR_Fx_aligned_lst,
+        #                "FR_Fy": FR_Fy_aligned_lst,
+        #                "FR_Fz": FR_Fz_aligned_lst,
+        #                "RL_Fx": RL_Fx_aligned_lst,
+        #                "RL_Fy": RL_Fy_aligned_lst,
+        #                "RL_Fz": RL_Fz_aligned_lst,
+        #                "RR_Fx": RR_Fx_aligned_lst,
+        #                "RR_Fy": RR_Fy_aligned_lst,
+        #                "RR_Fz": RR_Fz_aligned_lst,
+        #                }
             
-        df = pd.DataFrame(output_dict)
+        # df = pd.DataFrame(output_dict)
 
-        df.to_csv("./debugging.csv")
+        # df.to_csv("./debugging.csv")
 
         # fig = plt.figure(figsize=plt.figaspect(2.))
         # fig.suptitle('YMD Debug Shit')
@@ -292,6 +292,16 @@ class YMD:
         # # ax.legend(["FL", "FR", "RL", "RR"])
         # ax.set_xlabel("alpha")
         # ax.set_ylabel("delta")
+
+        # ax = fig.add_subplot(4, 3, 10)
+
+        # param = [x for x in range(len(FL_Fz_aligned_lst))]
+
+        # ax.plot(param, [x * 180 / np.pi for x in pitch_lst])
+        # ax.plot(param, [x * 180 / np.pi for x in roll_lst])
+        # ax.legend(["Pitch", "Roll"])
+        # ax.set_xlabel("Param")
+        # ax.set_ylabel("Angle (deg)")
 
         # ax.plot(t1, f(t1), 'bo',
         # t2, f(t2), 'k--', markerfacecolor='green')
@@ -444,12 +454,12 @@ class YMD:
         ########### Aero Forces and Moments ###########
         ###############################################
 
-        aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
+        # aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
 
-        aero_forces = aero_loads[:3]
-        aero_FAP = aero_loads[3:]
+        # aero_forces = aero_loads[:3]
+        # aero_FAP = aero_loads[3:]
 
-        CG_wrt_CoP = aero_FAP - self.cg_pos
+        # CG_wrt_CoP = aero_FAP - self.cg_pos
 
         ###############################################
         ######## Calculate Forces and Moments #########
@@ -462,8 +472,8 @@ class YMD:
                              np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned) + \
                              self.FL_moments_aligned + self.FR_moments_aligned + self.RL_moments_aligned + self.RR_moments_aligned
         
-        aero_forces = aero_forces
-        aero_moments = np.cross(CG_wrt_CoP, aero_forces)
+        aero_forces = 0
+        aero_moments = 0
 
         vehicle_centric_forces = -1 * gravity_force + suspension_forces + aero_forces
         vehicle_centric_moments = suspension_moments + aero_moments
