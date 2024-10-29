@@ -54,7 +54,7 @@ void Wishbone::flatten_rotate (const StaticVector<double, 3> &angle) {
 void Wishbone::set_initial_position () {
     StaticMatrix<double, 3UL, 3UL> rot_mat = rotation_matrix(direction, -1 * angle);
     StaticVector<double, 3> outboard_point = all_elements[1]->position - all_elements[0]->position;
-    all_elements[1]->position = (rot_mat * outbpard_point) + all_elements[0]->position;
+    all_elements[1]->position = (rot_mat * outboard_point) + all_elements[0]->position;
 }
 
 /* Translates all children (inboard and outboard Nodes) 
@@ -73,6 +73,7 @@ StaticVector<double, 6> Wishbone::plane () const {
     column(point_vecs, 0) = all_elements[0]->position;
     column(point_vecs, 1) = all_elements[1]->position;
     column(point_vecs, 2) = all_elements[2]->position;
+
     return ::plane(point_vecs);
 }
 
@@ -80,8 +81,8 @@ StaticVector<double, 6> Wishbone::plane () const {
    Returns unit vector (inboard aft to inboard fore)*/
 StaticVector<double, 3> Wishbone::direction_vec () const {
     //need to implement unit_vec for : return unit_vec(self.fore_link.inboard_node, self.aft_link.inboard_node)
-    StaticVector<double, 3UL> difference = all_elements[0]->position - all_elements[2]->position
-    double norm = norm(diff);
+    StaticVector<double, 3UL> difference = all_elements[0]->position - all_elements[2]->position;
+    double norm = blaze::norm(difference);
     return difference / norm;
 }
 

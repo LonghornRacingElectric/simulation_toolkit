@@ -12,12 +12,13 @@ int main() {
     Node node1(position1);
     Node node2(position2);
     Beam beam1(&node1, &node2);
+    Kingpin kp1(&beam1);
 
-    Tie tie1(&beam1);
+    Tie tie1(&beam1, &kp1);
 
     cout << tie1.getAngle() << endl;
-    cout << tie1.getInboardNode() << endl;
-    cout << tie1.getOutboardNode() << endl;
+    // cout << tie1.getInboardNode() << endl;
+    // cout << tie1.getOutboardNode() << endl;
     cout << tie1.getLength() << endl;
 
     return 0;

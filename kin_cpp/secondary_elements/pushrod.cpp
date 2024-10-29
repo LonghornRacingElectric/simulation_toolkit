@@ -19,8 +19,9 @@ double Pushrod::getAngle() const {
     return angle;
 }
 
-//TODO : Implement pushrod rotation
-
+Beam *Pushrod::getBeam() {
+    return pushrod_beam;
+}
 double Pushrod::calculateLength() {
     length = pushrod_beam->height();
     return length;
