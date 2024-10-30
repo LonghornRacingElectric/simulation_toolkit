@@ -55,21 +55,22 @@ test_car.controls = {
 wheel_torque ~f(speed, soc)
 """
 
-fig = plt.figure(figsize=(12,8))
+fig = plt.figure(figsize=(12, 8))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_title('wheel torque ~f(velocity, soc)  ~ type shit ~')
 ax.set_xlabel('velocity [m/s]')
 ax.set_ylabel('soc [%]')
+ax.set_zlabel('wheel torque [Nm]')
 
 torque_requests = [-220]
 
 for torque_set in torque_requests:
     test_car.controls['torque_request'] = torque_set
     torques = {}
-    vels = np.linspace(0, 350, 60)
+    vels = np.linspace(0, 350, 10)
     rpms = {}
     powers = {}
-    socs = np.arange(0.05, 1, .05)
+    socs = np.arange(0.05, 1, .5)
     wheel_speeds = {}
     tire_radius = 8*0.0254  # [m]
     output = {}
@@ -114,7 +115,7 @@ for torque_set in torque_requests:
     surf = ax.plot_surface(speed_grid, soc_grid, torque_grid)
 
 plt.show()
-
+pkl.dump(fig, open('regen_wheel_torque~f(velocity, soc).pkl', 'wb'))
 
 
 # 2d plot

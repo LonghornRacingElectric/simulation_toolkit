@@ -1,8 +1,8 @@
-### POWERTRAIN ###
+ ### POWERTRAIN ###
 powertrain:
- description: powertrain description
- type: str
- value: 2025 Powertrain
+     description: powertrain description
+     type: str
+     value: 2025 Powertrain
 
 motor:
  description: motor description
