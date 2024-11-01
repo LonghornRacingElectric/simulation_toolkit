@@ -6,6 +6,7 @@ import pickle as pkl
 import os
 import sys
 import matplotlib.pyplot as plt
+from matplotlib import colors
 
 # make everything in cd accessible
 for dirpath, dirnames, filenames in os.walk(os.curdir):
@@ -55,21 +56,21 @@ test_car.controls = {
 wheel_torque ~f(speed, soc)
 """
 
-fig = plt.figure(figsize=(12,8))
+fig = plt.figure(figsize=(12, 8))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_title('wheel torque ~f(velocity, soc)  ~ type shit ~')
 ax.set_xlabel('velocity [m/s]')
 ax.set_ylabel('soc [%]')
 
-torque_requests = [-220]
+torque_requests = [-220, 220]
 
 for torque_set in torque_requests:
     test_car.controls['torque_request'] = torque_set
     torques = {}
-    vels = np.linspace(0, 350, 60)
+    vels = np.linspace(0, 350, 100)
     rpms = {}
     powers = {}
-    socs = np.arange(0.05, 1, .05)
+    socs = np.arange(0.05, 1., .04)
     wheel_speeds = {}
     tire_radius = 8*0.0254  # [m]
     output = {}
@@ -111,11 +112,16 @@ for torque_set in torque_requests:
     # 3d plot
     speed_grid, soc_grid = np.meshgrid(wheel_speeds[socs[0]], socs)
     torque_grid = np.array([torques[soc] for soc in socs])
-    surf = ax.plot_surface(speed_grid, soc_grid, torque_grid)
+    if np.average(torque_grid) < 0:
+        cmap = 'viridis_r'
+    else:
+        cmap = 'viridis'
+    surf = ax.plot_surface(speed_grid, soc_grid, torque_grid, cmap=cmap)
 
+os.chdir('outputs')
+with open('combined_wheel_torque~f(velocity, soc).pkl', 'wb') as file:
+    pkl.dump(fig, file)
 plt.show()
-
-
 
 # 2d plot
 # for soc in socs:

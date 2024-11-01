@@ -132,7 +132,7 @@ class PowertrainModel:
             motor_pwr_mech = test_torque * motor_ang_vel
             phase_current = test_torque / self.motor_kt
             motor_eff = self.motor_efficiency([self.motor_rpm, np.abs(test_torque)])
-            inverter_eff = self.inverter_efficiency([phase_current, self.back_emf])
+            inverter_eff = self.inverter_efficiency([self.back_emf, phase_current])
 
             dc_pwr_inverter = motor_pwr_mech / (motor_eff * inverter_eff)
             #  assumes motor efficiency map is symetric about x axis, thus use abs(torque)
@@ -162,7 +162,7 @@ class PowertrainModel:
             phase_current = torque_req / self.motor_kt
             max_power_motor = max_motor_pwr_calc(torque_req)
             motor_inverter_eff = (self.motor_efficiency(np.array([self.motor_rpm, np.abs(torque_req)])) *
-                                  self.inverter_efficiency([phase_current, self.back_emf]))
+                                  self.inverter_efficiency([self.back_emf, phase_current]))
             if not self.regening:
                 regulated_power_limit_motor = self.regulated_power_limit_emeter * motor_inverter_eff
                 total_power_limit = float(min(regulated_power_limit_motor, max_power_motor))
@@ -208,7 +208,7 @@ class PowertrainModel:
         state_out = state_in
         motor_power = motor_torque * motor_ang_vel
         motor_efficiency = self.motor_efficiency([self.motor_rpm, np.abs(motor_torque)])
-        inverter_efficiency = self.inverter_efficiency([motor_torque/self.motor_kt, self.back_emf])
+        inverter_efficiency = self.inverter_efficiency([self.back_emf, motor_torque/self.motor_kt])
         if not self.regening:
             battery_terminal_power = motor_power/(motor_efficiency * inverter_efficiency)
         else:
