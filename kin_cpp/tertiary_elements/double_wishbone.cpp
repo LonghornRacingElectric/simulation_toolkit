@@ -1,4 +1,5 @@
 #include "double_wishbone.h"
+#include "../assets/misc_linalg.h"
 using namespace blaze;
 /* NEW CHANGE : outboard points is of form [[upper outboard], [lower outboard], [tie rod], [push/pull rod]]*/
 DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 4UL> &outboard_points, 
@@ -173,13 +174,46 @@ DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, S
     }
 }
 void DoubleWishbone::_fixed_unsprung_geom () {
+    cp_to_lower = norm (contact_patch->position - lower_outboard->position);
+    cp_to_upper = norm (contact_patch->position - upper_outboard->position);
+    cp_to_tie = norm (contact_patch->position - tie_outboard->position);
 
+    StaticVector<double, 2UL> xy_ang = kingpin->getBeam ()->normalized_transform ();
+    StaticVector<double, 3UL> cp_pos_shifted = contact_patch->position - lower_outboard->position;
+    StaticMatrix<double, 3UL, 3UL> x_rot = rotation_matrix ({1, 0, 0}, xy_ang[0]);
+    StaticMatrix<double, 3UL, 3UL> y_rot = rotation_matrix ({0, 1, 0}, -1 * xy_ang[1]);
+
+    cp_to_kingpin = y_rot * (x_rot * cp_pos_shifted);
 }
-StaticVector<double, 2UL>DoubleWishbone::_jounce_resid_func (StaticVector<double, 3UL> &x, double jounce) {
+StaticVector<double, 2UL>DoubleWishbone::_jounce_resid_func (StaticVector<double, 2UL> &x, double jounce) {
+    double upper_wishbone_rot = x[0];
+    double lower_wishbone_rot = x[1];
 
+    /* Apply wishbone rotations */
+    upper_wishbone->rotate (upper_wishbone_rot);
+    lower_wishbone->rotate (lower_wishbone_rot);
+
+    /* Calculate contact patch under jounce condition */
+    StaticVector<double, 2UL> xy_ang = kingpin->getBeam ()->normalized_transform ();
+    StaticMatrix<double, 3UL, 3UL> x_rot = rotation_matrix ({1, 0, 0}, -1 * xy_ang[0]);
+    StaticMatrix<double, 3UL, 3UL> y_rot = rotation_matrix ({0, 1, 0}, xy_ang[1]);
+    StaticVector<double, 3UL> cp_pos = (y_rot * (x_rot * cp_to_kingpin)) + lower_outboard->position;
+
+    /* Geometry constraints */
+    double _cp_to_lower = norm (cp_pos - lower_outboard->position);
+    double _cp_to_upper = norm (cp_pos - upper_outboard->position);
+    double offset = cp_pos[2] - jounce;\
+
+    contact_patch->position = cp_pos;
+    return {(_cp_to_lower - cp_to_lower) + offset, (_cp_to_upper - cp_to_upper) + offset};
 }
-double DoubleWishbone::_jounce_induced_steer_resid_func (StaticVector<double, 3UL> &x) {
 
+double DoubleWishbone::_jounce_induced_steer_resid_func (StaticVector<double, 1UL> &x) {
+    double induced_steer = x[0];
+    steering_link->rotate (induced_steer);
+
+    double residual_length = steering_link->getLength () - steering_link->getInitialLength ();
+    return residual_length;
 }
 void DoubleWishbone::jounce (double jounce, double heave_jounce, double roll_jounce, double pitch_jounce) {
 

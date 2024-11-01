@@ -10,6 +10,7 @@ public:
     // Functions for getting length and angle
     double getLength() const;
     double getAngle() const;
+    double getInitialLength () const
     StaticVector<double, 3UL> _steering_pickup_to_kingpin() const;
     void update();
     void rotate(double angle);

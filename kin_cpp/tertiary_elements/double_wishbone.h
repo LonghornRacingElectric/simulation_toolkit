@@ -58,6 +58,12 @@ private:
     PushPullRod *rod;
     bool upper;
 
+
+    double cp_to_lower;
+    double cp_to_upper;
+    double cp_to_tie;
+    StaticVector<double, 3UL> cp_to_kingpin;
+
     Node *elements[10];
     Node *all_elements[9];
 
@@ -70,8 +76,8 @@ public:
                    bool upper, StaticVector<double, 3UL> &contact_patch, double inclination_angle, double toe, double tire_radius, 
                    double tire_width, bool show_ICs);
     void _fixed_unsprung_geom ();
-    StaticVector<double, 2UL>_jounce_resid_func (StaticVector<double, 3UL> &x, double jounce);
-    double _jounce_induced_steer_resid_func (StaticVector<double, 3UL> &x);
+    StaticVector<double, 2UL>_jounce_resid_func (StaticVector<double, 2UL> &x, double jounce);
+    double _jounce_induced_steer_resid_func (StaticVector<double, 1UL> &x);
     void jounce (double jounce, double heave_jounce, double roll_jounce, double pitch_jounce);
     double _steer_resid_func (StaticVector<double, 3UL> &x);
     void steer (double steer);
