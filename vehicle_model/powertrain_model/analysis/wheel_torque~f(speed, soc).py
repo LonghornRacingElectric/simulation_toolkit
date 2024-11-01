@@ -61,16 +61,24 @@ ax = fig.add_subplot(111, projection='3d')
 ax.set_title('wheel torque ~f(velocity, soc)  ~ type shit ~')
 ax.set_xlabel('velocity [m/s]')
 ax.set_ylabel('soc [%]')
+ax.set_zlabel('wheel torque [Nm]')
 
 torque_requests = [-220, 220]
 
 for torque_set in torque_requests:
     test_car.controls['torque_request'] = torque_set
     torques = {}
+<<<<<<< HEAD
     vels = np.linspace(0, 350, 100)
     rpms = {}
     powers = {}
     socs = np.arange(0.05, 1., .04)
+=======
+    vels = np.linspace(0, 350, 10)
+    rpms = {}
+    powers = {}
+    socs = np.arange(0.05, 1, .5)
+>>>>>>> 671645e8cf864be746d7e7235e05bbfdf3ddd61f
     wheel_speeds = {}
     tire_radius = 8*0.0254  # [m]
     output = {}
@@ -122,6 +130,11 @@ os.chdir('outputs')
 with open('combined_wheel_torque~f(velocity, soc).pkl', 'wb') as file:
     pkl.dump(fig, file)
 plt.show()
+<<<<<<< HEAD
+=======
+pkl.dump(fig, open('regen_wheel_torque~f(velocity, soc).pkl', 'wb'))
+
+>>>>>>> 671645e8cf864be746d7e7235e05bbfdf3ddd61f
 
 # 2d plot
 # for soc in socs:
