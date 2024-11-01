@@ -63,24 +63,29 @@ ax.set_xlabel('velocity [m/s]')
 ax.set_ylabel('soc [%]')
 ax.set_zlabel('wheel torque [Nm]')
 
-torque_requests = [-220, 220]
+
+# ------------- inputs -------------- #
+
+torque_requests = np.array([-220, 220])  # [Nm]
+soc_mesh = 20
+soc_range = np.array([0.0, 0.99])  # [%]
+velocity_mesh = 125
+velocity_range = np.array([0, 35])  # [m/s]
+tire_radius = 8  # [in]
+
+# ------------- ------ -------------- #
+
+tire_radius *= 0.0254  # [m]
+velocity_range = velocity_range/tire_radius  # [m/s]
 
 for torque_set in torque_requests:
     test_car.controls['torque_request'] = torque_set
     torques = {}
-<<<<<<< HEAD
-    vels = np.linspace(0, 350, 100)
+    vels = np.linspace(velocity_range[0], velocity_range[1], velocity_mesh)
     rpms = {}
     powers = {}
-    socs = np.arange(0.05, 1., .04)
-=======
-    vels = np.linspace(0, 350, 10)
-    rpms = {}
-    powers = {}
-    socs = np.arange(0.05, 1, .5)
->>>>>>> 671645e8cf864be746d7e7235e05bbfdf3ddd61f
+    socs = np.linspace(soc_range[0], soc_range[1], soc_mesh)
     wheel_speeds = {}
-    tire_radius = 8*0.0254  # [m]
     output = {}
     for soc in socs:
         test_car.state_in['soc'] = soc
@@ -102,20 +107,20 @@ for torque_set in torque_requests:
             torque = np.append(torque, state['powertrain_torques'][2]+state['powertrain_torques'][3])
             power = np.append(power, state['motor_power']/1000)
             # rpm = np.append(rpm, state['motor_rpm'])
-            wheel_speed = np.append(wheel_speed, vel*tire_radius)
-            if state['powertrain_torques'][2] == 0:
-                break
-        iteration['torque']: torque
-        iteration['power'] = power
-        iteration['rpm'] = rpm
-        iteration['wheel_speed'] = wheel_speed
-        output[soc] = iteration
+            wheel_speed = np.append(wheel_speed, vel)  # [rad/s]
+            # if state['powertrain_torques'][2] == 0:
+            #     break
+        # iteration['torque']: torque
+        # iteration['power'] = power
+        # iteration['rpm'] = rpm
+        # iteration['wheel_speed'] = wheel_speed*tire_radius  # [m/s]
+        # output[soc] = iteration
 
         print(soc)
         torques[soc] = torque
         powers[soc] = power
         rpms[soc] = rpm
-        wheel_speeds[soc] = wheel_speed
+        wheel_speeds[soc] = wheel_speed*tire_radius  # [m/s]
 
     # 3d plot
     speed_grid, soc_grid = np.meshgrid(wheel_speeds[socs[0]], socs)
@@ -130,11 +135,6 @@ os.chdir('outputs')
 with open('combined_wheel_torque~f(velocity, soc).pkl', 'wb') as file:
     pkl.dump(fig, file)
 plt.show()
-<<<<<<< HEAD
-=======
-pkl.dump(fig, open('regen_wheel_torque~f(velocity, soc).pkl', 'wb'))
-
->>>>>>> 671645e8cf864be746d7e7235e05bbfdf3ddd61f
 
 # 2d plot
 # for soc in socs:
