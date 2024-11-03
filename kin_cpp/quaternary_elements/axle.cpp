@@ -101,11 +101,17 @@ double Axle::roll_stiffness() const{
 }
 
 void Axle::translate (StaticVector<double, 3UL> &translation){
-    return;
+    int array_size = sizeof(all_elements) / sizeof(all_elements[0]);
+    for (int i = 0; i < array_size; i++) {
+        all_elements[i]->translate(translation);
+    }
 }
 
 void Axle::flatten_rotate (StaticVector<double, 3UL> &angle) {
-    return;
+    int array_size = sizeof(all_elements) / sizeof(all_elements[0]);
+    for (int i = 0; i < array_size; i++) {
+        all_elements[i]->flatten_rotate(angle);
+    }
 }
 
 
