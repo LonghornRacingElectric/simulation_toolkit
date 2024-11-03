@@ -8,6 +8,7 @@ Axle::Axle (DoubleWishbone *left_assy, DoubleWishbone *right_assy, CG *cg) {
 
     elements[0] = all_elements[0] = left;
     elements[1] = all_elements[1] = right;
+    elements[2] = all_elements[2] = cg;
 }
 
 void Axle::roll(double angle){
@@ -17,10 +18,9 @@ void Axle::roll(double angle){
     double cg_lateral_pos = cg->getPosition ()->position[1] - right_cp->position[1];
     double left_cp_pos = left_cp->position[1] - right_cp->position[1];
 
-    double left_arm = std::abs(left_cp_pos - cg_lateral_pos);
-    double right_arm = std::abs(left_cp_pos - left_arm);
-    double LR_ration = left_arm/right_arm;
-
+    double left_arm = std::fabs(left_cp_pos - cg_lateral_pos);
+    double right_arm = std::fabs(left_cp_pos - left_arm);
+    double LR_ratio = left_arm/right_arm;
     double left_jounce_guess = left_arm * std::tan(angle);
 
     //TODO NEED FSOLVE FOR 
@@ -48,7 +48,7 @@ double Axle::_roll_resid_func(StaticVector<double, 2UL> &args, double x) {
     left->jounce(0.0, 0.0, -1 * left_jounce_guess, 0.0);
     right->jounce(0.0, 0.0, right_jounce_guess, 0.0);
 
-    double calculated_track = abs(left_cp->position[1] - right_cp->position[1]);
+    double calculated_track = fabs(left_cp->position[1] - right_cp->position[1]);
     double calculated_roll = atan((left_jounce_guess + right_jounce_guess) / calculated_track);
 
     return calculated_roll - angle;
@@ -84,7 +84,7 @@ void Axle::axle_pitch (double heave){
 }
 
 double Axle::track_width () const{
-    double track = abs(left->getContactPatch ()->position[1] - right->getContactPatch ()->position[1]);
+    double track = fabs(left->getContactPatch ()->position[1] - right->getContactPatch ()->position[1]);
     return track;
 }
 
