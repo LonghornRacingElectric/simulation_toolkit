@@ -300,6 +300,7 @@ double DoubleWishbone::motion_ratio () const {
 double DoubleWishbone::wheelrate () const {
     return spring_rate / pow (motion_ratio (), 2);
 }
+
 void DoubleWishbone::translate (StaticVector<double, 3UL> translation) {
     upper_wishbone->translate (translation);
     lower_wishbone->translate (translation);
@@ -315,6 +316,7 @@ void DoubleWishbone::translate (StaticVector<double, 3UL> translation) {
     SV_FAP->translate (translation);
     rod->translate (translation);
 }
+
 void DoubleWishbone::flatten_rotate (StaticVector<double, 3UL> angle) {
     upper_wishbone->flatten_rotate (angle);
     lower_wishbone->flatten_rotate (angle);
@@ -334,16 +336,19 @@ void DoubleWishbone::flatten_rotate (StaticVector<double, 3UL> angle) {
     FV_FAP->position = FV_FAP_position ();
     SV_FAP->position = SV_FAP_position ();
 }
+
 double DoubleWishbone::lateral_arm () const {
     double lateral_arm = abs (contact_patch->position[1] - cg->getPosition ()->position[1]);
 
     return lateral_arm;
 }
+
 double DoubleWishbone::longitudinal_arm () const {
     double longitudinal_arm = abs (contact_patch->position[0] - cg->getPosition ()->position[0]);
 
     return longitudinal_arm;
 }
+
 StaticVector<double, 3UL> DoubleWishbone::FVIC_position () const {
     StaticVector<double, 6UL> upper_plane = upper_wishbone->plane ();
     StaticVector<double, 6UL> lower_plane = lower_wishbone->plane ();
@@ -366,6 +371,7 @@ StaticVector<double, 3UL> DoubleWishbone::FVIC_position () const {
 
     return {x, y, z};
 }
+
 StaticVector<double, 3UL> DoubleWishbone::SVIC_position () const {
     StaticVector<double, 6UL> upper_plane = upper_wishbone->plane ();
     StaticVector<double, 6UL> lower_plane = lower_wishbone->plane ();
@@ -395,6 +401,7 @@ StaticVector<double, 3UL> DoubleWishbone::SVIC_position () const {
 
     return {x, y, z};
 }
+
 StaticVector<double, 3UL> DoubleWishbone::FV_FAP_position () const {
     StaticVector<double, 3UL> dir_yz = FVIC_link->getInboardNode ()->position - FVIC_link->getOutboardNode ()->position;
     double z = (dir_yz[2] / dir_yz[1]) * (cg->getPosition()->position[1] - FVIC_link->getOutboardNode ()->position[1] + FVIC_link->getOutboardNode ()->position[2]);
@@ -404,6 +411,7 @@ StaticVector<double, 3UL> DoubleWishbone::FV_FAP_position () const {
 
     return {x, y, z};
 }
+
 StaticVector<double, 3UL> DoubleWishbone::SV_FAP_position () const {
     StaticVector<double, 3UL> dir_yz = SVIC_link->getInboardNode ()->position - SVIC_link->getOutboardNode ()->position;
     double z = (dir_yz[2] / dir_yz[0]) * (cg->getPosition()->position[0] - FVIC_link->getOutboardNode ()->position[0] + FVIC_link->getOutboardNode ()->position[2]);
@@ -413,17 +421,25 @@ StaticVector<double, 3UL> DoubleWishbone::SV_FAP_position () const {
 
     return {x, y, z};
 }
+
 double DoubleWishbone::caster () const {
     return kingpin->getBeam ()->normalized_transform ()[1];
 }
+
 double DoubleWishbone::kpi () const {
     return kingpin->getBeam ()->normalized_transform ()[0];
 }
+
 double DoubleWishbone::toe () const {
     return tire->induced_steer ();
 }
+
 double DoubleWishbone::inclination_angle () const {
     StaticVector<double, 3UL> vec_a = tire->direction ();
     double gamma = atan (vec_a[2] / (sqrt (pow (vec_a[0], 2) + pow (vec_a[1], 2))));
     return gamma;
+}
+
+Node *DoubleWishbone::getContactPatch () const {
+    return contact_patch;
 }

@@ -105,6 +105,9 @@ public:
     double kpi () const;
     double toe () const;
     double inclination_angle () const;
+    
+    /* Getters */
+    Node *getContactPatch () const;
 };
 
 #endif
