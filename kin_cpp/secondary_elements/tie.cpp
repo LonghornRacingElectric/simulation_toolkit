@@ -29,6 +29,13 @@ double Tie::getAngle() const {
     return angle;
 }
 
+double Tie::getInitialLength () const {
+    return initial_length;
+}
+
+Beam *Tie::getTieBeam () const {
+    return tie_beam;
+}
 void Tie::update() {
     StaticVector<double, 3UL> angles = kingpin->getBeam()->normalized_transform();
     StaticMatrix<double, 3UL, 3UL> x_rot = rotation_matrix({1, 0, 0}, -1 * angles[0]);

@@ -20,6 +20,8 @@ private:
     double steered_angle;
     double induced_steer;
 
+    /* Helps track whether to include SVIC in translate / flatten rotate */
+    double pos_less_than_fifty;
     CG *cg;
 
     Beam *upper_fore_link;
@@ -27,26 +29,26 @@ private:
     Beam *lower_fore_link;
     Beam *lower_aft_link;
 
-    Wishbone *upper_wishbone;
-    Wishbone *lower_wishbone;
+    Wishbone *upper_wishbone; /* x */
+    Wishbone *lower_wishbone; /* x */
 
     Kingpin *kingpin;
-    Tie *steering_link;
+    Tie *steering_link; /* x */
 
     Node *upper_outboard;
     Node *lower_outboard;
     Node *tie_outboard;
     Node *contact_patch;
     
-    Tire *tire;
+    Tire *tire; /* x */
 
-    Node *FVIC;
+    Node *FVIC; /* x */
     Beam *FVIC_link;
-    Node *SVIC;
+    Node *SVIC; /* x */
     Beam *SVIC_link;
 
-    Node *FV_FAP;
-    Node *SV_FAP;
+    Node *FV_FAP; /* x */
+    Node *SV_FAP; /* x */
 
     Node *rod_inboard;
     Node *rod_outboard;
@@ -55,8 +57,22 @@ private:
     Node *shock_outboard;
     Node *shock_inboard;
 
-    PushPullRod *rod;
+    PushPullRod *rod;  /* x */
     bool upper;
+
+
+    double cp_to_lower;
+    double cp_to_upper;
+    double cp_to_tie;
+    StaticVector<double, 3UL> cp_to_kingpin;
+
+    double heave_jounce;
+    double roll_jounce;
+    double pitch_jounce;
+    double total_jounce;
+
+    /* Pointer to motion ratio function */
+    double (*motion_ratio_function) (double);
 
     Node *elements[10];
     Node *all_elements[9];
@@ -70,8 +86,8 @@ public:
                    bool upper, StaticVector<double, 3UL> &contact_patch, double inclination_angle, double toe, double tire_radius, 
                    double tire_width, bool show_ICs);
     void _fixed_unsprung_geom ();
-    StaticVector<double, 2UL>_jounce_resid_func (StaticVector<double, 3UL> &x, double jounce);
-    double _jounce_induced_steer_resid_func (StaticVector<double, 3UL> &x);
+    StaticVector<double, 2UL>_jounce_resid_func (StaticVector<double, 2UL> &x, double jounce);
+    double _jounce_induced_steer_resid_func (StaticVector<double, 1UL> &x);
     void jounce (double jounce, double heave_jounce, double roll_jounce, double pitch_jounce);
     double _steer_resid_func (StaticVector<double, 3UL> &x);
     void steer (double steer);
@@ -89,6 +105,9 @@ public:
     double kpi () const;
     double toe () const;
     double inclination_angle () const;
+    
+    /* Getters */
+    Node *getContactPatch () const;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "double_wishbone.h"
+#include "../assets/misc_linalg.h"
 using namespace blaze;
 /* NEW CHANGE : outboard points is of form [[upper outboard], [lower outboard], [tie rod], [push/pull rod]]*/
 DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 4UL> &outboard_points, 
@@ -119,7 +120,7 @@ DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, S
     /* TODO : 
         self.wheelrate_function = CubicSpline(x=jounce_sweep, y=wheelrate_lst) */
 
-    bool pos_less_than_fifty = false;
+    pos_less_than_fifty = false;
 
     for (int i = 0; i < 3; i++) {
         if (SVIC->position[i] > -50 && SVIC->position[i] < 50) {
@@ -173,62 +174,272 @@ DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, S
     }
 }
 void DoubleWishbone::_fixed_unsprung_geom () {
+    cp_to_lower = norm (contact_patch->position - lower_outboard->position);
+    cp_to_upper = norm (contact_patch->position - upper_outboard->position);
+    cp_to_tie = norm (contact_patch->position - tie_outboard->position);
 
-}
-StaticVector<double, 2UL>DoubleWishbone::_jounce_resid_func (StaticVector<double, 3UL> &x, double jounce) {
+    StaticVector<double, 2UL> xy_ang = kingpin->getBeam ()->normalized_transform ();
+    StaticVector<double, 3UL> cp_pos_shifted = contact_patch->position - lower_outboard->position;
+    StaticMatrix<double, 3UL, 3UL> x_rot = rotation_matrix ({1, 0, 0}, xy_ang[0]);
+    StaticMatrix<double, 3UL, 3UL> y_rot = rotation_matrix ({0, 1, 0}, -1 * xy_ang[1]);
 
+    cp_to_kingpin = y_rot * (x_rot * cp_pos_shifted);
 }
-double DoubleWishbone::_jounce_induced_steer_resid_func (StaticVector<double, 3UL> &x) {
+StaticVector<double, 2UL>DoubleWishbone::_jounce_resid_func (StaticVector<double, 2UL> &x, double jounce) {
+    double upper_wishbone_rot = x[0];
+    double lower_wishbone_rot = x[1];
 
-}
-void DoubleWishbone::jounce (double jounce, double heave_jounce, double roll_jounce, double pitch_jounce) {
+    /* Apply wishbone rotations */
+    upper_wishbone->rotate (upper_wishbone_rot);
+    lower_wishbone->rotate (lower_wishbone_rot);
 
+    /* Calculate contact patch under jounce condition */
+    StaticVector<double, 2UL> xy_ang = kingpin->getBeam ()->normalized_transform ();
+    StaticMatrix<double, 3UL, 3UL> x_rot = rotation_matrix ({1, 0, 0}, -1 * xy_ang[0]);
+    StaticMatrix<double, 3UL, 3UL> y_rot = rotation_matrix ({0, 1, 0}, xy_ang[1]);
+    StaticVector<double, 3UL> cp_pos = (y_rot * (x_rot * cp_to_kingpin)) + lower_outboard->position;
+
+    /* Geometry constraints */
+    double _cp_to_lower = norm (cp_pos - lower_outboard->position);
+    double _cp_to_upper = norm (cp_pos - upper_outboard->position);
+    double offset = cp_pos[2] - jounce;\
+
+    contact_patch->position = cp_pos;
+    return {(_cp_to_lower - cp_to_lower) + offset, (_cp_to_upper - cp_to_upper) + offset};
 }
+
+double DoubleWishbone::_jounce_induced_steer_resid_func (StaticVector<double, 1UL> &x) {
+    double induced_steer = x[0];
+    steering_link->rotate (induced_steer);
+
+    double residual_length = steering_link->getLength () - steering_link->getInitialLength ();
+    return residual_length;
+}
+void DoubleWishbone::jounce (double _jounce, double _heave_jounce, double _roll_jounce, double _pitch_jounce) {
+    if (_jounce) {
+        heave_jounce = roll_jounce = pitch_jounce = 0;
+    }
+
+    if (_heave_jounce) {
+        heave_jounce = _heave_jounce;
+    }
+
+    if (_roll_jounce) {
+        roll_jounce = _roll_jounce;
+    } 
+
+    if (_pitch_jounce) {
+        pitch_jounce = _pitch_jounce;
+    }
+
+    total_jounce = _jounce + heave_jounce + roll_jounce + pitch_jounce;
+
+    StaticVector<double, 2UL> wishbone_angles;
+    if (total_jounce) {
+        /* NEED FSOLVE FOR THE FOLLOWING 
+            wishbone_angles = fsolve(self._jounce_resid_func, [0, 0], args=(self.total_jounce))   
+        */
+    } else {
+        wishbone_angles = {0, 0};
+    }
+
+    upper_wishbone->rotate (wishbone_angles[0]);
+    lower_wishbone->rotate (wishbone_angles[1]);
+
+    StaticVector<double, 1UL> _induced_steer;
+
+    /* NEED FSOLVE FOR THE FOLLOWING : 
+        induced_steer = fsolve(self._jounce_induced_steer_resid_func, [0]) 
+    */
+
+   /* Set jounce induced steer in tire */
+   tire->set_induced_steer (_induced_steer[0]);
+
+   /* Apply transformation to push/pull rod */
+   if (upper) {
+        rod->rotate_rod (upper_wishbone->getDirection (), upper_wishbone->getForeBeam ()->getInboardNode (), wishbone_angles[0]);
+   } else {
+        rod->rotate_rod (lower_wishbone->getDirection (), lower_wishbone->getForeBeam ()->getInboardNode (), wishbone_angles[1]);
+   }
+
+   rod->update ();
+
+   induced_steer = _induced_steer[0];
+   FVIC->position = FVIC_position ();
+   SVIC->position = SVIC_position ();
+
+   FV_FAP->position = FV_FAP_position ();
+   SV_FAP->position = SV_FAP_position ();
+}
+
 double DoubleWishbone::_steer_resid_func (StaticVector<double, 3UL> &x) {
+    double steer_angle = x[0];
 
+    steering_link->rotate (steer_angle);
+    double residual_length = steering_link->calculateLength () - steering_link->getInitialLength ();
+
+    return residual_length;
 }
 void DoubleWishbone::steer (double steer) {
+    Node *steering_inboard = steering_link->getTieBeam ()->getInboardNode ();
+    steering_inboard->position[1] = steering_inboard->position[1] + steer;
 
+    StaticVector<double, 1UL> angle;
+
+    /* NEED FSOLVE FOR THE FOLLOWING : 
+        angle = fsolve(self._steer_resid_func, [0]) */
+    
+    tire->set_induced_steer (angle[0] + induced_steer);
+    steered_angle = steer;
 }
+
 double DoubleWishbone::motion_ratio () const {
-
+    motion_ratio_function (total_jounce);
 }
+
 double DoubleWishbone::wheelrate () const {
-
+    return spring_rate / pow (motion_ratio (), 2);
 }
+
 void DoubleWishbone::translate (StaticVector<double, 3UL> translation) {
+    upper_wishbone->translate (translation);
+    lower_wishbone->translate (translation);
+    steering_link->getTieBeam ()->translate (translation);
+    tire->translate (translation);
+    FVIC->translate (translation);
 
+    if (pos_less_than_fifty) {
+        SVIC->translate (translation);
+    }
+
+    FV_FAP->translate (translation);
+    SV_FAP->translate (translation);
+    rod->translate (translation);
 }
+
 void DoubleWishbone::flatten_rotate (StaticVector<double, 3UL> angle) {
+    upper_wishbone->flatten_rotate (angle);
+    lower_wishbone->flatten_rotate (angle);
+    steering_link->getTieBeam ()->flatten_rotate (angle);
+    tire->flatten_rotate (angle);
+    FVIC->flatten_rotate (angle);
 
+    if (pos_less_than_fifty) {
+        SVIC->flatten_rotate (angle);
+    }
+
+    FV_FAP->flatten_rotate (angle);
+    SV_FAP->flatten_rotate (angle);
+    rod->flatten_rotate (angle);
+
+    /* Adjust fore application points for rotation */
+    FV_FAP->position = FV_FAP_position ();
+    SV_FAP->position = SV_FAP_position ();
 }
+
 double DoubleWishbone::lateral_arm () const {
+    double lateral_arm = abs (contact_patch->position[1] - cg->getPosition ()->position[1]);
 
+    return lateral_arm;
 }
+
 double DoubleWishbone::longitudinal_arm () const {
+    double longitudinal_arm = abs (contact_patch->position[0] - cg->getPosition ()->position[0]);
 
+    return longitudinal_arm;
 }
+
 StaticVector<double, 3UL> DoubleWishbone::FVIC_position () const {
+    StaticVector<double, 6UL> upper_plane = upper_wishbone->plane ();
+    StaticVector<double, 6UL> lower_plane = lower_wishbone->plane ();
 
+    double x = contact_patch->position[0];
+
+    if ((upper_plane[1] / upper_plane[2]) == (lower_plane[1] / lower_plane[2])) {
+        double cp_y = contact_patch->position[1];
+        /* get the sign of cp_y : -1 if less than 0, 0 if 0, 1 if > 0 */
+        double sign = cp_y == 0 ? 0 : (cp_y < 0) ? -1 : 1; 
+        return {x, -1 * 1e9 * sign, 0};
+    }
+
+    StaticMatrix<double, 2UL, 2UL> a {{upper_plane[1], upper_plane[2]}, {lower_plane[1], lower_plane[2]}};
+    StaticVector<double, 2UL> b {upper_plane[0] * (upper_plane[3] - x) + upper_plane[1] * upper_plane[4] + upper_plane[2] * upper_plane[5], lower_plane[0] * (lower_plane[3] - x) + lower_plane[1] * lower_plane[4] + lower_plane[2] * lower_plane[5]};
+    StaticVector<double, 2UL> soln = solve (a, b);
+
+    double y = soln[0];
+    double z = soln[1];
+
+    return {x, y, z};
 }
+
 StaticVector<double, 3UL> DoubleWishbone::SVIC_position () const {
+    StaticVector<double, 6UL> upper_plane = upper_wishbone->plane ();
+    StaticVector<double, 6UL> lower_plane = lower_wishbone->plane ();
 
+    double y = contact_patch->position[1];
+
+    if ((upper_plane[0] / upper_plane[2]) == (lower_plane[0] / lower_plane[2])) {
+        if (contact_patch->position[0] == 0) {
+            return {-1 * 1e9, y, 0};
+        } else {
+            double cp_y = contact_patch->position[0];
+            /* get the sign of cp_y : -1 if less than 0, 0 if 0, 1 if > 0 */
+            double sign = cp_y == 0 ? 0 : (cp_y < 0) ? -1 : 1; 
+            return {-1 * 1e9 * sign, y, 0};
+        }
+    }
+
+    StaticMatrix<double, 2UL, 2UL> a = {{upper_plane[0], upper_plane[2]},
+                                        {lower_plane[0], lower_plane[2]}};
+    StaticVector<double, 2UL> b = {upper_plane[1] * (upper_plane[4] - y) + upper_plane[0] * upper_plane[3] + upper_plane[2] * upper_plane[5],
+                                   lower_plane[1] * (lower_plane[4] - y) + lower_plane[0] * lower_plane[3] + lower_plane[2] * lower_plane[5]};
+
+    StaticVector<double, 2UL> soln = solve (a, b);
+
+    double x = soln[0];
+    double z = soln[1];
+
+    return {x, y, z};
 }
+
 StaticVector<double, 3UL> DoubleWishbone::FV_FAP_position () const {
+    StaticVector<double, 3UL> dir_yz = FVIC_link->getInboardNode ()->position - FVIC_link->getOutboardNode ()->position;
+    double z = (dir_yz[2] / dir_yz[1]) * (cg->getPosition()->position[1] - FVIC_link->getOutboardNode ()->position[1] + FVIC_link->getOutboardNode ()->position[2]);
 
+    double x = FVIC_link->getOutboardNode ()->position[0];
+    double y = cg->getPosition()->position[1];
+
+    return {x, y, z};
 }
+
 StaticVector<double, 3UL> DoubleWishbone::SV_FAP_position () const {
+    StaticVector<double, 3UL> dir_yz = SVIC_link->getInboardNode ()->position - SVIC_link->getOutboardNode ()->position;
+    double z = (dir_yz[2] / dir_yz[0]) * (cg->getPosition()->position[0] - FVIC_link->getOutboardNode ()->position[0] + FVIC_link->getOutboardNode ()->position[2]);
 
+    double x = cg->getPosition ()->position[0];
+    double y = SVIC_link->getOutboardNode ()->position[1];
+
+    return {x, y, z};
 }
+
 double DoubleWishbone::caster () const {
-
+    return kingpin->getBeam ()->normalized_transform ()[1];
 }
+
 double DoubleWishbone::kpi () const {
-
+    return kingpin->getBeam ()->normalized_transform ()[0];
 }
+
 double DoubleWishbone::toe () const {
-
+    return tire->induced_steer ();
 }
-double DoubleWishbone::inclination_angle () const {
 
+double DoubleWishbone::inclination_angle () const {
+    StaticVector<double, 3UL> vec_a = tire->direction ();
+    double gamma = atan (vec_a[2] / (sqrt (pow (vec_a[0], 2) + pow (vec_a[1], 2))));
+    return gamma;
+}
+
+Node *DoubleWishbone::getContactPatch () const {
+    return contact_patch;
 }
