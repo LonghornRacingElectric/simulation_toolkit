@@ -16,7 +16,7 @@ class YMD:
         self.vehicle = vehicle
         self.mesh = mesh
 
-        self.delta_sweep = np.linspace(-35 * 3.50 / 360 * 0.0254, 25 * 3.50 / 360 * 0.0254, mesh)
+        self.delta_sweep = np.linspace(-30 * 3.50 / 360 * 0.0254, 30 * 3.50 / 360 * 0.0254, mesh)
         self.beta_sweep = np.linspace(-12 * np.pi / 180, 12 * np.pi / 180, mesh)
 
         self.suspension = self.vehicle.suspension
@@ -469,8 +469,8 @@ class YMD:
 
         suspension_forces = self.FL_forces_aligned + self.FR_forces_aligned + self.RL_forces_aligned + self.RR_forces_aligned
         suspension_moments = np.cross(self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
-                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned) + \
-                             self.FL_moments_aligned + self.FR_moments_aligned + self.RL_moments_aligned + self.RR_moments_aligned
+                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned)
+                            #  self.FL_moments_aligned + self.FR_moments_aligned + self.RL_moments_aligned + self.RR_moments_aligned
         
         aero_forces = 0
         aero_moments = 0
@@ -737,4 +737,5 @@ class YMD:
             ax.plot(lat_accels, yaw_accels, c="red", linewidth=0.8)
             ax.text(text_pos[0], text_pos[1], f'β = {round(body_slip * 180 / np.pi, 1)}°', fontsize=6, c="red")
 
-        plt.show()
+        ymd.savefig("./outputs/ymd.png")
+        # plt.show()
