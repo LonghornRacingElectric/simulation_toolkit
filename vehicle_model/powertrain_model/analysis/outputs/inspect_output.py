@@ -4,7 +4,7 @@ import os
 
 # os.chdir(r'vehicle_model/powertrain_model/analysis/outputs')
 
-filename = 'combined_wheel_torque~f(velocity, soc).pkl'
+filename = 'combined_wheel_torque_4.0gr~f(velocity, soc).pkl'
 with open(filename, 'rb') as file:
     data = pkl.load(file)  # Load the figure directly
 

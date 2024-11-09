@@ -97,7 +97,7 @@ diffMuRatio:
 gear_ratio:
  description: transmission speed gear ratio (input_RPM / output_RPM)
  type: float
- value: 3.5
+ value: 4.0
 
 default_parameter:
  description: parameter description

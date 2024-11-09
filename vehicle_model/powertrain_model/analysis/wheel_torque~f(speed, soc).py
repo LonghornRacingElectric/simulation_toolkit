@@ -67,9 +67,9 @@ ax.set_zlabel('wheel torque [Nm]')
 # ------------- inputs -------------- #
 
 torque_requests = np.array([-220, 220])  # [Nm]
-soc_mesh = 20
+soc_mesh = 5
 soc_range = np.array([0.0, 0.99])  # [%]
-velocity_mesh = 125
+velocity_mesh = 10
 velocity_range = np.array([0, 35])  # [m/s]
 tire_radius = 8  # [in]
 
@@ -77,6 +77,7 @@ tire_radius = 8  # [in]
 
 tire_radius *= 0.0254  # [m]
 velocity_range = velocity_range/tire_radius  # [m/s]
+save_data = {'data': {}}
 
 for torque_set in torque_requests:
     test_car.controls['torque_request'] = torque_set
@@ -86,14 +87,14 @@ for torque_set in torque_requests:
     powers = {}
     socs = np.linspace(soc_range[0], soc_range[1], soc_mesh)
     wheel_speeds = {}
-    output = {}
+    save_states = {}
     for soc in socs:
         test_car.state_in['soc'] = soc
         torque = np.array([])
         power = np.array([])
         rpm = np.array([])
         wheel_speed = np.array([])
-        iteration = {}
+        state
         for vel in vels:
             test_car.state_in['wheel_angular_velocities'] = [vel] * 4
             test_ptn = PowertrainModel(Car(powertrain_parameters))
@@ -108,32 +109,43 @@ for torque_set in torque_requests:
             power = np.append(power, state['motor_power']/1000)
             # rpm = np.append(rpm, state['motor_rpm'])
             wheel_speed = np.append(wheel_speed, vel)  # [rad/s]
-            # if state['powertrain_torques'][2] == 0:
-            #     break
-        # iteration['torque']: torque
-        # iteration['power'] = power
-        # iteration['rpm'] = rpm
-        # iteration['wheel_speed'] = wheel_speed*tire_radius  # [m/s]
-        # output[soc] = iteration
+            save_state = np.append(save_state, state)
 
         print(soc)
         torques[soc] = torque
         powers[soc] = power
         rpms[soc] = rpm
         wheel_speeds[soc] = wheel_speed*tire_radius  # [m/s]
+        save_states[soc] = save_state
+
+    # compile data
+    torque_req_data = {
+        'torques': torques,
+        'powers': powers,
+        'rpms': rpms,
+        'wheel_speeds': wheel_speeds
+    }
+    save_data['data']['test' + str(torque_set)] = torque_req_data
 
     # 3d plot
-    speed_grid, soc_grid = np.meshgrid(wheel_speeds[socs[0]], socs)
-    torque_grid = np.array([torques[soc] for soc in socs])
-    if np.average(torque_grid) < 0:
-        cmap = 'viridis_r'
-    else:
-        cmap = 'viridis'
-    surf = ax.plot_surface(speed_grid, soc_grid, torque_grid, cmap=cmap)
+    # speed_grid, soc_grid = np.meshgrid(wheel_speeds[socs[0]], socs)
+    # torque_grid = np.array([torques[soc] for soc in socs])
+    # if np.average(torque_grid) < 0:
+    #     cmap = 'viridis_r'
+    # else:
+    #     cmap = 'viridis'
+    # surf = ax.plot_surface(speed_grid, soc_grid, torque_grid, cmap=cmap)
 
-os.chdir('outputs')
-with open('combined_wheel_torque~f(velocity, soc).pkl', 'wb') as file:
+# save data
+save_name = '4.0gr results'
+os.makedirs('outputs/' + str(), exist_ok=True)
+save_data['parameters_file'] = powertrain_parameters
+save_data['combined_wheel_torque~f(velocity, soc)'] = fig
+with open(save_name + '.pkl', 'wb') as file:
     pkl.dump(fig, file)
+
+# with open('combined_wheel_torque_4.0gr~f(velocity, soc).pkl', 'wb') as file:
+#     pkl.dump(fig, file)
 plt.show()
 
 # 2d plot
