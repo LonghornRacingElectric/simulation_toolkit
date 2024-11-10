@@ -16,6 +16,10 @@ public:
     double roll_stiffness () const;
     void translate (StaticVector<double, 3UL> &translation);
     void flatten_rotate (StaticVector<double, 3UL> &angle);
+
+    DoubleWishbone *getLeft () { return left; }
+    DoubleWishbone *getRight () { return right; }
+    CG *getCG () { return cg; }
 private:
     DoubleWishbone *left;
     DoubleWishbone *right;

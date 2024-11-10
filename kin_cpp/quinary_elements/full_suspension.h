@@ -3,6 +3,7 @@
 
 #include "../quaternary_elements/axle.h";
 #include "../secondary_elements/cg.h"
+#include "../secondary_elements/kin_pc.h"
 
 class FullSuspension {
 private:
@@ -12,8 +13,10 @@ private:
     bool transform_origin;
     StaticVector<double, 3UL> current_average_cp, prac_average_cp;
     double ang_x, ang_y;
-    Node *elements[3];
-    Node *all_elements[2];
+    Axle *elements[3];
+    Axle *all_elements[2];
+
+    KinPC *left_kin_pc, right_kin_PC; 
 public:
     FullSuspension (Axle *Fr_axle, Axle *Rr_axle, CG *cg);
     void steer (double rack_displacement);
@@ -21,8 +24,8 @@ public:
     void pitch (double angle);
     void roll (double angle);
     double left_wheelbase () const;
-    double right_wheelbase (const);
-    StaticVector<double, 2UL> _pitch_resid_func (double x, StaticVector<double, 2UL> args);
+    double right_wheelbase () const;
+    double _pitch_resid_func (double x, StaticVector<double, 2UL> args);
     void _update_FAP ();
     double heave_stiffness () const;
     double roll_stiffness () const;
@@ -33,5 +36,6 @@ public:
     StaticVector<double, 6UL> plane (StaticMatrix<double, 3UL, 3UL> points);
     void translate (StaticVector<double, 3UL> translation);
     void flatten_rotate (StaticVector<double, 3UL> angle);
-}
+};
+
 #endif
