@@ -146,7 +146,3 @@ double FullSuspension::heave_stiffness () const {
 
     return FL_wheelrate + FR_wheelrate + RL_wheelrate + RR_wheelrate;
 }
-
-double FullSuspension::roll_stiffness () {
-    
-}
