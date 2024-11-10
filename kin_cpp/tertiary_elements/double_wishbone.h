@@ -108,6 +108,10 @@ public:
     
     /* Getters */
     Node *getContactPatch () const;
+    Beam *getFVICLink () { return FVIC_link; }
+    Beam *getSVICLink () { return SVIC_link; }
+    Node *getFVFAP () { return FV_FAP; }
+    Node *getSVFAP () { return SV_FAP; }
 };
 
 #endif
