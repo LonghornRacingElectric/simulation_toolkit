@@ -29,10 +29,10 @@ class SuspensionModel:
     ----------
     FL_inboard_points : Sequence[Sequence[float]]
         Array containing all inboard coordinates of the front-left suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     FL_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the front-left suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     FL_bellcrank_params : Sequence[Sequence[float]]
         Relevant bellcrank to shock parameters for front-left suspension assembly
         - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
@@ -54,10 +54,10 @@ class SuspensionModel:
 
     FR_inboard_points : Sequence[Sequence[float]]
         Array containing all inboard coordinates of the front-right suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     FR_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the front-right suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     FR_bellcrank_params : Sequence[Sequence[float]]
         Relevant bellcrank to shock parameters for front-right suspension assembly
         - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
@@ -79,10 +79,10 @@ class SuspensionModel:
 
     RL_inboard_points : Sequence[Sequence[float]]
         Array containing all inboard coordinates of the rear-left suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     RL_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the rear-left suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     RL_bellcrank_params : Sequence[Sequence[float]]
         Relevant bellcrank to shock parameters for rear-left suspension assembly
         - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
@@ -104,10 +104,10 @@ class SuspensionModel:
 
     RR_inboard_points : Sequence[Sequence[float]]
         Array containing all inboard coordinates of the rear-right suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     RR_outboard_points : Sequence[Sequence[float]]
         Array containing all outboard coordinates of the rear-right suspension assembly
-        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod]]
+        - Order: [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push / Pull Rod]]
     RR_bellcrank_params : Sequence[Sequence[float]]
         Relevant bellcrank to shock parameters for rear-right suspension assembly
         - Order: [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]

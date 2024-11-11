@@ -2,7 +2,7 @@
 #include "../assets/misc_linalg.h"
 using namespace blaze;
 /* NEW CHANGE : outboard points is of form [[upper outboard], [lower outboard], [tie rod], [push/pull rod]]*/
-DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 4UL> &outboard_points, 
+DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 6UL> &outboard_points, 
                    StaticMatrix<double, 3UL, 4UL> &bellcrank_params, double _spring_rate, double _weight, CG *cent_grav, 
                    bool _upper, StaticVector<double, 3UL> &_contact_patch, double inclination_angle, double toe, double tire_radius, 
                    double tire_width, bool show_ICs) {
@@ -33,8 +33,8 @@ DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, S
     Node *tie_inboard = new Node (column(inboard_points, 4));
 
     Node *_upper_outboard = new Node (column(outboard_points, 0));
-    Node *_lower_outboard = new Node (column(outboard_points, 1));
-    Node *_tie_outboard = new Node (column(outboard_points, 2));
+    Node *_lower_outboard = new Node (column(outboard_points, 2));
+    Node *_tie_outboard = new Node (column(outboard_points, 4));
 
     cg = cent_grav;
 

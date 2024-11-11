@@ -36,6 +36,9 @@ public:
     StaticVector<double, 6UL> plane (StaticMatrix<double, 3UL, 3UL> points);
     void translate (StaticVector<double, 3UL> translation);
     void flatten_rotate (StaticVector<double, 3UL> angle);
+
+    Axle *getFR () { return Fr_axle; }
+    Axle *getRR () { return Rr_axle; }
 };
 
 #endif

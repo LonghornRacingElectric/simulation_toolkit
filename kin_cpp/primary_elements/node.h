@@ -11,7 +11,7 @@ public:
     StaticVector<double, 3UL> initial_position;
 
     // Constructor that takes an array of positions
-    Node (const StaticVector<double, 3UL>);
+    Node (const StaticVector<double, 3UL> &);
     void reset ();
     void translate(const StaticVector<double, 3UL> &); //parameter : [x_shift, y_shift, z_shift]
     void flatten_rotate(const StaticVector<double, 3UL> &); //parameter : [x_rot, y_rot, z_rot]

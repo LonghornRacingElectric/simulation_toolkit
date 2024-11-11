@@ -2,8 +2,7 @@
 #include "../assets/misc_linalg.h"
 
 PushPullRod::PushPullRod (Node *inboard, Node *outboard, bool upper, bool bellcrank, Node *bc_pivot, StaticVector<double, 3UL> &bc_direction, Node *shock_outboard, Node *shock_inboard) {
-    // rod = &Beam (inboard, outboard);
-    Beam* rod = new Beam(inboard, outboard);
+    rod = new Beam(inboard, outboard);
     initial_rod_length = rod_length ();
     bellcrank_angle = 0.0;
     wishbone_angle = 0.0;
