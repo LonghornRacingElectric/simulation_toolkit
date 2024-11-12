@@ -221,8 +221,8 @@ class PowertrainModel:
 
         # assign state out
         state_out['motor_rpm'] = self.motor_rpm
-        state_out['motor_torque'] = motor_torque
-        state_out['motor_power'] = motor_power
+        state_out['motor_torque'] = float(motor_torque)
+        state_out['motor_power'] = float(motor_power)
         state_out['battery_terminal_power'] = battery_terminal_power
         state_out['battery_terminal_voltage'] = battery_terminal_voltage
         state_out['battery_ocv'] = self.cell_ocv*self.s_count
@@ -272,6 +272,7 @@ class PowertrainModel:
 
         powertrain_torques = [0, 0, left_torque, right_torque]
         state_out['powertrain_torques'] = powertrain_torques  # need to implement mechanical braking!!
+        state_out['differential_torque'] = diff_in_torque
         # print('motor torque=', motor_torque)
 
         return state_out
