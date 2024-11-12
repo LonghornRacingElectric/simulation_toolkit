@@ -5,23 +5,28 @@ import os
 import pandas as pd
 from matplotlib.lines import Line2D
 
+os.chdir(r'C:\Users\simmons_\Documents\lhre git')
+orig_dir = os.getcwd()
+print(os.getcwd())
 
-os.chdir(r'C:\Users\andre\Documents\GitHub\simulation_toolkit\vehicle_model\powertrain_model\analysis\torque_speed_requirements')
+os.chdir('simulation_toolkit/vehicle_model/powertrain_model/analysis/torque_speed_requirements')
 target = pd.read_csv('torque_speed_req.csv')
+os.chdir(orig_dir)
+print(os.getcwd())
 
 target_tor, target_vel = target['torque'], target['velocity']
 
-os.chdir(r'C:\Users\andre\Documents\GitHub\simulation_toolkit\vehicle_model\powertrain_model\analysis\outputs\gear_ratio_results')
+os.chdir('simulation_toolkit/vehicle_model/powertrain_model/analysis/outputs/gear_ratio_results')
 files = os.listdir()
 files = np.flip(np.sort([file for file in files if '.pkl' in file]))
 # files = ['3.15_results.pkl']
 
 # colors = np.linspace(0,1, len(files))
 # colors = [(color, 0 ,0) for color in colors]
-colors = ['r', 'g', 'b', 'c', 'y', 'k']
+colors = ['r', 'g', 'b', 'c', 'y', 'k', (1.0, 0.0, 0.7215), (0., 0.94117647, 0.99607843)]
 loaded_files = []
 for i, file in enumerate(files):
-    filename = file
+    filename = str(file)
     with open(filename, 'rb') as f:
         stuff = pkl.load(f)  # Load the figure directly7
     loaded_files = np.append(loaded_files, stuff)

@@ -14,11 +14,11 @@ from matplotlib import colors
 
 torque_requests = np.array([-220, 220])  # [Nm]
 soc_mesh = 20
-soc_range = np.array([0.0, 0.99])  # [%]
+soc_range = np.array([0.01, 0.99])  # [%]
 velocity_mesh = 100
 velocity_range = np.array([0, 35])  # [m/s]
 tire_radius = 8  # [in]
-gear_ratio = 3.15
+gear_ratio = 3.2308
 
 # ------------------- ------ -------------------- #
 # ------------------- ------ -------------------- #
@@ -148,7 +148,7 @@ for torque_set in torque_requests:
 
 # save that shit
 save_data = {}
-save_name = str(gear_ratio) + '_gr_high_mesh'
+save_name = str(gear_ratio) + ''
 # os.makedirs('outputs/' + 'gear_ratio_results', exist_ok=True)
 # os.chdir('outputs/' + 'gear_ratio_results')
 save_data['output'] = output
