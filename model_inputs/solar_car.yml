@@ -4,13 +4,13 @@ Description:
     Description: Name of vehicle
     Type: string
     Unit: N/A
-    Value: Nightwatch
+    Value: Solar Mcqueen
   V:
     Description: Internal version number for vehicle
     Type: string
     Unit: N/A
-    Value: 1.1.0
-    Changes: Decreased font scrub. Made FLCAs more acute. Moved fore Rr_LCA negative in x. Removed bump steer in rear.
+    Value: 0.0.0
+    Changes: NA
 
 Environment:
   G:
