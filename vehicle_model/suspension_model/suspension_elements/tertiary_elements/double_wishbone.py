@@ -187,7 +187,7 @@ class DoubleWishbone:
         self.jounce(jounce=0)
 
         # Create function for wheelrate
-        wheelrate_lst = [self.spring_rate / MR**2 for MR in motion_ratio_lst]
+        wheelrate_lst = [self.spring_rate / 1.3**2 for MR in motion_ratio_lst]
         # wheelrate_lst = [self.spring_rate / MR**2 for MR in [1.3 for x in motion_ratio_lst]]
         self.wheelrate_function = CubicSpline(x=jounce_sweep, y=wheelrate_lst)
 
@@ -199,9 +199,9 @@ class DoubleWishbone:
 
         # Plotting
         if not show_ICs:
-            self.elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.kingpin, self.steering_link, self.tire]
+            self.elements = [self.upper_wishbone, self.lower_wishbone, self.kingpin, self.steering_link, self.tire]
         elif max(np.abs(self.SVIC.position)) < 50:
-            self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link, self.FV_FAP, self.SV_FAP]
+            self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link, self.FV_FAP, self.SV_FAP]
         else:
             # self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.FVIC_link, self.FV_FAP, self.SV_FAP]
             self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC_link, self.FV_FAP, self.SV_FAP]
@@ -456,7 +456,7 @@ class DoubleWishbone:
         float
             Wheelrate under current jounce condition
         """
-        return self.spring_rate / self.motion_ratio**2
+        return self.spring_rate / 1.4**2
     
     def translate(self, translation: Sequence[float]) -> None:
         """
@@ -670,6 +670,19 @@ class DoubleWishbone:
             Kingpin inclination angle in radians
         """
         return self.kingpin.normalized_transform()[0]
+    
+    @property
+    def scrub(self) -> float:
+        kpi_dir = self.kingpin.direction
+        center = self.kingpin.center
+        
+        x = center[0] - center[2] / kpi_dir[2] * kpi_dir[0]
+        y = center[1] - center[2] / kpi_dir[2] * kpi_dir[1]
+
+        ground_pierce = np.array([x, y, 0])
+        pierce_to_cp = self.contact_patch.position - ground_pierce
+
+        return pierce_to_cp[1]
 
     @property
     def toe(self) -> float:

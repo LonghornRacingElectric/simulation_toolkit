@@ -3,7 +3,8 @@ from vehicle_model.suspension_model.suspension_model import SuspensionModel
 from vehicle_model._assets.misc_linalg import rotation_matrix
 from vehicle_model.vehicle_model import VehicleModel
 from LHR_tire_toolkit.MF52 import MF52
-from typing import Sequence, Tuple
+from matplotlib.lines import Line2D
+from typing import Sequence, Union
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,7 +17,7 @@ class YMD:
         self.vehicle = vehicle
         self.mesh = mesh
 
-        self.delta_sweep = np.linspace(-30 * 3.50 / 360 * 0.0254, 30 * 3.50 / 360 * 0.0254, mesh)
+        self.delta_sweep = np.linspace(-45 * 3.50 / 360 * 0.0254, 45 * 3.50 / 360 * 0.0254, mesh)
         self.beta_sweep = np.linspace(-12 * np.pi / 180, 12 * np.pi / 180, mesh)
 
         self.suspension = self.vehicle.suspension
@@ -25,6 +26,7 @@ class YMD:
         self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
         self.all_points = []
+        self.velocity = velocity
 
         total_states = len(self.delta_sweep) * len(self.beta_sweep)
         counter = 0
@@ -44,7 +46,7 @@ class YMD:
             for j, delta in enumerate(self.delta_sweep):
                 print(f"Progress | {round(counter / total_states * 100, 1)}%", end="\r")
                 counter += 1
-                x_ddot, y_ddot, yaw_ddot, heave, pitch, roll = fsolve(self._residual_function, x0=[0, 0, 0, 0, 0, 0], args=[delta, beta, velocity])
+                x_ddot, y_ddot, yaw_ddot, heave, pitch, roll = fsolve(self._residual_function, x0=[0, 0, 0, 0, 0, 0], args=[delta, beta, velocity, None])
                 
                 x_ddot_lst.append(x_ddot)
                 y_ddot_lst.append(y_ddot)
@@ -113,93 +115,110 @@ class YMD:
         RL_cp_pos_lst = []
         RR_cp_pos_lst = []
 
-        # for pair in zip(x_ddot_lst, y_ddot_lst, yaw_ddot_lst, heave_lst, pitch_lst, roll_lst, delta_lst, beta_lst):
-        #     output = self._residual_eval(x = pair[:6], args = [*pair[6:], 25])
+        for pair in zip(x_ddot_lst, y_ddot_lst, yaw_ddot_lst, heave_lst, pitch_lst, roll_lst, delta_lst, beta_lst):
+            output = self._residual_eval(x = pair[:6], args = [*pair[6:], 25, None])
 
-        #     Fx_res_lst.append(output[0])
-        #     Fy_res_lst.append(output[1])
-        #     Fz_res_lst.append(output[2])
-        #     Mx_res_lst.append(output[3])
-        #     My_res_lst.append(output[4])
-        #     Mz_res_lst.append(output[5])
-        #     FL_jounce_lst.append(output[6])
-        #     FR_jounce_lst.append(output[7])
-        #     RL_jounce_lst.append(output[8])
-        #     RR_jounce_lst.append(output[9])
-        #     FL_gamma_lst.append(output[10])
-        #     FR_gamma_lst.append(output[11])
-        #     RL_gamma_lst.append(output[12])
-        #     RR_gamma_lst.append(output[13])
-        #     FL_alpha_lst.append(output[14])
-        #     FR_alpha_lst.append(output[15])
-        #     RL_alpha_lst.append(output[16])
-        #     RR_alpha_lst.append(output[17])
-        #     FL_Fx_aligned_lst.append(output[18])
-        #     FL_Fy_aligned_lst.append(output[19])
-        #     FL_Fz_aligned_lst.append(output[20])
-        #     FR_Fx_aligned_lst.append(output[21])
-        #     FR_Fy_aligned_lst.append(output[22])
-        #     FR_Fz_aligned_lst.append(output[23])
-        #     RL_Fx_aligned_lst.append(output[24])
-        #     RL_Fy_aligned_lst.append(output[25])
-        #     RL_Fz_aligned_lst.append(output[26])
-        #     RR_Fx_aligned_lst.append(output[27])
-        #     RR_Fy_aligned_lst.append(output[28])
-        #     RR_Fz_aligned_lst.append(output[29])
-        #     new_heave_lst.append(output[30])
-        #     new_pitch_lst.append(output[31])
-        #     new_roll_lst.append(output[32])
-        #     new_delta_lst.append(output[33])
-        #     new_beta_lst.append(output[34])
-        #     ax_lst.append(output[35])
-        #     ay_lst.append(output[36])
-        #     new_yaw_ddot_lst.append(output[37])
-        #     FL_cp_pos_lst.append(output[38])
-        #     FR_cp_pos_lst.append(output[39])
-        #     RL_cp_pos_lst.append(output[40])
-        #     RR_cp_pos_lst.append(output[41])
+            Fx_res_lst.append(output[0])
+            Fy_res_lst.append(output[1])
+            Fz_res_lst.append(output[2])
+            Mx_res_lst.append(output[3])
+            My_res_lst.append(output[4])
+            Mz_res_lst.append(output[5])
+            FL_jounce_lst.append(output[6])
+            FR_jounce_lst.append(output[7])
+            RL_jounce_lst.append(output[8])
+            RR_jounce_lst.append(output[9])
+            FL_gamma_lst.append(output[10])
+            FR_gamma_lst.append(output[11])
+            RL_gamma_lst.append(output[12])
+            RR_gamma_lst.append(output[13])
+            FL_alpha_lst.append(output[14])
+            FR_alpha_lst.append(output[15])
+            RL_alpha_lst.append(output[16])
+            RR_alpha_lst.append(output[17])
+            FL_Fx_aligned_lst.append(output[18])
+            FL_Fy_aligned_lst.append(output[19])
+            FL_Fz_aligned_lst.append(output[20])
+            FR_Fx_aligned_lst.append(output[21])
+            FR_Fy_aligned_lst.append(output[22])
+            FR_Fz_aligned_lst.append(output[23])
+            RL_Fx_aligned_lst.append(output[24])
+            RL_Fy_aligned_lst.append(output[25])
+            RL_Fz_aligned_lst.append(output[26])
+            RR_Fx_aligned_lst.append(output[27])
+            RR_Fy_aligned_lst.append(output[28])
+            RR_Fz_aligned_lst.append(output[29])
+            new_heave_lst.append(output[30])
+            new_pitch_lst.append(output[31])
+            new_roll_lst.append(output[32])
+            new_delta_lst.append(output[33])
+            new_beta_lst.append(output[34])
+            ax_lst.append(output[35])
+            ay_lst.append(output[36])
+            new_yaw_ddot_lst.append(output[37])
+            FL_cp_pos_lst.append(output[38])
+            FR_cp_pos_lst.append(output[39])
+            RL_cp_pos_lst.append(output[40])
+            RR_cp_pos_lst.append(output[41])
+        
+        simmons_dict = {"FL_Fz": FL_Fz_aligned_lst,
+                        "FR_Fz": FR_Fz_aligned_lst,
+                        "RL_Fz": RL_Fz_aligned_lst,
+                        "RR_Fz": RR_Fz_aligned_lst,
+                        "FL_SA": [x for x in FL_alpha_lst],
+                        "FR_SA": [x for x in FR_alpha_lst],
+                        "RL_SA": [x for x in RL_alpha_lst],
+                        "RR_SA": [x for x in RR_alpha_lst],
+                        "FL gamma": [x for x in FL_gamma_lst],
+                        "FR gamma": [x for x in FR_gamma_lst],
+                        "RL gamma": [x for x in RL_gamma_lst],
+                        "RR gamma": [x for x in RR_gamma_lst],
+                        }
+        
+        df = pd.DataFrame().from_dict(simmons_dict)
+        df.to_csv(f"./model_inputs/tire_states_{velocity}_mps.csv")
 
-        # output_dict = {"x_ddot": ax_lst,
-        #                "y_ddot": ay_lst,
-        #                "yaw_ddot": yaw_ddot_lst,
-        #                "delta": [x * 180 / np.pi / (3.50 / (2 * np.pi) * 0.0254) for x in delta_lst],
-        #                "beta": [x * 180 / np.pi for x in beta_lst],
-        #                "FL_cp_pos": FL_cp_pos_lst,
-        #                "FR_cp_pos": FR_cp_pos_lst,
-        #                "RL_cp_pos": RL_cp_pos_lst,
-        #                "RR_cp_pos": RR_cp_pos_lst,
-        #                "FL_SA": [x * 180 / np.pi for x in FL_alpha_lst],
-        #                "FR_SA": [x * 180 / np.pi for x in FR_alpha_lst],
-        #                "RL_SA": [x * 180 / np.pi for x in RL_alpha_lst],
-        #                "RR_SA": [x * 180 / np.pi for x in RR_alpha_lst],
-        #                "heave": [x / 0.0254 for x in heave_lst],
-        #                "pitch": [x * 180 / np.pi for x in pitch_lst],
-        #                "roll": [x * 180 / np.pi for x in roll_lst],
-        #                "FL jounce": [x / 0.0254 for x in FL_jounce_lst],
-        #                "FR jounce": [x / 0.0254 for x in FR_jounce_lst],
-        #                "RL jounce": [x / 0.0254 for x in RL_jounce_lst],
-        #                "RR jounce": [x / 0.0254 for x in RR_jounce_lst],
-        #                "FL gamma": [x * 180 / np.pi for x in FL_gamma_lst],
-        #                "FR gamma": [x * 180 / np.pi for x in FR_gamma_lst],
-        #                "RL gamma": [x * 180 / np.pi for x in RL_gamma_lst],
-        #                "RR gamma": [x * 180 / np.pi for x in RR_gamma_lst],
-        #                "FL_Fx": FL_Fx_aligned_lst,
-        #                "FL_Fy": FL_Fy_aligned_lst,
-        #                "FL_Fz": FL_Fz_aligned_lst,
-        #                "FR_Fx": FR_Fx_aligned_lst,
-        #                "FR_Fy": FR_Fy_aligned_lst,
-        #                "FR_Fz": FR_Fz_aligned_lst,
-        #                "RL_Fx": RL_Fx_aligned_lst,
-        #                "RL_Fy": RL_Fy_aligned_lst,
-        #                "RL_Fz": RL_Fz_aligned_lst,
-        #                "RR_Fx": RR_Fx_aligned_lst,
-        #                "RR_Fy": RR_Fy_aligned_lst,
-        #                "RR_Fz": RR_Fz_aligned_lst,
-        #                }
+        output_dict = {"x_ddot": ax_lst,
+                       "y_ddot": ay_lst,
+                       "yaw_ddot": yaw_ddot_lst,
+                       "delta": [x * 180 / np.pi / (3.50 / (2 * np.pi) * 0.0254) for x in delta_lst],
+                       "beta": [x * 180 / np.pi for x in beta_lst],
+                       "FL_cp_pos": FL_cp_pos_lst,
+                       "FR_cp_pos": FR_cp_pos_lst,
+                       "RL_cp_pos": RL_cp_pos_lst,
+                       "RR_cp_pos": RR_cp_pos_lst,
+                       "FL_SA": [x * 180 / np.pi for x in FL_alpha_lst],
+                       "FR_SA": [x * 180 / np.pi for x in FR_alpha_lst],
+                       "RL_SA": [x * 180 / np.pi for x in RL_alpha_lst],
+                       "RR_SA": [x * 180 / np.pi for x in RR_alpha_lst],
+                       "heave": [x / 0.0254 for x in heave_lst],
+                       "pitch": [x * 180 / np.pi for x in pitch_lst],
+                       "roll": [x * 180 / np.pi for x in roll_lst],
+                       "FL jounce": [x / 0.0254 for x in FL_jounce_lst],
+                       "FR jounce": [x / 0.0254 for x in FR_jounce_lst],
+                       "RL jounce": [x / 0.0254 for x in RL_jounce_lst],
+                       "RR jounce": [x / 0.0254 for x in RR_jounce_lst],
+                       "FL gamma": [x * 180 / np.pi for x in FL_gamma_lst],
+                       "FR gamma": [x * 180 / np.pi for x in FR_gamma_lst],
+                       "RL gamma": [x * 180 / np.pi for x in RL_gamma_lst],
+                       "RR gamma": [x * 180 / np.pi for x in RR_gamma_lst],
+                       "FL_Fx": FL_Fx_aligned_lst,
+                       "FL_Fy": FL_Fy_aligned_lst,
+                       "FL_Fz": FL_Fz_aligned_lst,
+                       "FR_Fx": FR_Fx_aligned_lst,
+                       "FR_Fy": FR_Fy_aligned_lst,
+                       "FR_Fz": FR_Fz_aligned_lst,
+                       "RL_Fx": RL_Fx_aligned_lst,
+                       "RL_Fy": RL_Fy_aligned_lst,
+                       "RL_Fz": RL_Fz_aligned_lst,
+                       "RR_Fx": RR_Fx_aligned_lst,
+                       "RR_Fy": RR_Fy_aligned_lst,
+                       "RR_Fz": RR_Fz_aligned_lst,
+                       }
             
-        # df = pd.DataFrame(output_dict)
+        df = pd.DataFrame(output_dict)
 
-        # df.to_csv("./debugging.csv")
+        df.to_csv("./debugging.csv")
 
         # fig = plt.figure(figsize=plt.figaspect(2.))
         # fig.suptitle('YMD Debug Shit')
@@ -293,16 +312,6 @@ class YMD:
         # ax.set_xlabel("alpha")
         # ax.set_ylabel("delta")
 
-        # ax = fig.add_subplot(4, 3, 10)
-
-        # param = [x for x in range(len(FL_Fz_aligned_lst))]
-
-        # ax.plot(param, [x * 180 / np.pi for x in pitch_lst])
-        # ax.plot(param, [x * 180 / np.pi for x in roll_lst])
-        # ax.legend(["Pitch", "Roll"])
-        # ax.set_xlabel("Param")
-        # ax.set_ylabel("Angle (deg)")
-
         # ax.plot(t1, f(t1), 'bo',
         # t2, f(t2), 'k--', markerfacecolor='green')
         # ax.grid(True)
@@ -310,8 +319,169 @@ class YMD:
 
         # plt.plot(Ay_lst, delta_lst)
         # plt.show()
-        self.plot()
+        self.plot(velocity=velocity)
 
+    def generate_constant_radius_YMD(self, radius: float) -> None:
+        self.body_slip_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
+        self.steered_angle_iso_lines = [[0, [0] * self.mesh, [0] * self.mesh] for _ in range(self.mesh)]
+        self.all_points = []
+        self.radius = radius
+
+        total_states = len(self.delta_sweep) * len(self.beta_sweep)
+        counter = 0
+        total_start = time.time()
+
+        x_ddot_lst = []
+        y_ddot_lst = []
+        yaw_ddot_lst = []
+        heave_lst = []
+        pitch_lst = []
+        roll_lst = []
+
+        delta_lst = []
+        beta_lst = []
+
+        for i, beta in enumerate(self.beta_sweep):
+            for j, delta in enumerate(self.delta_sweep):
+                print(f"Progress | {round(counter / total_states * 100, 1)}%", end="\r")
+                counter += 1
+                x_ddot, y_ddot, yaw_ddot, heave, pitch, roll = fsolve(self._residual_function, x0=[0.001, 0.001, 0.001, 0.001, 0.001, 0.001], maxfev=int(1e9), args=[delta, beta, None, radius])
+                
+                x_ddot_lst.append(x_ddot)
+                y_ddot_lst.append(y_ddot)
+                yaw_ddot_lst.append(yaw_ddot)
+                heave_lst.append(heave)
+                pitch_lst.append(pitch)
+                roll_lst.append(roll)
+
+                delta_lst.append(delta)
+                beta_lst.append(beta)
+
+                self.steered_angle_iso_lines[j][0] = delta / (3.50 / (2 * np.pi) * 0.0254)
+                self.steered_angle_iso_lines[j][1][i] = y_ddot
+                self.steered_angle_iso_lines[j][2][i] = yaw_ddot
+                
+                self.body_slip_iso_lines[i][0] = beta
+                self.body_slip_iso_lines[i][1][j] = y_ddot
+                self.body_slip_iso_lines[i][2][j] = yaw_ddot
+
+        max_y_ddot = max(y_ddot_lst)
+        corresp_yaw_ddot = yaw_ddot_lst[y_ddot_lst.index(max(y_ddot_lst))]
+
+        print(f"Max y_ddot: {max_y_ddot}")
+        print(f"Corresponding yaw_ddot: {corresp_yaw_ddot}")
+
+        Fx_res_lst = []
+        Fy_res_lst = []
+        Fz_res_lst = []
+        Mx_res_lst = []
+        My_res_lst = []
+        Mz_res_lst = []
+        FL_jounce_lst = []
+        FR_jounce_lst = []
+        RL_jounce_lst = []
+        RR_jounce_lst = []
+        FL_gamma_lst = []
+        FR_gamma_lst = []
+        RL_gamma_lst = []
+        RR_gamma_lst = []
+        FL_alpha_lst = []
+        FR_alpha_lst = []
+        RL_alpha_lst = []
+        RR_alpha_lst = []
+        FL_Fx_aligned_lst = []
+        FL_Fy_aligned_lst = []
+        FL_Fz_aligned_lst = []
+        FR_Fx_aligned_lst = []
+        FR_Fy_aligned_lst = []
+        FR_Fz_aligned_lst = []
+        RL_Fx_aligned_lst = []
+        RL_Fy_aligned_lst = []
+        RL_Fz_aligned_lst = []
+        RR_Fx_aligned_lst = []
+        RR_Fy_aligned_lst = []
+        RR_Fz_aligned_lst = []
+        new_heave_lst = []
+        new_pitch_lst = []
+        new_roll_lst = []
+        new_delta_lst = []
+        new_beta_lst = []
+        ax_lst = []
+        ay_lst = []
+        new_yaw_ddot_lst = []
+        FL_cp_pos_lst = []
+        FR_cp_pos_lst = []
+        RL_cp_pos_lst = []
+        RR_cp_pos_lst = []
+        velocity_lst = []
+
+        for pair in zip(x_ddot_lst, y_ddot_lst, yaw_ddot_lst, heave_lst, pitch_lst, roll_lst, delta_lst, beta_lst):
+            output = self._residual_eval(x = pair[:6], args = [*pair[6:], None, radius])
+
+            Fx_res_lst.append(output[0])
+            Fy_res_lst.append(output[1])
+            Fz_res_lst.append(output[2])
+            Mx_res_lst.append(output[3])
+            My_res_lst.append(output[4])
+            Mz_res_lst.append(output[5])
+            FL_jounce_lst.append(output[6])
+            FR_jounce_lst.append(output[7])
+            RL_jounce_lst.append(output[8])
+            RR_jounce_lst.append(output[9])
+            FL_gamma_lst.append(output[10])
+            FR_gamma_lst.append(output[11])
+            RL_gamma_lst.append(output[12])
+            RR_gamma_lst.append(output[13])
+            FL_alpha_lst.append(output[14])
+            FR_alpha_lst.append(output[15])
+            RL_alpha_lst.append(output[16])
+            RR_alpha_lst.append(output[17])
+            FL_Fx_aligned_lst.append(output[18])
+            FL_Fy_aligned_lst.append(output[19])
+            FL_Fz_aligned_lst.append(output[20])
+            FR_Fx_aligned_lst.append(output[21])
+            FR_Fy_aligned_lst.append(output[22])
+            FR_Fz_aligned_lst.append(output[23])
+            RL_Fx_aligned_lst.append(output[24])
+            RL_Fy_aligned_lst.append(output[25])
+            RL_Fz_aligned_lst.append(output[26])
+            RR_Fx_aligned_lst.append(output[27])
+            RR_Fy_aligned_lst.append(output[28])
+            RR_Fz_aligned_lst.append(output[29])
+            new_heave_lst.append(output[30])
+            new_pitch_lst.append(output[31])
+            new_roll_lst.append(output[32])
+            new_delta_lst.append(output[33])
+            new_beta_lst.append(output[34])
+            ax_lst.append(output[35])
+            ay_lst.append(output[36])
+            new_yaw_ddot_lst.append(output[37])
+            FL_cp_pos_lst.append(output[38])
+            FR_cp_pos_lst.append(output[39])
+            RL_cp_pos_lst.append(output[40])
+            RR_cp_pos_lst.append(output[41])
+            velocity_lst.append(output[42])
+        
+        simmons_dict = {"FL_Fz": FL_Fz_aligned_lst,
+                        "FR_Fz": FR_Fz_aligned_lst,
+                        "RL_Fz": RL_Fz_aligned_lst,
+                        "RR_Fz": RR_Fz_aligned_lst,
+                        "FL_SA": [x for x in FL_alpha_lst],
+                        "FR_SA": [x for x in FR_alpha_lst],
+                        "RL_SA": [x for x in RL_alpha_lst],
+                        "RR_SA": [x for x in RR_alpha_lst],
+                        "FL gamma": [x for x in FL_gamma_lst],
+                        "FR gamma": [x for x in FR_gamma_lst],
+                        "RL gamma": [x for x in RL_gamma_lst],
+                        "RR gamma": [x for x in RR_gamma_lst],
+                        "Velocity": [x for x in velocity_lst]
+                        }
+        
+        df = pd.DataFrame().from_dict(simmons_dict)
+        df.to_csv(f"./model_inputs/tire_states_{radius}_m.csv")
+
+        self.plot(radius=radius)
+    
     def _residual_function(self, x: Sequence[float], args: Sequence[float]) -> Sequence[float]:
         """
         ## Residual Function
@@ -343,19 +513,35 @@ class YMD:
 
         delta = args[0]
         beta = args[1]
-        velocity = args[2]
+
+        if args[2]:
+            velocity = args[2]
+            radius = velocity**2 / ay
+        else:
+            radius = args[3]
+            velocity = np.sqrt(abs(ay * radius))
 
         #############
         ### Setup ###
         #############
 
         # Adjust velocity vectors
-        imf_velocity = velocity * np.array([np.cos(beta), np.sin(beta), 0])
+        if args[2]:
+            imf_velocity = velocity * np.array([np.cos(beta), np.sin(beta), 0])
 
-        # Adjust acceleration vectors and dependencies
-        imf_accel = np.array([ax, ay, 0])
-        ntb_accel = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=beta), imf_accel)
-        yaw_rate = 0 if ntb_accel[1] == 0 else ntb_accel[1] / np.linalg.norm(imf_velocity)
+            # Adjust acceleration vectors and dependencies
+            imf_accel = np.array([ax, ay, 0])
+            ntb_accel = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=beta), imf_accel)
+            yaw_rate = 0 if ntb_accel[1] == 0 else ntb_accel[1] / np.linalg.norm(imf_velocity)
+
+        else:
+            imf_velocity = velocity * np.array([np.cos(beta), np.sin(beta), 0])
+
+            # Adjust acceleration vectors and dependencies
+            imf_accel = np.array([ax, ay, 0])
+            ntb_accel = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=beta), imf_accel)
+            # omega = v / r
+            yaw_rate = velocity / radius
 
         # Store suspension objects
         suspension: SuspensionModel = self.suspension
@@ -456,10 +642,12 @@ class YMD:
 
         # aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
 
-        # aero_forces = aero_loads[:3]
-        # aero_FAP = aero_loads[3:]
+        aero_loads = self.vehicle.aero_model.force_props(roll=roll, pitch=pitch, body_slip=beta, heave=heave, velocity=velocity)
 
-        # CG_wrt_CoP = aero_FAP - self.cg_pos
+        aero_forces = aero_loads[:3]
+        aero_FAP = aero_loads[3:]
+
+        CG_wrt_CoP = aero_FAP - self.cg_pos
 
         ###############################################
         ######## Calculate Forces and Moments #########
@@ -469,11 +657,14 @@ class YMD:
 
         suspension_forces = self.FL_forces_aligned + self.FR_forces_aligned + self.RL_forces_aligned + self.RR_forces_aligned
         suspension_moments = np.cross(self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
-                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned)
-                            #  self.FL_moments_aligned + self.FR_moments_aligned + self.RL_moments_aligned + self.RR_moments_aligned
+                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned) + \
+                             self.FL_moments_aligned + self.FR_moments_aligned + self.RL_moments_aligned + self.RR_moments_aligned
         
-        aero_forces = 0
-        aero_moments = 0
+        aero_forces = aero_forces
+        aero_moments = np.cross(CG_wrt_CoP, aero_forces)
+
+        # aero_forces = 0
+        # aero_moments = 0
 
         vehicle_centric_forces = -1 * gravity_force + suspension_forces + aero_forces
         vehicle_centric_moments = suspension_moments + aero_moments
@@ -532,19 +723,35 @@ class YMD:
 
         delta = args[0]
         beta = args[1]
-        velocity = args[2]
+        
+        if args[2]:
+            velocity = args[2]
+            radius = velocity**2 / ay
+        else:
+            radius = args[3]
+            velocity = np.sqrt(abs(ay * radius))
 
         #############
         ### Setup ###
         #############
 
         # Adjust velocity vectors
-        imf_velocity = velocity * np.array([np.cos(beta), np.sin(beta), 0])
+        if args[2]:
+            imf_velocity = velocity * np.array([np.cos(beta), np.sin(beta), 0])
 
-        # Adjust acceleration vectors and dependencies
-        imf_accel = np.array([ax, ay, 0])
-        ntb_accel = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=beta), imf_accel)
-        yaw_rate = 0 if ntb_accel[1] == 0 else ntb_accel[1] / np.linalg.norm(imf_velocity)
+            # Adjust acceleration vectors and dependencies
+            imf_accel = np.array([ax, ay, 0])
+            ntb_accel = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=beta), imf_accel)
+            yaw_rate = 0 if ntb_accel[1] == 0 else ntb_accel[1] / np.linalg.norm(imf_velocity)
+
+        else:
+            imf_velocity = velocity * np.array([np.cos(beta), np.sin(beta), 0])
+
+            # Adjust acceleration vectors and dependencies
+            imf_accel = np.array([ax, ay, 0])
+            ntb_accel = np.matmul(rotation_matrix(unit_vec=[0, 0, 1], theta=beta), imf_accel)
+            # omega = v / r
+            yaw_rate = velocity / radius
 
         # Store suspension objects
         suspension: SuspensionModel = self.suspension
@@ -656,7 +863,8 @@ class YMD:
 
         suspension_forces = self.FL_forces_aligned + self.FR_forces_aligned + self.RL_forces_aligned + self.RR_forces_aligned
         suspension_moments = np.cross(self.FL_Cp_wrt_cg, self.FL_forces_aligned) + np.cross(self.FR_Cp_wrt_cg, self.FR_forces_aligned) + \
-                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned) 
+                             np.cross(self.RL_Cp_wrt_cg, self.RL_forces_aligned) + np.cross(self.RR_Cp_wrt_cg, self.RR_forces_aligned) + \
+                             self.FL_moments_aligned + self.FR_moments_aligned + self.RL_moments_aligned + self.RR_moments_aligned
 
         aero_forces = aero_forces
         aero_moments = np.cross(CG_wrt_CoP, aero_forces)
@@ -678,12 +886,9 @@ class YMD:
         force_residuals = vehicle_centric_forces - sum_force
         moment_residuals = vehicle_centric_moments - sum_moment
 
-        residuals = [*force_residuals, *moment_residuals, FL_jounce, FR_jounce, RL_jounce, RR_jounce, FL_gamma, FR_gamma, RL_gamma, RR_gamma, FL_alpha, FR_alpha, RL_alpha, RR_alpha, *[float(x) for x in self.FL_forces_aligned], *[float(x) for x in self.FR_forces_aligned], *[float(x) for x in self.RL_forces_aligned], *[float(x) for x in self.RR_forces_aligned], heave, pitch, roll, delta, beta, ax, ay, yaw_ddot, self.FL_Cp_wrt_cg, self.FR_Cp_wrt_cg, self.RL_Cp_wrt_cg, self.RR_Cp_wrt_cg]
+        residuals = [*force_residuals, *moment_residuals, FL_jounce, FR_jounce, RL_jounce, RR_jounce, FL_gamma, FR_gamma, RL_gamma, RR_gamma, FL_alpha, FR_alpha, RL_alpha, RR_alpha, *[float(x) for x in self.FL_forces_aligned], *[float(x) for x in self.FR_forces_aligned], *[float(x) for x in self.RL_forces_aligned], *[float(x) for x in self.RR_forces_aligned], heave, pitch, roll, delta, beta, ax, ay, yaw_ddot, self.FL_Cp_wrt_cg, self.FR_Cp_wrt_cg, self.RL_Cp_wrt_cg, self.RR_Cp_wrt_cg, velocity]
 
         return residuals
-
-    def generate_constant_radius_YMD(self, radius: float) -> None:
-        pass
 
     def generate_suspension_report(self) -> None:
         """
@@ -711,11 +916,16 @@ class YMD:
         """
         pass
 
-    def plot(self):
+    def plot(self, radius: Union[float, None] = None, velocity: Union[float, None] = None):
         ymd = plt.figure()
+        ymd.set_size_inches(w=11, h=8.5)
         ax = ymd.gca()
 
-        ax.set_title("Yaw Acceleration vs Lateral Acceleration")
+        if velocity:
+            ax.set_title(f"Constant Velocity: {velocity} m/s | Yaw Acceleratino vs Lateral Acceleration")
+        else:
+            ax.set_title(f"Constant Radius: {radius} m | Yaw Acceleratino vs Lateral Acceleration")
+
         ax.set_xlabel("Lateral Acceleration (m/s^2)")
         ax.set_ylabel("Yaw Acceleration (rad/s^2)")
         ax.axhline(c="gray", linewidth=0.5)
@@ -736,6 +946,15 @@ class YMD:
 
             ax.plot(lat_accels, yaw_accels, c="red", linewidth=0.8)
             ax.text(text_pos[0], text_pos[1], f'β = {round(body_slip * 180 / np.pi, 1)}°', fontsize=6, c="red")
+        
+        custom_leg = [Line2D([0], [0], color='blue', lw=2),
+                Line2D([0], [0], color='red', lw=2)]
 
-        ymd.savefig("./outputs/ymd.png")
+        ax.legend(custom_leg, ["Constant δ (HWA)", "Constant β"])
+        ax.grid()
+        
+        if velocity:
+            plt.savefig(f"./outputs/ymd_{velocity}_mps.png")
+        else:
+            plt.savefig(f"./outputs/ymd_{radius}_m.png")
         # plt.show()

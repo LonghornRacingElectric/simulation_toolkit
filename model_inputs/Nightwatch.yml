@@ -9,8 +9,8 @@ Description:
     Description: Internal version number for vehicle
     Type: string
     Unit: N/A
-    Value: 1.0.5
-    Changes: From 1.0.4, new hdpts
+    Value: 1.1.0
+    Changes: Decreased font scrub. Made FLCAs more acute. Moved fore Rr_LCA negative in x. Removed bump steer in rear.
 
 Environment:
   G:
@@ -80,22 +80,22 @@ Geometric Properties:
     Type: list[list[float]]
     Unit: m
     Value: [
-      [0.11226939, 0.2159, 0.24],
-      [-0.11226939, 0.2159, 0.24],
-      [0.11277651, 0.2159, 0.08],
-      [-0.11277651, 0.2159, 0.08],
-      [0.05715005, 0.18288, 0.10490047],
+      [0.11226939, 0.223, 0.185],
+      [-0.11226939, 0.223, 0.185],
+      [0.112776, 0.2159, 0.08],
+      [-0.09525, 0.2159, 0.08],
+      [0.05715005, 0.211, 0.110],
       [0, 0.27638715, 0.08312027]]
   FLOP:
     Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-0.00634805, 0.552, 0.293622819],
-      [-0.00634805, 0.552, 0.293622819],
-      [0, 0.552, 0.10693398],
-      [0, 0.552, 0.10693398],
-      [0.05537382, 0.57785109, 0.15519324],
+      [-0.00634805, 0.55626, 0.2970022],
+      [-0.00634805, 0.55626, 0.2970022],
+      [0, 0.5703316, 0.1199998],
+      [0, 0.5703316, 0.1199998],
+      [0.05537382, 0.570, 0.15519324],
       [-0.00002554, 0.51228060, 0.25244758]]
   FL_Up:
     Description: True if push/pull rod mounts to upper wishbone
@@ -115,28 +115,28 @@ Geometric Properties:
     Description: Front left contact patch location
     Type: list[float]
     Unit: m
-    Value: [0.00000000, 0.6334506, 0.00000000]
+    Value: [0.00000000, 0.6096, 0.00000000]
   RLIP:
     Description: Rear left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.2715281, 0.32, 0.22],
-      [-1.49097773, 0.32, 0.22],
-      [-1.29540043, 0.295, 0.08],
-      [-1.5110603, 0.295, 0.08],
-      [-1.39521968, 0.275, 0.1262375],
+      [-1.28834, 0.260, 0.245],
+      [-1.50424, 0.260, 0.245],
+      [-1.28834, 0.25205, 0.08],
+      [-1.50424, 0.25205, 0.08],
+      [-1.3742004204848486, 0.2552116041818182, 0.1456182],
       [-1.47573900, 0.30957935, 0.11471471]]
   RLOP:
     Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.5501596, 0.5775969, 0.300],
-      [-1.5501596, 0.5775969, 0.300],
-      [-1.554986, 0.5775969, 0.111],
-      [-1.554986, 0.5775969, 0.111],
-      [-1.45744993, 0.58648783, 0.20447093],
+      [-1.5501596, 0.575, 0.2952369],
+      [-1.5501596, 0.575, 0.2952369],
+      [-1.554986, 0.5775969, 0.10541],
+      [-1.554986, 0.5775969, 0.10541],
+      [-1.45744993, 0.58648783, 0.1996660600320616],
       [-1.55040452, 0.51228235, 0.29667004]]
   RL_Up:
     Description: True if push/pull rod mounts to upper wishbone
@@ -161,9 +161,9 @@ Geometric Properties:
     Description: Inclination angle of tires [FL, RL]
     Type: float
     Unit: deg
-    Value: [0, 0]
+    Value: [1, 0]
   Toe:
-    Description: Toe angle of tires [FL, RL]
+    Description: Toe angle of tires [FL, RL], follows sign convention of slip angle
     Type: Float
     Unit: deg
     Value: [0, 0]
@@ -174,7 +174,7 @@ Suspension:
     Description: Linear rate of suspension springs [FL, FR, RL, RR]
     Type: list[float]
     Unit: N/m
-    Value: [70050.733858268, 70050.733858268, 70050.733858268, 70050.733858268]
+    Value: [78807.0755905515, 78807.0755905515, 70050.733858268, 70050.733858268]
   ARBK:
     Description: Linear stiffness of torsion bars from eye to eye [FR, RR]
     Type: float

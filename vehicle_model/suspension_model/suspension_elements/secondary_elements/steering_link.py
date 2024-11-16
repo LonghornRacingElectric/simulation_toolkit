@@ -2,6 +2,7 @@ from vehicle_model.suspension_model.suspension_elements.secondary_elements.kingp
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
 from vehicle_model.suspension_model.assets.misc_linalg import rotation_matrix
+from typing import Sequence
 import numpy as np
 
 

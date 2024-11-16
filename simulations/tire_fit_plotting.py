@@ -203,6 +203,6 @@ if __name__ == "__main__":
     alpha_sweep = np.linspace(-10 * np.pi / 180, 10 * np.pi / 180, 30)
 
     mesh_plots = tire_plotter.get_mesh_fig(Fz_nomin=654, gamma=0 * np.pi / 180, Fz_sweep=FZ_sweep, kappa_sweep=kappa_sweep_mesh, alpha_sweep=alpha_sweep_mesh)
-    ellipse_plot = tire_plotter.get_friction_ellipse_fig(Fz_nomin=654, gamma=0, kappa_sweep=kappa_sweep, alpha_sweep=alpha_sweep)
+    ellipse_plot = tire_plotter.get_friction_ellipse_fig(Fz_nomin=1200, gamma=0, kappa_sweep=kappa_sweep, alpha_sweep=alpha_sweep)
 
     tire_plotter.save_pdf(figs=[mesh_plots, ellipse_plot], save_path="./outputs/Tire_Fit_Plots.pdf")

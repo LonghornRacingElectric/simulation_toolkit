@@ -54,26 +54,25 @@ class  interp3d:
         self.v = v
 
     def __call__(self, x: float, y: float, z: float) -> float:
-        points = (self.x, self.y, self.z)
-        values = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z)))
+        try:
+            points = (self.x, self.y, self.z)
+            # values = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z)))
 
-        if x > max(self.x):
-            x = max(self.x)
-        elif x < min(self.x):
-            x = min(self.x)
+            if x > max(self.x):
+                x = max(self.x)
+            elif x < min(self.x):
+                x = min(self.x)
 
-        if y > max(self.y):
-            y = max(self.y)
-        elif y < min(self.y):
-            y = min(self.y)
+            if y > max(self.y):
+                y = max(self.y)
+            elif y < min(self.y):
+                y = min(self.y)
 
-        if z > max(self.z):
-            z = max(self.z)
-        elif z < min(self.z):
-            z = min(self.z)
-
-        if len(self.v) == len(self.x):
-            
+            if z > max(self.z):
+                z = max(self.z)
+            elif z < min(self.z):
+                z = min(self.z)
+                
             interp_val = griddata((self.x, self.y, self.z), self.v, (x, y, z), method='linear')
             
             if str(interp_val) == "nan":
@@ -81,7 +80,7 @@ class  interp3d:
 
             return interp_val
 
-        else:
+        except ValueError:
             points = (self.x, self.y, self.z)
             values = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z)))
             values = self.v
