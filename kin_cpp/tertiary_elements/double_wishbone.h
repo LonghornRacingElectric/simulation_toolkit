@@ -81,7 +81,7 @@ private:
        motion_ratio_function = CubicSpline (x=jounce_sweep, y=motion_ratio_lst)
        wheelrate_function = CubicSpline (x=jounce_sweep, y=wheelrate_lst) */
 public:
-    DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 4UL> &outboard_points, 
+    DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 6UL> &outboard_points, 
                    StaticMatrix<double, 3UL, 4UL> &bellcrank_params, double spring_rate, double weight, CG *cent_grav, 
                    bool upper, StaticVector<double, 3UL> &contact_patch, double inclination_angle, double toe, double tire_radius, 
                    double tire_width, bool show_ICs);
@@ -108,6 +108,10 @@ public:
     
     /* Getters */
     Node *getContactPatch () const;
+    Beam *getFVICLink () { return FVIC_link; }
+    Beam *getSVICLink () { return SVIC_link; }
+    Node *getFVFAP () { return FV_FAP; }
+    Node *getSVFAP () { return SV_FAP; }
 };
 
 #endif

@@ -8,7 +8,7 @@ Axle::Axle (DoubleWishbone *left_assy, DoubleWishbone *right_assy, CG *cg) {
 
     elements[0] = all_elements[0] = left;
     elements[1] = all_elements[1] = right;
-    elements[2] = all_elements[2] = cg;
+    elements[2] = all_elements[2] = (DoubleWishbone *) cg;
 }
 
 void Axle::roll(double angle){

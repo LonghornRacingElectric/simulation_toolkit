@@ -11,7 +11,7 @@ class PushPullRod
 private:
     Beam *rod;
     Damper *damper;
-    Bellcrank *Bellcrank;
+    Bellcrank *bellcrank;
     double bellcrank_angle;
     double wishbone_angle;
     double initial_rod_length;
