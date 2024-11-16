@@ -3,6 +3,7 @@ from vehicle_model.suspension_model.assets.plotter import Plotter
 from vehicle_model.aero_model.aero_model import AeroModel
 from vehicle_model._assets.processor import Processor
 from LHR_tire_toolkit.MF52 import MF52
+from typing import Union
 import numpy as np
 
 class VehicleModel:
@@ -20,14 +21,14 @@ class VehicleModel:
     aero_map_path: str
         File path to aero map in .csv format
     """
-    def __init__(self, defn_file_path: str, tir_file_path: str, aero_map_path: str) -> None:
+    def __init__(self, defn_file_path: str, tir_file_path: str, aero_map_path: Union[str, None]) -> None:
         self.processor = Processor(file_path=defn_file_path)
         self.params = self.processor.params
         self.tir_file_path = tir_file_path
-        self.aero_map_path = aero_map_path
+        # self.aero_map_path = aero_map_path
 
         self.initialize_suspension()
-        self.initialize_aero()
+        # self.initialize_aero()
 
     def initialize_suspension(self) -> None:
         """
@@ -136,5 +137,5 @@ class VehicleModel:
 
         self.suspension_plotter.show()
 
-    def initialize_aero(self) -> None:
-        self.aero_model = AeroModel(self.aero_map_path, 1.225)
+    # def initialize_aero(self) -> None:
+    #     self.aero_model = AeroModel(self.aero_map_path, 1.225)

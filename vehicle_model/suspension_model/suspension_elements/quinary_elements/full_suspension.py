@@ -42,7 +42,7 @@ class FullSuspension:
         self.ang_x = 0
         self.ang_y = 0
 
-        self.elements = [self.Fr_axle, self.Rr_axle, self.cg]
+        self.elements = [self.Fr_axle, self.cg]
         self.all_elements = [self.Fr_axle, self.Rr_axle]
 
     def steer(self, rack_displacement: float) -> None:
