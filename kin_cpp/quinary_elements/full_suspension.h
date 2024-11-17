@@ -16,7 +16,7 @@ private:
     Axle *elements[3];
     Axle *all_elements[2];
 
-    KinPC *left_kin_pc, right_kin_PC; 
+    KinPC *left_kin_pc, *right_kin_pc; 
 public:
     FullSuspension (Axle *Fr_axle, Axle *Rr_axle, CG *cg);
     void steer (double rack_displacement);
@@ -33,7 +33,6 @@ public:
     void reset_position ();
     void hard_reset (); /* For when shit hits the fan */
     void flatten ();
-    StaticVector<double, 6UL> plane (StaticMatrix<double, 3UL, 3UL> points);
     void translate (StaticVector<double, 3UL> translation);
     void flatten_rotate (StaticVector<double, 3UL> angle);
 

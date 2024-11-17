@@ -6,16 +6,16 @@
 
 class KinPC {
 public:
-    KinPC(Link* front_swing_arm, Link* rear_swing_arm, CG* cg);
+    KinPC(Beam *_front_swing_arm, Beam *_rear_swing_arm, CG* _cg);
 
     void update();
-    StaticVector<double, 2> getCGAxisKinPCPos() const;
-    StaticVector<double, 2> getTrueKinPCPos() const;
-    void translate(const StaticVector<double, 3UL>& translate);
+    StaticVector<double, 3UL> cg_axis_KinPC_pos() const;
+    StaticVector<double, 3UL> true_KinPC_pos() const;
+    void translate(const StaticVector<double, 3UL>& translation);
     void flatten_rotate(const StaticVector<double, 3UL>& angle);
 private:
-    Beam* front_swing_arm;
-    Beam* rear_swing_arm;
+    Beam *front_swing_arm;
+    Beam *rear_swing_arm;
     CG* cg;
 
     Node* true_KinPC;
@@ -24,10 +24,8 @@ private:
     double long_position;
     double vertical_position;
 
-    Beam *elements[2];
-    Node *all_elements[3];
-    StaticVector<double, 3> true_KinPC_pos;
-    StaticVector<double, 3> cg_axis_KinPC_pos;
+    Node *elements[1];
+    Node *all_elements[1];
 };
 
 #endif //KIN_PC_H
