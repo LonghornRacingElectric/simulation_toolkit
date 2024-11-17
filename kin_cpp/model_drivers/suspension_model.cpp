@@ -1,5 +1,7 @@
 #include "suspension_model.h"
 #include <cmath>
+#include <filesystem>
+#include <vector>
 
 SuspensionModel::SuspensionModel (StaticMatrix<double, 3UL, 6UL> &FL_inboard_points, 
                     StaticMatrix<double, 3UL, 6UL> &FL_outboard_points,
@@ -61,27 +63,24 @@ SuspensionModel::SuspensionModel (StaticMatrix<double, 3UL, 6UL> &FL_inboard_poi
     elements[0] = full_suspension;
 }
 
-void SuspensionModel::generate_kin () {
-    FL_dw = full_suspension->getFR ()->getLeft ();
-    FR_dw = full_suspension->getFR ()->getRight ();
-    RL_dw = full_suspension->getRR ()->getLeft ();
-    RR_dw = full_suspension->getRR ()->getRight ();
-}
-
+/* Induce steer into system */
 void SuspensionModel::steer (double rack_displacement) {
     full_suspension->steer (rack_displacement);
 }
 
+/* Vertically translate entire car */
 void SuspensionModel::heave (double heave) {
     current_heave = heave;
     full_suspension->heave (heave);
 }
 
+/* Vertically translate one half of car by {pitch} degrees about cg */
 void SuspensionModel::pitch (double pitch) {
     current_pitch = pitch;
     full_suspension->pitch (pitch * M_PI / 180);
 }
 
+/* Laterally rotate car by {roll} degrees about cg */
 void SuspensionModel::roll (double roll) {
     current_roll = roll;
     full_suspension->roll (roll * M_PI / 180);
