@@ -33,7 +33,6 @@ public:
     void reset_position ();
     void hard_reset (); /* For when shit hits the fan */
     void flatten ();
-    StaticVector<double, 6UL> plane (StaticMatrix<double, 3UL, 3UL> points);
     void translate (StaticVector<double, 3UL> translation);
     void flatten_rotate (StaticVector<double, 3UL> angle);
 

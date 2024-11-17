@@ -37,7 +37,7 @@ StaticMatrix<double, 3UL, 3UL> rotation_matrix(const StaticVector<double, 3UL> &
     - points (3x3 StaticMatrix) -- 3 points, each a column vector in 3D space
    Return value : 6D StaticVector -- parameters defining plane
     - in form [a, b, c, x_0, y_0, z_0] */
-StaticVector<double, 6UL> get_plane(StaticMatrix<double, 3UL, 3UL> &points) {
+StaticVector<double, 6UL> plane(StaticMatrix<double, 3UL, 3UL> &points) {
     /* Sanitize inputs to 3D space */
     assert (columns(points) == 3);
     /* Get 2 vectors that define a plane*/
@@ -73,9 +73,9 @@ StaticVector<double, 3UL> plane_eval(StaticMatrix<double, 3UL, 3UL> &points, dou
     assert (columns(points) == 3);
 
     /* Get parameters defining plane and unpack them */
-    StaticVector<double, 6> plane = get_plane(points);
-    double a = plane[0], b = plane[1], c = plane[2];
-    double x_0 = plane[3], y_0 = plane[4], z_0 = plane[5];
+    StaticVector<double, 6> _plane = plane(points);
+    double a = _plane[0], b = _plane[1], c = _plane[2];
+    double x_0 = _plane[3], y_0 = _plane[4], z_0 = _plane[5];
 
     /* Compute missing coordinate */
     double z = a / c *(x_0 - x) + b / c * (y_0 - y) + z_0;

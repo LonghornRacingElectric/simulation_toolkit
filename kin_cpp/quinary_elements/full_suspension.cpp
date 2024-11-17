@@ -1,4 +1,5 @@
 #include "full_suspension.h"
+#include "../assets/misc_linalg.h"
 using namespace blaze;
 
 FullSuspension::FullSuspension(Axle *front_axle, Axle *rear_axle, CG *cg) {
@@ -49,11 +50,11 @@ void FullSuspension::heave (double heave){
 }
 
 void FullSuspension::pitch (double angle){
-    Node *FL_cp = Fr_axle->left->contact_patch;
-    Node *RL_cp = Rr_axle->left->contact_patch;
+    Node *FL_cp = Fr_axle->getLeft ()->getContactPatch ();
+    Node *RL_cp = Rr_axle->getLeft ()->getContactPatch ();
 
-    double cg_long_pos = cg->position[0] - RL_cp->position[0];
-    double front_cp_pos = FL_cp.position[0] - RL_cp.position[0];
+    double cg_long_pos = cg->getPosition ()->position[0] - RL_cp->position[0];
+    double front_cp_pos = FL_cp->position[0] - RL_cp->position[0];
 
     double front_arm = fabs(front_cp_pos - cg_long_pos);
     double rear_arm = fabs(front_cp_pos - front_arm);
@@ -62,7 +63,7 @@ void FullSuspension::pitch (double angle){
 
     double front_heave_guess = front_arm * sin(angle);
     //TODO Implement fsolve() below
-    double heave_soln = fsolve(_pitch_resid_func, front_heave_guess, args={angle, FR_ratio});
+    double heave_soln = fsolve(_pitch_resid_func, front_heave_guess, {angle, FR_ratio});
 
     Fr_axle->axle_pitch(heave_soln);
     Rr_axle->axle_pitch(-1 * heave_soln / FR_ratio);
@@ -104,8 +105,8 @@ double FullSuspension::_pitch_resid_func (double x, StaticVector<double, 2UL> ar
     double angle = args[0];
     double FR_ratio = args[1];
 
-    double front_heave_guess = x[0];
-    double rear_heave_guess = x[0] / FR_ratio;
+    double front_heave_guess = x;
+    double rear_heave_guess = x / FR_ratio;
 
     Node *FL_cp = Fr_axle->getLeft ()->getContactPatch ();
     Node *RL_cp = Rr_axle->getLeft ()->getContactPatch ();
@@ -148,20 +149,20 @@ double FullSuspension::heave_stiffness () const {
 }
 
 double FullSuspension::roll_stiffness () const {
-    double Fr_axle_rate = Fr_axle->roll_stiffness;
-    double Rr_axle_rate = Rr_axle->roll_stiffness;
+    double Fr_axle_rate = Fr_axle->roll_stiffness ();
+    double Rr_axle_rate = Rr_axle->roll_stiffness ();
 
     return Fr_axle_rate + Rr_axle_rate;
 }
 
 double FullSuspension::pitch_stiffness () const {
-    double Fr_axle_rate = Fr_axle->left->wheelrate + Fr_axle->right->wheelrate;
-    double Rr_axle_rate = Rr_axle->left->wheelrate + Rr_axle->right->wheelrate;
-    double Fr_position = Fr_axle->left->contact_patch.->position[0];
-    double Rr_position = Rr_axle->left->contact_patch.->position[0];
-    double cg_position = cg->position[0];
+    double Fr_axle_rate = Fr_axle->getLeft()->wheelrate () + Fr_axle->getRight()->wheelrate ();
+    double Rr_axle_rate = Rr_axle->getLeft()->wheelrate () + Rr_axle->getRight()->wheelrate ();
+    double Fr_position = Fr_axle->getLeft()->getContactPatch ()->position[0];
+    double Rr_position = Rr_axle->getLeft()->getContactPatch ()->position[0];
+    double cg_position = cg->getPosition ()->position[0];
 
-    double pitch_stiffness = 1/4 * ((Fr_position - cg_position)**2 * Fr_axle_rate + (Rr_position - cg_position)**2 * Rr_axle_rate);
+    double pitch_stiffness = 1/4 * (pow((Fr_position - cg_position), 2) * Fr_axle_rate + pow((Rr_position - cg_position), 2) * Rr_axle_rate);
     return pitch_stiffness;
 }
 
@@ -181,31 +182,34 @@ void FullSuspension::hard_reset () {
 }
 
 void FullSuspension::flatten () {
-    vector<double> FL_cp = Fr_axle->left->position;
-    vector<double> FR_cp = Fr_axle->right->position;
-    vector<double> RL_cp = Rr_axle->left->position;
-    vector<double> RR_cp = Rr_axle->right->position;
+    Node * FL_cp = Fr_axle->getLeft()->getContactPatch ();
+    Node * FR_cp = Fr_axle->getRight ()->getContactPatch ();
+    Node * RL_cp = Rr_axle->getLeft()->getContactPatch ();
+    Node * RR_cp = Rr_axle->getRight ()->getContactPatch ();
 
-    vector<double> average_cp = {(FL_cp[0] + FR_cp[0] + RL_cp[0] + RR_cp[0]) / 4,
-                                (FL_cp[1] + FR_cp[1] + RL_cp[1] + RR_cp[1]) / 4,
-                                (FL_cp[2] + FR_cp[2] + RL_cp[2] + RR_cp[2]) / 4};
+    StaticVector<double, 3UL> average_cp = (FL_cp->position + FR_cp->position + RL_cp->position + RR_cp->position) / 4;
 
-    this-> current_average_cp = average_cp;
-    translate(-1*average_cp);
-    auto plane_enq = 
+    current_average_cp = average_cp;
+    translate(-1 * average_cp);
 
-    auto plane_coeffs = plane({FL_cp, FR_cp, RL_cp});
-        double a = plane_coeffs[0], b = plane_coeffs[1], c = plane_coeffs[2];
-        double x_0 = plane_coeffs[3], y_0 = plane_coeffs[4], z_0 = plane_coeffs[5];
+    /* Parameter for plane */
+    StaticMatrix<double, 3UL, 3UL> cp_plane_params;
+    column (cp_plane_params, 0) = FL_cp->position;
+    column (cp_plane_params, 1) = FR_cp->position;
+    column (cp_plane_params, 2) = RL_cp->position;
 
-    auto plane_eqn = [&](double x, double y) -> double {
-            return ((a * x_0 + b * y_0 + c * z_0) - a * x - b * y) / c;
-        };
+    StaticVector<double, 6UL> cp_plane = plane (cp_plane_params);
+    double a = cp_plane[0], b = cp_plane[1], c = cp_plane[2];
+    double x_0 = cp_plane[3], y_0 = cp_plane[4], z_0 = cp_plane[5];
+    auto plane_eqn = [a, b, c, x_0, y_0, z_0](int a1, int a2) -> double {
+        ((a * x_0 + b * y_0 + c * z_0) - a * a1 - b * a2) / c; }; 
 
-    ang_x = atan(plane_eqn(0,1));
-    ang_y = atan(plane_eqn(1,0));
+    double ang_x = atan(plane_eqn(0,1));
+    double ang_y = atan(plane_eqn(1,0));
 
     if (transform_origin) {
+        this->ang_x = ang_x;
+        this->ang_y = ang_y;
         flatten_rotate({-ang_x, ang_y, 0.0});
     }
 
@@ -213,43 +217,16 @@ void FullSuspension::flatten () {
     translate(prac_average_cp);
 }
 
-vector<double, 6> FullSuspension::plane (vector<vector<double>> points) {
-    assert(points.size() == 3 && "Plane generator only accepts 3 points");
-        vector<double> PQ = {points[1][0] - points[0][0], points[1][1] - points[0][1], points[1][2] - points[0][2]};
-        vector<double> PR = {points[2][0] - points[0][0], points[2][1] - points[0][1], points[2][2] - points[0][2]};
-        
-        // Calculates cross product or PQ and PR
-        vector<double, 3> normal;
-        normal[0] = PQ[1] * PR[2] - PQ[2] * PR[1]; // i-component
-        normal[1] = PQ[2] * PR[0] - PQ[0] * PR[2]; // j-component
-        normal[2] = PQ[0] * PR[1] - PQ[1] * PR[0]; // k-component
-
-        double a = normal[0];
-        double b = normal[1];
-        double c = normal[2];
-
-        double x_0 = points[0][0];
-        double y_0 = points[0][1];
-        double z_0 = points[0][2];
-
-        return {a, b, c, x_0, y_0, z_0};
+void FullSuspension::translate(StaticVector<double, 3UL> translation) {
+    Fr_axle->translate (translation);
+    Rr_axle->translate (translation);
+    cg->getPosition ()->translate (translation);
 }
 
-void FullSuspension::translate(vector<double> translation) {
-    for (int i=0; i<all_elements.size(); i++) {
-        all_elements[i].translate(translation);
-    }
+void FullSuspension::flatten_rotate (StaticVector<double, 3UL> angle) {
+    Fr_axle->flatten_rotate (angle);
+    Rr_axle->flatten_rotate (angle);
+    cg->getPosition ()->flatten_rotate (angle);
 }
-
-void FullSuspension::flatten_rotate (vector<double> angle) {
-    for (int i=0; i<all_elements.size(); i++) {
-        all_elements[i].flatten_rotate(angle);
-    }
-}
-
-//TODO
-void FullSuspension::plot_elements() {
-
-}
-       
+  
 

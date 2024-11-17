@@ -3,6 +3,8 @@
     "files.associations": {
         "cmath": "cpp",
         "array": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "regex": "cpp",
+        "vector": "cpp"
     }
 }
