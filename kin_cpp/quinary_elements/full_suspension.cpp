@@ -146,8 +146,6 @@ double FullSuspension::heave_stiffness () const {
 
     return FL_wheelrate + FR_wheelrate + RL_wheelrate + RR_wheelrate;
 }
-<<<<<<< Updated upstream
-=======
 
 double FullSuspension::roll_stiffness () const {
     double Fr_axle_rate = Fr_axle->roll_stiffness;
@@ -255,4 +253,3 @@ void FullSuspension::plot_elements() {
 }
        
 
->>>>>>> Stashed changes
