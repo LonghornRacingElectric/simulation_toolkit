@@ -16,7 +16,7 @@ private:
     Axle *elements[3];
     Axle *all_elements[2];
 
-    KinPC *left_kin_pc, right_kin_PC; 
+    KinPC *left_kin_pc, *right_kin_pc; 
 public:
     FullSuspension (Axle *Fr_axle, Axle *Rr_axle, CG *cg);
     void steer (double rack_displacement);
