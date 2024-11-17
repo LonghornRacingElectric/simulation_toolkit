@@ -40,8 +40,8 @@ void FullSuspension::heave (double heave){
     Fr_axle->axle_heave(heave);
     Rr_axle->axle_heave(heave);
     
-    left_kin_PC->update ();
-    right_kin_PC->update ();
+    left_kin_pc->update ();
+    right_kin_pc->update ();
 
     if (transform_origin) {
         flatten();
@@ -67,8 +67,8 @@ void FullSuspension::pitch (double angle){
     Fr_axle->axle_pitch(heave_soln);
     Rr_axle->axle_pitch(-1 * heave_soln / FR_ratio);
 
-    left_kin_PC->update();
-    right_kin_PC->update();
+    left_kin_pc->update();
+    right_kin_pc->update();
 
     if (transform_origin) {
         flatten ();
@@ -80,10 +80,10 @@ void FullSuspension::roll (double angle){
     Fr_axle->roll(angle);
     Rr_axle->roll(angle);
     
-    left_kin_PC->update();
-    right_kin_PC->update();
+    left_kin_pc->update();
+    right_kin_pc->update();
 
-    if (transform_origin()){
+    if (transform_origin){
         flatten();
     }
 }
@@ -186,9 +186,9 @@ void FullSuspension::flatten () {
     vector<double> RL_cp = Rr_axle->left->position;
     vector<double> RR_cp = Rr_axle->right->position;
 
-    vector<double> average_cp = {(FL_cp[0] + FR_cp[0] + FL_cp[0] + RR_cp[0]) / 4,
-                                (FL_cp[1] + FR_cp[1] + FL_cp[1] + RR_cp[1]) / 4,
-                                (FL_cp[2] + FR_cp[2] + FL_cp[2] + RR_cp[2]) / 4};
+    vector<double> average_cp = {(FL_cp[0] + FR_cp[0] + RL_cp[0] + RR_cp[0]) / 4,
+                                (FL_cp[1] + FR_cp[1] + RL_cp[1] + RR_cp[1]) / 4,
+                                (FL_cp[2] + FR_cp[2] + RL_cp[2] + RR_cp[2]) / 4};
 
     this-> current_average_cp = average_cp;
     translate(-1*average_cp);
