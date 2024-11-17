@@ -1,6 +1,8 @@
 #include "misc_linalg.h"
 #include <cmath>
 #include <cassert>
+#include <iostream>
+#include <gsl/gsl_multimin.h>
 using namespace blaze;
 /* Generates rotation matrix
    Params : 
@@ -84,3 +86,150 @@ StaticVector<double, 3UL> plane_eval(StaticMatrix<double, 3UL, 3UL> &points, dou
     StaticVector<double, 3> point{x, y, z};
     return point;
 }
+
+/* Fsolve for one variable
+ (The driver function to minimize any given function)
+    
+    To call fsolve1:
+
+    // Initial guess for x (e.g., x = 0)
+    gsl_vector *initial_guess = gsl_vector_alloc(1);
+    gsl_vector_set(initial_guess, 0, 0.0);
+
+    // Call the driver function to minimize the function
+    double min_value = fsolve1(function_to_minimize, initial_guess);
+    
+    std::cout << "The minimum value of the function is at x = " << min_value << std::endl;
+
+    // Free the memory
+    gsl_vector_free(initial_guess);
+    */
+
+double fsolve1(double (*func)(const gsl_vector *, void *), gsl_vector *initial_guess) {
+    // Define the GSL minimization context
+    gsl_multimin_function min_func;
+    min_func.n = 1;  // Number of parameters (we minimize over one variable here)
+    min_func.f = func;  // The function to minimize
+    min_func.params = nullptr;  // No extra parameters for the function
+
+    // Create a minimizer (use Nelder-Mead simplex method)
+    gsl_multimin_fminimizer *s = gsl_multimin_fminimizer_alloc(gsl_multimin_fminimizer_nmsimplex, 1);
+
+    // Set the initial guess and step size (e.g., step size = 0.1)
+    gsl_vector *step_size = gsl_vector_alloc(1);
+    gsl_vector_set(step_size, 0, 0.1);  // Step size of 0.1 for the first (and only) parameter
+
+    // Set the minimizer with the function, initial guess, and step size
+    gsl_multimin_fminimizer_set(s, &min_func, initial_guess, step_size);
+
+    // Perform the minimization (find the value where the function is minimized)
+    int status;
+    int iteration = 0;
+    do {
+        iteration++;
+
+        // Take a step
+        status = gsl_multimin_fminimizer_iterate(s);
+
+        if (status) {
+            std::cout << "Error during iteration " << iteration << std::endl;
+            break;
+        }
+
+        // Check for convergence
+        double size = gsl_multimin_fminimizer_size(s);
+        if (size < 1e-5) {  // Convergence threshold
+            break;
+        }
+    } while (true);
+
+    // Return the minimized value (x value where the function is minimized)
+    double min_value = gsl_vector_get(s->x, 0);
+    
+    // Free the memory allocated for the minimizer
+    gsl_multimin_fminimizer_free(s);
+    gsl_vector_free(step_size);
+
+    return min_value;
+}
+
+//
+
+// Fsolve for two variables (can be modified to inlcude more variables if needed)
+/*(The driver function to minimize any given function)
+    To call fsolve2:
+
+    // Number of variables (e.g., 2 variables x1, x2)
+    size_t n = 2;
+
+    // Initial guess for x1, x2 (e.g., x1 = 0, x2 = 0)
+    gsl_vector *initial_guess = gsl_vector_alloc(n);
+    gsl_vector_set(initial_guess, 0, 0.0);
+    gsl_vector_set(initial_guess, 1, 0.0);
+
+    // Call the driver function to minimize the system of equations
+    gsl_vector *solution = fsolve2(function_to_minimize, initial_guess, n);
+
+    // Print the solution (values of x1, x2, ...)
+    std::cout << "The solution to the system is:" << std::endl;
+    for (size_t i = 0; i < n; i++) {
+        std::cout << "x" << i + 1 << " = " << gsl_vector_get(solution, i) << std::endl;
+    }
+
+    // Free the memory
+    gsl_vector_free(initial_guess);
+    gsl_vector_free(solution);
+
+*/
+// The driver function to minimize the system of equations
+gsl_vector* fsolve2(double (*func)(const gsl_vector *, void *), gsl_vector *initial_guess, size_t n) {
+    // Define the GSL minimization context
+    gsl_multimin_function min_func;
+    min_func.n = n;  // Number of parameters
+    min_func.f = func;  // The function to minimize
+    min_func.params = nullptr;  // No extra parameters for the function
+
+    // Create a minimizer (use Nelder-Mead simplex method)
+    gsl_multimin_fminimizer *s = gsl_multimin_fminimizer_alloc(gsl_multimin_fminimizer_nmsimplex, n);
+
+    // Set the initial guess and step size (e.g., step size = 0.1 for each parameter)
+    gsl_vector *step_size = gsl_vector_alloc(n);
+    for (size_t i = 0; i < n; i++) {
+        gsl_vector_set(step_size, i, 0.1);  // Set step size for each parameter
+    }
+
+    // Set the minimizer with the function, initial guess, and step size
+    gsl_multimin_fminimizer_set(s, &min_func, initial_guess, step_size);
+
+    // Perform the minimization (find the value where the function is minimized)
+    int status;
+    int iteration = 0;
+    do {
+        iteration++;
+
+        // Take a step
+        status = gsl_multimin_fminimizer_iterate(s);
+
+        if (status) {
+            std::cout << "Error during iteration " << iteration << std::endl;
+            break;
+        }
+
+        // Check for convergence
+        double size = gsl_multimin_fminimizer_size(s);
+        if (size < 1e-5) {  // Convergence threshold
+            break;
+        }
+    } while (true);
+
+    // Return the vector containing the minimized values (solutions to the system)
+    gsl_vector *solution = gsl_vector_alloc(n);
+    gsl_vector_memcpy(solution, s->x);
+
+    // Free the memory allocated for the minimizer and step size
+    gsl_multimin_fminimizer_free(s);
+    gsl_vector_free(step_size);
+
+    return solution;
+}
+
