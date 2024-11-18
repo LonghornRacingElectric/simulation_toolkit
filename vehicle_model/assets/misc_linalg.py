@@ -1,9 +1,8 @@
-from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
 from typing import Sequence
 import numpy as np
 
 
-def unit_vec(p1: Node, p2: Node) -> np.ndarray:
+def unit_vec(p1: Sequence[float], p2: Sequence[float]) -> np.ndarray:
     """
     ## Unit Vector Calculation
 
@@ -21,8 +20,10 @@ def unit_vec(p1: Node, p2: Node) -> np.ndarray:
     np.ndarray
         Unit vector pointing from starting node to ending node
     """
-    vector_AB = p1.position - p2.position
-    vector_AB_mag = np.linalg.norm(p1.position - p2.position)
+    p1 = np.array(p1)
+    p2 = np.array(p2)
+    vector_AB = p1 - p2
+    vector_AB_mag = np.linalg.norm(p1 - p2)
     
     return vector_AB / vector_AB_mag
 

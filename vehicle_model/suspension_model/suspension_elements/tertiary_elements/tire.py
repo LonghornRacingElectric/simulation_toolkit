@@ -1,6 +1,6 @@
-from vehicle_model.suspension_model.assets.misc_linalg import rotation_matrix
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.kingpin import Kingpin
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.assets.misc_linalg import rotation_matrix
 from typing import Sequence
 import numpy as np
 

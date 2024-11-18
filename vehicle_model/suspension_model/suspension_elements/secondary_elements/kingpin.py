@@ -1,6 +1,6 @@
-from vehicle_model.suspension_model.assets.misc_linalg import rotation_matrix
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.assets.misc_linalg import rotation_matrix
 import numpy as np
 
 

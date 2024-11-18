@@ -1,4 +1,4 @@
-import vehicle_model.suspension_model.assets.misc_linalg as linalg
+import vehicle_model.assets.misc_linalg as linalg
 from typing import Sequence
 import numpy as np
 
@@ -17,7 +17,7 @@ class Node:
     """
     def __init__(self, position: Sequence[float]) -> None:
         self.position = np.array(position)
-        self.initial_position = position
+        self.initial_position = np.array(position)
 
     def reset(self) -> None:
         """
@@ -52,7 +52,7 @@ class Node:
         """
         self.position = self.position + np.array(translation)
     
-    def flatten_rotate(self, angle: Sequence[float]) -> None:
+    def rotate(self, origin: "Node", angle_x: float = 0, angle_y: float = 0, angle_z: float = 0) -> None:
         """
         ## Flatten Rotate
 
@@ -61,26 +61,16 @@ class Node:
 
         Parameters
         ----------
-        angle : Sequence[float]
-            Angles of rotation in radians [x_rot, y_rot, z_rot]
+        origin : Node
+            Node representing origin of transformation
+        angle_x : float
+            Angle of rotation about x in radians
+        angle_y : float
+            Angle of rotation about y in radians
+        angle_z : float
+            Angle of rotation about z in radians
         """
-        x_rot = linalg.rotation_matrix(unit_vec=[1, 0, 0], theta=angle[0])
-        y_rot = linalg.rotation_matrix(unit_vec=[0, 1, 0], theta=angle[1])
-        z_rot = linalg.rotation_matrix(unit_vec=[0, 0, 1], theta=angle[2])
-        self.position = np.matmul(x_rot, np.matmul(y_rot, np.matmul(z_rot, self.position)))
-
-    def plot_elements(self, plotter, radius: float = 0.022225 / 2) -> None:
-        """
-        ## Plot Elements
-
-        Plots Node
-
-        Parameters
-        ----------
-        plotter : pv.Plotter
-            Plotter object
-        radius: float
-            Radius of Node
-        """
-        if max(np.abs(self.position)) < 50:
-            plotter.add_node(center=self.position, radius=radius)
+        x_rot = linalg.rotation_matrix(unit_vec=[1, 0, 0], theta=angle_x)
+        y_rot = linalg.rotation_matrix(unit_vec=[0, 1, 0], theta=angle_y)
+        z_rot = linalg.rotation_matrix(unit_vec=[0, 0, 1], theta=angle_z)
+        self.position = np.matmul(z_rot, np.matmul(y_rot, np.matmul(x_rot, self.position - origin.position))) + origin.position

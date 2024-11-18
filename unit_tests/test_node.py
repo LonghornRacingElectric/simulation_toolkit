@@ -1,5 +1,5 @@
-from vehicle_model.new_suspension_model.suspension_elements.primary_elements.node import Node
-from vehicle_model.new_suspension_model.assets.plotter import Plotter
+from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.assets.plotter import Plotter
 import numpy as np
 
 from unittest import main, TestCase
@@ -91,7 +91,7 @@ class NodeTest(TestCase):
         nodes = [test_node_1, test_node_2, test_node_3, test_node_4, test_node_5, test_node_6, test_node_7, test_node_8]
 
         for node in nodes:
-            node.plot(plotter=test_plotter, radius=0.25)
+            test_plotter.add_node(node=node, radius=0.25)
         # test_plotter.show()
     
     def test_plotter_transform(self):
@@ -109,11 +109,11 @@ class NodeTest(TestCase):
         nodes = [test_node_1, test_node_2, test_node_3, test_node_4, test_node_5, test_node_6, test_node_7, test_node_8]
 
         for node in nodes:
-            node.plot(plotter=test_plotter, radius=0.25)
+            test_plotter.add_node(node=node, radius=0.25)
 
         for node in nodes:
             node.rotate(origin=Node(position=[0, 0, 0]), angle_x=np.pi/4, angle_y=np.pi/4)
 
         for node in nodes:
-            node.plot(plotter=test_plotter, radius=0.25)
+            test_plotter.add_node(node=node, radius=0.25, color="black")
         # test_plotter.show()

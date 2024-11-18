@@ -2,16 +2,12 @@ from vehicle_model.suspension_model.suspension_elements.tertiary_elements.double
 from vehicle_model.suspension_model.suspension_elements.quinary_elements.full_suspension import FullSuspension
 from vehicle_model.suspension_model.suspension_elements.quaternary_elements.axle import Axle
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.cg import CG
-from vehicle_model._assets.pickle_helpers import pickle_import
 from matplotlib.backends.backend_pdf import PdfPages
 from vehicle_model._assets.interp import interp4d
 from typing import Callable, Sequence, Tuple
 from matplotlib.figure import Figure
-from collections import OrderedDict
-from dash import Dash, dash_table
 import matplotlib.pyplot as plt
 import pyvista as pv
-import pandas as pd
 import numpy as np
 import pickle
 import os
@@ -841,6 +837,7 @@ class SuspensionModel:
             "Bump FAPz Migration Full": {"FL": [], "FR": [], "RL": [], "RR": []},
             "Bump CPx Migration Full": {"FL": [], "FR": [], "RL": [], "RR": []},
             "Bump CPy Migration Full": {"FL": [], "FR": [], "RL": [], "RR": []},
+            "Bump MR Full": {"FL": [], "FR": [], "RL": [], "RR": []},
             "Bump Kw Full": {"FL": [], "FR": [], "RL": [], "RR": []},
             "Bump Kr Full": {"FL": [], "FR": [], "RL": [], "RR": []},
             "Bump Kp Full": {"FL": [], "FR": [], "RL": [], "RR": []},
@@ -1077,6 +1074,11 @@ class SuspensionModel:
             kin_dict["Bump Kw Full"]["FR"].append(self.FR_dw.wheelrate)
             kin_dict["Bump Kw Full"]["RL"].append(self.RL_dw.wheelrate)
             kin_dict["Bump Kw Full"]["RR"].append(self.RR_dw.wheelrate)
+
+            kin_dict["Bump MR Full"]["FL"].append(self.FL_dw.motion_ratio)
+            kin_dict["Bump MR Full"]["FR"].append(self.FR_dw.motion_ratio)
+            kin_dict["Bump MR Full"]["RL"].append(self.RL_dw.motion_ratio)
+            kin_dict["Bump MR Full"]["RR"].append(self.RR_dw.motion_ratio)
 
             kin_dict["Bump Kr Full"]["FL"].append(self.Fr_axle.roll_stiffness)
             kin_dict["Bump Kr Full"]["FR"].append(self.Fr_axle.roll_stiffness)
@@ -2300,9 +2302,47 @@ class SuspensionModel:
         ax_28[1, 1].grid()
         # fig_26.legend(["Lite Model", "Full Model", "Cached Model"])
 
+        fig_29, ax_29 = plt.subplots(nrows=2, ncols=2)
+        fig_29.set_size_inches(w=11, h=8.5)
+        fig_29.suptitle("Bump Motion Ratio")
+        fig_29.subplots_adjust(wspace=0.2, hspace=0.4)
+        
+        ax_29[0, 0].set_xlabel("Jounce (mm)")
+        ax_29[0, 0].set_ylabel("Motion Ratio (-)")
+        ax_29[0, 0].set_title("FL Motion Ratio")
+        # ax_29[0, 0].plot(self.roll_sweep * 180 / np.pi, kin_dict["Roll Scrub Lite"]["FL"])
+        ax_29[0, 0].plot(self.heave_sweep * 1000, np.array(kin_dict["Bump MR Full"]["FL"]))
+        # ax_29[0, 0].plot(self.heave_sweep * 1000, kin_dict["Roll Scrub Cached"]["FL"])
+        ax_29[0, 0].grid()
+
+        ax_29[0, 1].set_xlabel("Jounce (mm)")
+        ax_29[0, 1].set_ylabel("Motion Ratio (-)")
+        ax_29[0, 1].set_title("FR Motion Ratio")
+        # ax_29[0, 1].plot(self.heave_sweep * 1000, kin_dict["Roll Scrub Lite"]["FR"])
+        ax_29[0, 1].plot(self.heave_sweep * 1000, np.array(kin_dict["Bump MR Full"]["FR"]))
+        # ax_29[0, 1].plot(self.heave_sweep * 1000, kin_dict["Roll Scrub Cached"]["FR"])
+        ax_29[0, 1].grid()
+
+        ax_29[1, 0].set_xlabel("Jounce (mm)")
+        ax_29[1, 0].set_ylabel("Motion Ratio (-)")
+        ax_29[1, 0].set_title("RL Motion Ratio")
+        # ax_29[1, 0].plot(self.heave_sweep * 1000, kin_dict["Roll Scrub Lite"]["RL"])
+        ax_29[1, 0].plot(self.heave_sweep * 1000, np.array(kin_dict["Bump MR Full"]["RL"]))
+        # ax_29[1, 0].plot(self.heave_sweep * 1000, kin_dict["Roll Scrub Cached"]["RL"])
+        ax_29[1, 0].grid()
+
+        ax_29[1, 1].set_xlabel("Jounce (mm)")
+        ax_29[1, 1].set_ylabel("Motion Ratio (-)")
+        ax_29[1, 1].set_title("RR Motion Ratio")
+        # ax_29[1, 1].plot(self.heave_sweep * 1000, kin_dict["Roll Scrub Lite"]["RR"])
+        ax_29[1, 1].plot(self.heave_sweep * 1000, np.array(kin_dict["Bump MR Full"]["RR"]))
+        # ax_26[1, 1].plot(self.heave_sweep * 1000, kin_dict["Roll Scrub Cached"]["RR"])
+        ax_29[1, 1].grid()
+        # fig_26.legend(["Lite Model", "Full Model", "Cached Model"])
+
         self.plot(figs=[fig_1, fig_2, fig_3, fig_4, fig_5, fig_6, fig_7, fig_8, fig_9, fig_10, fig_11,
                         fig_12, fig_13, fig_14, fig_15, fig_16, fig_17, fig_18, fig_19, fig_20, fig_21, 
-                        fig_22, fig_23, fig_24, fig_25, fig_26, fig_27, fig_28])
+                        fig_22, fig_23, fig_24, fig_25, fig_26, fig_27, fig_28, fig_29])
     
     def generate_kin_helper(self, steer: float, heave: float, pitch: float, roll: float, reset: bool = False):
         dist_vecs = {"FL": {"CGx": None, "CGy": None},

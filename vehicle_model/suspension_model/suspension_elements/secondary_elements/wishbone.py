@@ -1,6 +1,7 @@
+from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
+from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
 from vehicle_model.suspension_model.assets.misc_linalg import rotation_matrix
 from vehicle_model.suspension_model.assets.misc_linalg import unit_vec
-from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.assets.plotter import Plotter
 from typing import Sequence
 import numpy as np
@@ -24,6 +25,7 @@ class Wishbone:
         self.aft_link = aft_link
 
         self.direction = self.direction_vec
+        self.origin = Node(position=(fore_link.inboard_node.position + aft_link.inboard_node.position) / 2)
         self.angle = 0
 
         self.elements = [self.fore_link, self.aft_link]

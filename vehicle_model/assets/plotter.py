@@ -1,6 +1,6 @@
 from vehicle_model.suspension_model.suspension_elements.tertiary_elements.tire import Tire
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-from typing import Sequence
+from typing import Sequence, Union
 from pyvista import PolyData
 from typing import Callable
 from typing import Tuple
@@ -21,8 +21,9 @@ class Plotter:
         self.pl = pv.Plotter()
         self.pl.enable_anti_aliasing()
         self.pl.set_background('white')
-        self.tires: Sequence[PolyData] | None = []
-        self.links: Sequence[PolyData] | None = []
+
+        self.tires: Union[Sequence[PolyData], list] = []
+        self.links: Union[Sequence[PolyData], list] = []
 
     def add_ground(self, FL_cp: Node, RL_cp: Node, tire: Tire) -> None:
         """
@@ -103,7 +104,7 @@ class Plotter:
         self.pl.add_mesh(pv.Cylinder(center=center, direction=direction, radius=radius, height=height), color=color)
         self.links.append(pv.Cylinder(center=center, direction=direction, radius=radius, height=height))
     
-    def add_node(self, center: Sequence[float], radius: float = 0.022225 / 2, color: str = "red") -> None:
+    def add_node(self, node: Node, radius: float = 0.022225 / 2, color: str = "red") -> None:
         """
         ## Add Node
 
@@ -111,8 +112,8 @@ class Plotter:
 
         Parameters
         ----------
-        center : Sequence[float]
-            Center of sphere
+        nodes : Sequence[Node]
+            Sequence of nodes to plot
         radius : float, optional
             Radius of sphere, by default 0.875/2
         color : str, optional
@@ -122,7 +123,7 @@ class Plotter:
         ----------
         None
         """
-        self.pl.add_mesh(pv.Sphere(radius=radius, center=center), color=color)
+        self.pl.add_mesh(pv.Sphere(radius=radius, center=node.position), color=color)
         
     def add_slider(self, func: Callable, title: str, bounds: Tuple[float, float], pos: Tuple[Tuple[float, float], Tuple[float, float]]) -> None:
         """

@@ -1,5 +1,6 @@
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.steering_link import SteeringLink
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.push_pull_rod import PushPullRod
+from vehicle_model.suspension_model.suspension_elements.secondary_elements.direct_rod import DirectRod
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.kingpin import Kingpin
 from vehicle_model.suspension_model.suspension_elements.tertiary_elements.tire import Tire
@@ -79,6 +80,7 @@ class DoubleWishbone:
         self.max_steer: float | None = None
 
         # Initialize load parameters
+        self.bellcrank_params = bellcrank_params
         self.spring_rate = spring_rate
         self.weight = weight
         
@@ -146,20 +148,24 @@ class DoubleWishbone:
         # Define push/pull rod
         rod_inboard = Node(position=inboard_points[5])
         rod_outboard = Node(position=outboard_points[5])
-        bellcrank_pivot = Node(position=bellcrank_params[0])
-        bellcrank_direction = bellcrank_params[1]
-        shock_outboard = Node(position=bellcrank_params[2])
-        shock_inboard = Node(position=bellcrank_params[3])
         
-        self.rod = PushPullRod(inboard=rod_inboard, 
-                               outboard=rod_outboard,
-                               upper=upper,
-                               bellcrank=True,
-                               bellcrank_pivot=bellcrank_pivot,
-                               bellcrank_direction=bellcrank_direction,
-                               shock_outboard=shock_outboard,
-                               shock_inboard=shock_inboard)
+        if bellcrank_params:
+            bellcrank_pivot = Node(position=bellcrank_params[0])
+            bellcrank_direction = bellcrank_params[1]
+            shock_outboard = Node(position=bellcrank_params[2])
+            shock_inboard = Node(position=bellcrank_params[3])
 
+            self.rod = PushPullRod(inboard=rod_inboard, 
+                                outboard=rod_outboard,
+                                upper=upper,
+                                bellcrank=True,
+                                bellcrank_pivot=bellcrank_pivot,
+                                bellcrank_direction=bellcrank_direction,
+                                shock_outboard=shock_outboard,
+                                shock_inboard=shock_inboard)
+        else:
+            self.rod = DirectRod(inboard=rod_inboard,
+                                 outboard=rod_outboard)
         # Track pushrod location for transformations later
         self.upper = upper
 
@@ -170,26 +176,31 @@ class DoubleWishbone:
         jounce_sweep = np.linspace(-0.0254 * 5, 0.0254 * 5, 100)
         jounce_interval = 0.0254 * 2 * 5 / 100
 
+        jounce_lst = []
         motion_ratio_lst = []
         for jounce in jounce_sweep:
             upper = jounce + jounce_interval
             self.jounce(jounce=jounce)
-            spring_pos_0 = self.rod.spring_damper_length
+            spring_pos_0 = self.rod.rod_length
             self.jounce(jounce=upper)
-            spring_pos_1 = self.rod.spring_damper_length
+            spring_pos_1 = self.rod.rod_length
 
             motion_ratio = jounce_interval / (spring_pos_0 - spring_pos_1)
-            motion_ratio_lst.append(motion_ratio)
+            if str(motion_ratio) == "inf":
+                continue
+            else:
+                motion_ratio_lst.append(motion_ratio)
+                jounce_lst.append(jounce)
         
-        self.motion_ratio_function = CubicSpline(x=jounce_sweep, y=motion_ratio_lst)
+        self.motion_ratio_function = CubicSpline(x=jounce_lst, y=motion_ratio_lst)
         
         # Reset jounce
         self.jounce(jounce=0)
 
         # Create function for wheelrate
-        wheelrate_lst = [self.spring_rate / 1.3**2 for MR in motion_ratio_lst]
+        wheelrate_lst = [self.spring_rate / MR**2 for MR in motion_ratio_lst]
         # wheelrate_lst = [self.spring_rate / MR**2 for MR in [1.3 for x in motion_ratio_lst]]
-        self.wheelrate_function = CubicSpline(x=jounce_sweep, y=wheelrate_lst)
+        self.wheelrate_function = CubicSpline(x=jounce_lst, y=wheelrate_lst)
 
         # plt.plot(jounce_sweep, self.motion_ratio_function(jounce_sweep))
         # plt.show()
@@ -199,12 +210,12 @@ class DoubleWishbone:
 
         # Plotting
         if not show_ICs:
-            self.elements = [self.upper_wishbone, self.lower_wishbone, self.kingpin, self.steering_link, self.tire]
+            self.elements = [self.upper_wishbone, self.lower_wishbone, self.rod, self.kingpin, self.steering_link, self.tire]
         elif max(np.abs(self.SVIC.position)) < 50:
-            self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link, self.FV_FAP, self.SV_FAP]
+            self.elements = [self.kingpin, self.steering_link, self.tire, self.rod, self.FVIC, self.SVIC, self.FVIC_link, self.SVIC_link, self.FV_FAP, self.SV_FAP]
         else:
             # self.elements = [self.kingpin, self.steering_link, self.rod, self.tire, self.FVIC, self.FVIC_link, self.FV_FAP, self.SV_FAP]
-            self.elements = [self.kingpin, self.steering_link, self.tire, self.FVIC_link, self.FV_FAP, self.SV_FAP]
+            self.elements = [self.kingpin, self.steering_link, self.tire, self.rod, self.FVIC_link, self.FV_FAP, self.SV_FAP]
         
         # Rotations
         if max(np.abs(self.SVIC.position)) < 50:
@@ -355,11 +366,17 @@ class DoubleWishbone:
         self.tire.induced_steer = induced_steer[0]
 
         # Apply transformation to push/pull rod
-        if self.upper:
-            self.rod.rotate_rod(axis=self.upper_wishbone.direction, origin=self.upper_wishbone.fore_link.inboard_node, angle=wishbone_angles[0])
+        if self.bellcrank_params:
+            if self.upper:
+                self.rod.rotate_rod(axis=self.upper_wishbone.direction, origin=self.upper_wishbone.origin, angle=wishbone_angles[0])
+            else:
+                self.rod.rotate_rod(axis=self.lower_wishbone.direction, origin=self.lower_wishbone.origin, angle=wishbone_angles[1])
+            self.rod.update()
         else:
-            self.rod.rotate_rod(axis=self.lower_wishbone.direction, origin=self.lower_wishbone.fore_link.inboard_node, angle=wishbone_angles[1])
-        self.rod.update()
+            if self.upper:
+                self.rod.rotate_rod(axis=self.upper_wishbone.direction, origin=self.upper_wishbone.origin, angle=wishbone_angles[0])
+            else:
+                self.rod.rotate_rod(axis=self.lower_wishbone.direction, origin=self.lower_wishbone.origin, angle=wishbone_angles[1])
 
         self.induced_steer = induced_steer[0]
         self.FVIC.position = self.FVIC_position
@@ -456,7 +473,7 @@ class DoubleWishbone:
         float
             Wheelrate under current jounce condition
         """
-        return self.spring_rate / 1.4**2
+        return self.spring_rate / self.motion_ratio**2
     
     def translate(self, translation: Sequence[float]) -> None:
         """
