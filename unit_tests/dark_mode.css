@@ -1,0 +1,38 @@
+body {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff;
+}
+
+table {
+    color: #ffffff;
+    border-color: #444444;
+}
+
+table th {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+table td {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+.pass {
+    background-color: #2e7d32; /* Green for passed tests */
+    color: #ffffff;
+}
+
+.fail {
+    background-color: #d32f2f; /* Red for failed tests */
+    color: #ffffff;
+}
+
+.skip {
+    background-color: #f9a825; /* Yellow for skipped tests */
+    color: #ffffff;
+}

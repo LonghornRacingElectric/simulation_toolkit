@@ -6,4 +6,6 @@ scipy
 pandas
 pyyaml
 dash
+pytest-cov
+pytest-html
 git+https://github.com/LonghornRacingElectric/tire_analysis@LHR_tire_toolkit_package

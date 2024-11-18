@@ -18,18 +18,13 @@ else
 endif
 
 clean:
-	rm -rf unit_test_results
-	rm -rf model_outputs
+	rm -rf unit_tests/python_test_results
+	mkdir unit_tests/python_test_results
 
-sim_setup:
-	mkdir model_outputs
+test_results: unit_tests/python_tests/
+	$(PYTHON) -m pytest --cov=src --cov-branch --cov=unit_tests/python_tests --cov-report=html:unit_tests/python_test_results/coverage_html \
+    --html=unit_tests/python_test_results/test_results.html --self-contained-html --css=unit_tests/dark_mode.css
+	firefox unit_tests/python_test_results/test_results.html
+	firefox unit_tests/python_test_results/coverage_html/index.html
 
-unit_test_results:
-	mkdir unit_test_results
-
-unit_test_results/test_node.tmp: vehicle_model/suspension_model/suspension_elements/primary_elements/node.py
-	python3 unit_tests/test_node.py
-
-run_tests: unit_test_results unit_test_results/test_node.tmp
-
-run_sim: sim_setup
+test: clean test_results
