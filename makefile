@@ -24,7 +24,7 @@ clean:
 test_results: unit_tests/python_tests/
 	$(PYTHON) -m pytest --cov=src --cov-branch --cov=unit_tests/python_tests --cov-report=html:unit_tests/python_test_results/coverage_html \
     --html=unit_tests/python_test_results/test_results.html --self-contained-html --css=unit_tests/dark_mode.css
-	firefox unit_tests/python_test_results/test_results.html
-	firefox unit_tests/python_test_results/coverage_html/index.html
+	firefox unit_tests/python_test_results/test_results.html &
+	firefox unit_tests/python_test_results/coverage_html/index.html &
 
 test: clean test_results
