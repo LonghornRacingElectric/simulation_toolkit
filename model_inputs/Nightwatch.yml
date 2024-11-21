@@ -9,8 +9,8 @@ Description:
     Description: Internal version number for vehicle
     Type: string
     Unit: N/A
-    Value: 1.1.0
-    Changes: Decreased font scrub. Made FLCAs more acute. Moved fore Rr_LCA negative in x. Removed bump steer in rear.
+    Value: 1.1.1
+    Changes: Clearances for pushrod and shock pot. Clearances for ptn. Changes for frame.
 
 Environment:
   G:
@@ -82,22 +82,22 @@ Geometric Properties:
     Type: list[list[float]]
     Unit: m
     Value: [
-      [0.11226939, 0.2159, 0.205],
-      [-0.11226939, 0.2159, 0.205],
-      [0.112776, 0.2159, 0.09],
+      [0.08686939, 0.2159, 0.200],
+      [-0.09525, 0.2159, 0.200],
+      [0.087376, 0.2159, 0.09],
       [-0.09525, 0.2159, 0.09],
-      [0.05786492484, 0.2159, 0.11684],
+      [0.04112845585454544, 0.2159, 0.117856],
       [0, 0.27638715, 0.08312027]]
   FLOP:
     Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-0.00634805, 0.52578, 0.295],
-      [-0.00634805, 0.52578, 0.295],
+      [-0.00634805, 0.52324, 0.28702],
+      [-0.00634805, 0.52324, 0.28702],
       [0, 0.5565, 0.125],
       [0, 0.5565, 0.125],
-      [0.05537382, 0.57, 0.17080855205739529],
+      [0.05537382, 0.57, 0.1704017490374177],
       [-0.00002554, 0.51228060, 0.25244758]]
   FL_Up:
     Description: True if push/pull rod mounts to upper wishbone
@@ -108,7 +108,11 @@ Geometric Properties:
     Description: Front left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
     Type: list[list[float]]
     Unit: m
-    Value: []
+    Value: [
+      [0, 0.24130000, 0.08890000],
+      [1, 0, 0],
+      [0, 0.24079888, 0.13334718],
+      [0, 0.05080000, 0.10160000]]
   FLCP:
     Description: Front left contact patch location
     Type: list[float]
@@ -119,22 +123,22 @@ Geometric Properties:
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.28834, 0.2822252, 0.235],
-      [-1.50424, 0.2822252, 0.235],
-      [-1.28834, 0.2822252, 0.09],
-      [-1.50424, 0.2822252, 0.09],
-      [-1.3741112098571429, 0.27745, 0.14525],
+      [-1.28891, 0.2829999, 0.2175],
+      [-1.49098, 0.2829999, 0.2175],
+      [-1.28891, 0.2829999, 0.09],
+      [-1.49098, 0.2829999, 0.09],
+      [-1.428060949019608, 0.2829999, 0.17779999999999999],
       [-1.47573900, 0.30957935, 0.11471471]]
   RLOP:
     Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.6002, 0.555, 0.2952369],
-      [-1.6002, 0.555, 0.2952369],
-      [-1.554986, 0.580, 0.10541],
-      [-1.554986, 0.580, 0.10541],
-      [-1.45744993, 0.58648783, 0.18387381224876337],
+      [-1.5748, 0.555, 0.28956],
+      [-1.5748, 0.555, 0.28956],
+      [-1.554986, 0.580, 0.11303],
+      [-1.554986, 0.580, 0.11303],
+      [-1.4606249299999998, 0.5689599999999999, 0.23694254028146533],
       [-1.55040452, 0.51228235, 0.29667004]]
   RL_Up:
     Description: True if push/pull rod mounts to upper wishbone
@@ -145,7 +149,11 @@ Geometric Properties:
     Description: Rear left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
     Type: list[list[float]]
     Unit: m
-    Value: []
+    Value: [
+      [-1.47320000, 0.27940000, 0.13335000],
+      [1, 0, 0],
+      [-1.47840082, 0.25837024, 0.2],
+      [-1.43510000, 0.07899653, 0.13970000]]
   RLCP:
     Description: Rear left contact patch location
     Type: list[float]
@@ -155,7 +163,7 @@ Geometric Properties:
     Description: Inclination angle of tires [FL, RL]
     Type: float
     Unit: deg
-    Value: [1, 0]
+    Value: [1, 1]
   Toe:
     Description: Toe angle of tires [FL, RL], follows sign convention of slip angle
     Type: Float
