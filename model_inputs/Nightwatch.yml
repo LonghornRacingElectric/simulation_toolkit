@@ -9,8 +9,8 @@ Description:
     Description: Internal version number for vehicle
     Type: string
     Unit: N/A
-    Value: 1.1.1
-    Changes: Clearances for pushrod and shock pot. Clearances for ptn. Changes for frame.
+    Value: 1.1.2
+    Changes: All outboard tie hdpts. Rear inboard fore hdpts.
 
 Environment:
   G:
@@ -97,7 +97,7 @@ Geometric Properties:
       [-0.00634805, 0.52324, 0.28702],
       [0, 0.5565, 0.125],
       [0, 0.5565, 0.125],
-      [0.05537382, 0.57, 0.1704017490374177],
+      [0.05385816, 0.5323332, 0.1648206],
       [-0.00002554, 0.51228060, 0.25244758]]
   FL_Up:
     Description: True if push/pull rod mounts to upper wishbone
@@ -123,9 +123,9 @@ Geometric Properties:
     Type: list[list[float]]
     Unit: m
     Value: [
-      [-1.28891, 0.2829999, 0.2175],
+      [-1.2989052, 0.2829999, 0.2175],
       [-1.49098, 0.2829999, 0.2175],
-      [-1.28891, 0.2829999, 0.09],
+      [-1.2989052, 0.2829999, 0.09],
       [-1.49098, 0.2829999, 0.09],
       [-1.428060949019608, 0.2829999, 0.17779999999999999],
       [-1.47573900, 0.30957935, 0.11471471]]
@@ -138,7 +138,7 @@ Geometric Properties:
       [-1.5748, 0.555, 0.28956],
       [-1.554986, 0.580, 0.11303],
       [-1.554986, 0.580, 0.11303],
-      [-1.4606249299999998, 0.5689599999999999, 0.23694254028146533],
+      [-1.4627098, 0.587375, 0.2407412],
       [-1.55040452, 0.51228235, 0.29667004]]
   RL_Up:
     Description: True if push/pull rod mounts to upper wishbone
