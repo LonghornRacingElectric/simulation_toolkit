@@ -225,7 +225,7 @@ class PowertrainModel:
         state_out['motor_power'] = float(motor_power)
         state_out['battery_terminal_power'] = battery_terminal_power
         state_out['battery_terminal_voltage'] = battery_terminal_voltage
-        state_out['battery_ocv'] = self.cell_ocv*self.s_count
+        state_out['battery_ocv'] = battery_ocv
         state_out['battery_current'] = battery_current
         state_out['battery_power'] = battery_power
         state_out['motor_efficiency'] = motor_efficiency

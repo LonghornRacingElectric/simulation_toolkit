@@ -13,12 +13,12 @@ from matplotlib import colors
 # ------------------- ------ -------------------- #
 
 torque_requests = np.array([-220, 220])  # [Nm]
-soc_mesh = 20
+soc_mesh = 25
 soc_range = np.array([0.01, 0.99])  # [%]
-velocity_mesh = 100
+velocity_mesh = 130
 velocity_range = np.array([0, 35])  # [m/s]
 tire_radius = 8  # [in]
-gear_ratio = 3.2308
+gear_ratio = 3.30769
 
 # ------------------- ------ -------------------- #
 # ------------------- ------ -------------------- #

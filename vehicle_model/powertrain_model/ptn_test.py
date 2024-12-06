@@ -30,7 +30,7 @@ test_car = Car(powertrain_parameters)
 
 test_car.state_in = {
     'wheel_angular_velocities': [30]*4,  # rad/s
-    'soc': 1,
+    'soc': .99,
     # avg_cell_temp: 30
     'tire_torques': [0, 0, 1000, 1000],
     'motor_rpm': None,
@@ -47,12 +47,12 @@ test_car.state_in = {
 }
 
 test_car.controls = {
-    'torque_request': float(-220)  # [Nm]
+    'torque_request': float(0)  # [Nm]
 }
 
 ############## check cell soc ##############
 
-# powertrain_parameters['s_count']['value'] = 1
+powertrain_parameters['s_count']['value'] = 7
 test_ptn = PowertrainModel(Car(powertrain_parameters))
 state = test_ptn.eval(test_car.state_in, test_car.controls)
 print('soc:', state['soc'], ';', 'battery_power:', state['battery_power'], ';',

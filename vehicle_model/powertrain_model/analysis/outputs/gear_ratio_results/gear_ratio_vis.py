@@ -5,7 +5,8 @@ import os
 import pandas as pd
 from matplotlib.lines import Line2D
 
-os.chdir(r'C:\Users\simmons_\Documents\lhre git')
+# os.chdir(r'C:\Users\simmons_\Documents\lhre git')
+os.chdir(r'C:\Users\andre\Documents\coding')
 orig_dir = os.getcwd()
 print(os.getcwd())
 
