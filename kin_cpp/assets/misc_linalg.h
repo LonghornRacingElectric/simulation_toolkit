@@ -27,4 +27,6 @@ StaticVector<double, 6UL> plane(const StaticMatrix<double, 3UL, 3UL> &);
     - y(double) -- y coordinate of point
     Return value : 3D StaticVector -- point on plane in form [x, y, x] */
 StaticVector<double, 3UL> plane_eval(const StaticMatrix<double, 3UL, 3UL> &, double, double);
+
+
 #endif //MISC_LINALG

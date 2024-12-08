@@ -29,26 +29,26 @@ private:
     Beam *lower_fore_link;
     Beam *lower_aft_link;
 
-    Wishbone *upper_wishbone; /* x */
-    Wishbone *lower_wishbone; /* x */
+    Wishbone *upper_wishbone;
+    Wishbone *lower_wishbone;
 
     Kingpin *kingpin;
-    Tie *steering_link; /* x */
+    Tie *steering_link;
 
     Node *upper_outboard;
     Node *lower_outboard;
     Node *tie_outboard;
     Node *contact_patch;
     
-    Tire *tire; /* x */
+    Tire *tire;
 
-    Node *FVIC; /* x */
+    Node *FVIC;
     Beam *FVIC_link;
-    Node *SVIC; /* x */
+    Node *SVIC;
     Beam *SVIC_link;
 
-    Node *FV_FAP; /* x */
-    Node *SV_FAP; /* x */
+    Node *FV_FAP;
+    Node *SV_FAP;
 
     Node *rod_inboard;
     Node *rod_outboard;
@@ -57,7 +57,7 @@ private:
     Node *shock_outboard;
     Node *shock_inboard;
 
-    PushPullRod *rod;  /* x */
+    PushPullRod *rod; 
     bool upper;
 
 
