@@ -560,11 +560,11 @@ class YMD:
         sus_corners: Sequence[DoubleWishbone] = [FL_double_wishbone, FR_double_wishbone, RL_double_wishbone, RR_double_wishbone]
 
         # Get CG position
-        cgx = suspension.cgx_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        cgy = suspension.cgy_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        cgz = suspension.cgz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
-        
-        self.cg_pos = np.array([cgx, cgy, cgz])
+        # cgx = suspension.cgx_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        # cgy = suspension.cgy_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        # cgz = suspension.cgz_lookup(x=delta, y=heave, z=pitch, w=roll)[0]
+        # self.cg_pos = np.array([cgx, cgy, cgz])
+        self.cg_pos = self.suspension.cg.position
 
         # Store contact patch positions
         self.FL_Cp_wrt_cg = FL_double_wishbone.contact_patch.position - self.cg_pos
@@ -663,8 +663,8 @@ class YMD:
         aero_forces = aero_forces
         aero_moments = np.cross(CG_wrt_CoP, aero_forces)
 
-        # aero_forces = 0
-        # aero_moments = 0
+        aero_forces = 0
+        aero_moments = 0
 
         vehicle_centric_forces = -1 * gravity_force + suspension_forces + aero_forces
         vehicle_centric_moments = suspension_moments + aero_moments
@@ -922,9 +922,9 @@ class YMD:
         ax = ymd.gca()
 
         if velocity:
-            ax.set_title(f"Constant Velocity: {velocity} m/s | Yaw Acceleratino vs Lateral Acceleration")
+            ax.set_title(f"Constant Velocity: {velocity} m/s | Yaw Acceleration vs Lateral Acceleration")
         else:
-            ax.set_title(f"Constant Radius: {radius} m | Yaw Acceleratino vs Lateral Acceleration")
+            ax.set_title(f"Constant Radius: {radius} m | Yaw Acceleration vs Lateral Acceleration")
 
         ax.set_xlabel("Lateral Acceleration (m/s^2)")
         ax.set_ylabel("Yaw Acceleration (rad/s^2)")

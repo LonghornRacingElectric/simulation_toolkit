@@ -49,11 +49,19 @@ class LinkTest(TestCase):
 
         self.assertIsInstance(test_link.height, float)
 
-    # def test_node_translate_position(self):
-    #     test_node = Node(position=[1, 1, 1])
-    #     test_node.translate(translation=[-1, -1, -1])
-        
-    #     self.assertListEqual(list(test_node.position), [0, 0, 0])
+    def test_link_yz_intersection(self):
+        inboard_1 = Node(position=[0, 1, 1])
+        outboard_1 = Node(position=[0, 2, 2])
+        test_link_1 = Link(inboard=inboard_1, outboard=outboard_1)
+
+        inboard_2 = Node(position=[0, 0, 2])
+        outboard_2 = Node(position=[0, -1, 3])
+        test_link_2 = Link(inboard=inboard_2, outboard=outboard_2)
+
+        intersection = test_link_1.yz_intersection(test_link_2)
+
+        self.assertListEqual(list(intersection.position), [1, 1, 0])
+
 
     # def test_node_translate_type(self):
     #     test_node = Node(position=[1, 1, 1])
