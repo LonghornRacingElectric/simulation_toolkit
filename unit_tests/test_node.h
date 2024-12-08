@@ -10,7 +10,12 @@ using namespace blaze;
 class testNode {
 public:
     void testNodePosition();
-    
-
+    void testNodeType();
+    void testNodeTranslatePosition();
+    void testNodeTranslateType();
+    void testNodeTranslateInitialPosition();
+    void testNodeRotateBase();
+    void testNodeResetPosition();
+    void testNodeResetType();
 };
 #endif
