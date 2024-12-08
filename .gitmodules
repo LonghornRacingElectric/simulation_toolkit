@@ -10,3 +10,6 @@
 [submodule "kin_cpp/third_party/scilab"]
 	path = kin_cpp/third_party/scilab
 	url = https://gitlab.com/scilab/scilab.git
+[submodule "kin_cpp/third_party/googletest"]
+	path = kin_cpp/third_party/googletest
+	url = https://github.com/google/googletest
