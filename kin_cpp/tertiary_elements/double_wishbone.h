@@ -71,15 +71,14 @@ private:
     double pitch_jounce;
     double total_jounce;
 
-    /* Pointer to motion ratio function */
-    double (*motion_ratio_function) (double);
+    /* Callable motion ratio function */
+    std::shared_ptr<std::function<double(double)>> motion_ratio_function;
+    /* Callable wheelrate function */
+    std::shared_ptr<std::function<double(double)>> wheelrate_function;
 
     Node *elements[10];
     Node *all_elements[9];
 
-    /* TODO -- NEED TO FIND SUITABLE FUNCTION FOR scipy.interpolate.CubicSpline:
-       motion_ratio_function = CubicSpline (x=jounce_sweep, y=motion_ratio_lst)
-       wheelrate_function = CubicSpline (x=jounce_sweep, y=wheelrate_lst) */
 public:
     DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 6UL> &outboard_points, 
                    StaticMatrix<double, 3UL, 4UL> &bellcrank_params, double spring_rate, double weight, CG *cent_grav, 
