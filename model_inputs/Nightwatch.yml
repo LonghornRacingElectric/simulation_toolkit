@@ -97,7 +97,7 @@ Geometric Properties:
       [-0.00634805, 0.52324, 0.28702],
       [0, 0.5565, 0.125],
       [0, 0.5565, 0.125],
-      [0.05385816, 0.5323332, 0.1648206],
+      [0.0560, 0.5323332, 0.1648206],
       [-0.00002554, 0.51228060, 0.25244758]]
   FL_Up:
     Description: True if push/pull rod mounts to upper wishbone
@@ -176,7 +176,7 @@ Suspension:
     Description: Linear rate of suspension springs [FL, FR, RL, RR]
     Type: list[float]
     Unit: N/m
-    Value: [78807.0755905515, 78807.0755905515, 70050.733858268, 70050.733858268]
+    Value: [61294.392126, 61294.392126, 105076.10078740199, 105076.10078740199]
   ARBK:
     Description: Linear stiffness of torsion bars from eye to eye [FR, RR]
     Type: float
