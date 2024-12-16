@@ -58,8 +58,7 @@ StaticVector<double, 3> Beam::yz_intersection (Beam *second_beam) {
     return StaticVector<double, 3UL>{x, yz[0], yz[1]}; 
 }
 
-/* NOTE: Deprecated, Undeprecated as of 11/17/2024. REDEPRECATE IF CAN GET RID OF KIN_PC/KIN_RC
-    Calculates intersection point between two links in the x-z plane 
+/* NOTE: DEPRECATED
     Params : second_beam (Beam *) -- beam intersecting this beam in xz
     Returns 3-element array -- coordinates of intersection (averages x between the links) */
 StaticVector<double, 3> Beam::xz_intersection (Beam *second_beam) {

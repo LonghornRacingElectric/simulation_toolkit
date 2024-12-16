@@ -29,7 +29,6 @@ void Axle::roll(double angle){
     // left->jounce(0.0, 0.0, -1 * jounce_soln, 0.0);
     // right->jounce(0.0, 0.0, jounce_soln / LR_ratio, 0.0);
 
-    // Expand : kin_rc->update(); Since we don't use kin_rc anymore
 }
 
 // Jounce = (_jounce, _heave_jounce, _roll_jounce, _pitch_jounce)
@@ -63,24 +62,18 @@ void Axle::reset_roll(){
 void Axle::steer(double rack_displacement){
     left->steer(rack_displacement);
     right->steer(rack_displacement);
-
-    //kin_RC->update(); WE DON'T HAVE KIN_RC ANYMORE, SO EXPAND THIS
 }
 
 void Axle::axle_heave (double heave){
     // heave_jounce = jounce
     left->jounce(0.0, heave, 0.0, 0.0);
     right->jounce(0.0, heave, 0.0, 0.0);
-
-    //kin_RC->update(); WE DON'T HAVE KIN_RC ANYMORE, SO EXPAND THIS
 }
 
 void Axle::axle_pitch (double heave){
     //pitch_jounce = jounce
     left->jounce(0.0, 0.0, 0.0, heave);
     right->jounce(0.0, 0.0, 0.0, heave);
-
-    //kin_RC->update(); WE DON'T HAVE KIN_RC ANYMORE, SO EXPAND THIS
 }
 
 double Axle::track_width () const{

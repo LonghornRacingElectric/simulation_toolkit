@@ -9,8 +9,6 @@ FullSuspension::FullSuspension(Axle *front_axle, Axle *rear_axle, CG *cg) {
 
     bool transform_origin = true;
 
-    left_kin_pc = new KinPC (Fr_axle->getLeft ()->getSVICLink (), Rr_axle->getLeft ()->getSVICLink (), cg);
-    right_kin_pc = new KinPC (Fr_axle->getRight ()->getSVICLink (), Rr_axle->getRight ()->getSVICLink (), cg);
     current_average_cp = 
         (Fr_axle->getLeft ()->getContactPatch ()->position + 
         Fr_axle->getRight ()->getContactPatch ()->position + 
@@ -28,9 +26,6 @@ void FullSuspension::steer (double rack_displacement){
     reset_position();
     Fr_axle->steer(rack_displacement);
     
-    left_kin_pc->update ();
-    right_kin_pc->update ();
-
     if (transform_origin) {
         flatten();
     }
@@ -41,8 +36,6 @@ void FullSuspension::heave (double heave){
     Fr_axle->axle_heave(heave);
     Rr_axle->axle_heave(heave);
     
-    left_kin_pc->update ();
-    right_kin_pc->update ();
 
     if (transform_origin) {
         flatten();
@@ -68,9 +61,6 @@ void FullSuspension::pitch (double angle){
     Fr_axle->axle_pitch(heave_soln);
     Rr_axle->axle_pitch(-1 * heave_soln / FR_ratio);
 
-    left_kin_pc->update();
-    right_kin_pc->update();
-
     if (transform_origin) {
         flatten ();
     }
@@ -81,9 +71,6 @@ void FullSuspension::roll (double angle){
     Fr_axle->roll(angle);
     Rr_axle->roll(angle);
     
-    left_kin_pc->update();
-    right_kin_pc->update();
-
     if (transform_origin){
         flatten();
     }

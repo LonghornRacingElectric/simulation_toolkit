@@ -3,7 +3,6 @@
 
 #include "../quaternary_elements/axle.h";
 #include "../secondary_elements/cg.h"
-#include "../secondary_elements/kin_pc.h"
 
 class FullSuspension {
 private:
@@ -16,7 +15,6 @@ private:
     Axle *elements[3];
     Axle *all_elements[2];
 
-    KinPC *left_kin_pc, *right_kin_pc; 
 public:
     FullSuspension (Axle *Fr_axle, Axle *Rr_axle, CG *cg);
     void steer (double rack_displacement);

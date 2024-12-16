@@ -233,3 +233,58 @@ gsl_vector* fsolve2(double (*func)(const gsl_vector *, void *), gsl_vector *init
     return solution;
 }
 
+/* Return cubic function mapping double->double
+   Params : 
+    - in -- independent variable value
+    - out -- dependent variable value 
+   Note : i'th data point is (in[i], out[i]) */
+std::shared_ptr<std::function<double(double)>> cubic_spline (double in[], double out[], double length) {
+    // Degree of polynomial is 3
+    const int N = 3;
+    /* Values of sum(in^n) for 0 <= n <= 2N. Highest n at lowest index */
+    double cum_x [2 * N + 1];
+    /* Values of sum(out * in^n) for 0 <= n <= N. Highest n at lowest index */
+    double cum_xy [N + 1];
+
+    /* Populate cum_x, cum_xy */
+    for (int n1 = 0; n1 <= 2 * N; n1++) {
+        /* I don't fucking remember if stack pages are zeroed out on being
+           faulted in...covering my ass -- Arnav */
+        /* Later matrices have highest pows at lowest indices, so reverse indices here */
+        int n = 2 * N - n1;
+        cum_x[n] = 0;
+        cum_xy[n] = 0;
+        for (int i = 0; i < length; i++) {
+            cum_x[n] += pow (in[i], n);
+
+            /* Account for bounds difference for cum_xy */
+            if (n <= N) {
+                cum_xy[n] += out[i] * pow (in[i], n);
+            }
+        }
+    }
+
+    StaticMatrix<double, N + 1, N + 1> x_pows;
+    StaticVector<double, N + 1> xy_pows (cum_xy);
+
+    /* Populate x_pows */
+    for (int i = 0; i <= 2 * N; i++) {
+        for (int j = 0; j <= 2 * N; j++) {
+            x_pows(i, j) = cum_x[i + j];
+        }
+    }
+
+    /* Solve x_pows * weights = xy_pows */
+    StaticVector<double, N + 1> coeffs = solve (x_pows, xy_pows);
+
+    auto lambda = [coeffs](double in) -> double {
+        /* Extract coefficients */
+        double a3 = coeffs[0], a2 = coeffs[1], a1 = coeffs[2], a0 = coeffs[3];
+        /* Compute output from spline */
+        return a3 * pow (in, 3) + a2 * pow (in, 2) + a1 * in + a0;
+    };
+
+    auto spline_func = std::make_shared<std::function<double(double)>> (lambda);
+
+    return spline_func;
+}

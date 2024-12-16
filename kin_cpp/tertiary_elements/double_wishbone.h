@@ -29,26 +29,26 @@ private:
     Beam *lower_fore_link;
     Beam *lower_aft_link;
 
-    Wishbone *upper_wishbone; /* x */
-    Wishbone *lower_wishbone; /* x */
+    Wishbone *upper_wishbone;
+    Wishbone *lower_wishbone;
 
     Kingpin *kingpin;
-    Tie *steering_link; /* x */
+    Tie *steering_link;
 
     Node *upper_outboard;
     Node *lower_outboard;
     Node *tie_outboard;
     Node *contact_patch;
     
-    Tire *tire; /* x */
+    Tire *tire;
 
-    Node *FVIC; /* x */
+    Node *FVIC;
     Beam *FVIC_link;
-    Node *SVIC; /* x */
+    Node *SVIC;
     Beam *SVIC_link;
 
-    Node *FV_FAP; /* x */
-    Node *SV_FAP; /* x */
+    Node *FV_FAP;
+    Node *SV_FAP;
 
     Node *rod_inboard;
     Node *rod_outboard;
@@ -57,7 +57,7 @@ private:
     Node *shock_outboard;
     Node *shock_inboard;
 
-    PushPullRod *rod;  /* x */
+    PushPullRod *rod; 
     bool upper;
 
 
@@ -71,15 +71,14 @@ private:
     double pitch_jounce;
     double total_jounce;
 
-    /* Pointer to motion ratio function */
-    double (*motion_ratio_function) (double);
+    /* Callable motion ratio function */
+    std::shared_ptr<std::function<double(double)>> motion_ratio_function;
+    /* Callable wheelrate function */
+    std::shared_ptr<std::function<double(double)>> wheelrate_function;
 
     Node *elements[10];
     Node *all_elements[9];
 
-    /* TODO -- NEED TO FIND SUITABLE FUNCTION FOR scipy.interpolate.CubicSpline:
-       motion_ratio_function = CubicSpline (x=jounce_sweep, y=motion_ratio_lst)
-       wheelrate_function = CubicSpline (x=jounce_sweep, y=wheelrate_lst) */
 public:
     DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, StaticMatrix<double, 3UL, 6UL> &outboard_points, 
                    StaticMatrix<double, 3UL, 4UL> &bellcrank_params, double spring_rate, double weight, CG *cent_grav, 

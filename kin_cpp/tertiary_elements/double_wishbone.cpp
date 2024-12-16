@@ -105,9 +105,8 @@ DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, S
         motion_ratio_list[i] = motion_ratio;
     }
 
-    /* TODO : 
-       self.motion_ratio_function = CubicSpline(x=jounce_sweep, y=motion_ratio_lst) */
-    
+    motion_ratio_function = cubic_spline (jounce_sweep, motion_ratio_list, 101);
+
     /* Reset jounce */
     jounce (0, 0, 0, 0);
 
@@ -117,9 +116,7 @@ DoubleWishbone::DoubleWishbone(StaticMatrix<double, 3UL, 6UL> &inboard_points, S
         wheelrate_list[i] = spring_rate / pow (motion_ratio_list[i], 2);
     }
 
-    /* TODO : 
-        self.wheelrate_function = CubicSpline(x=jounce_sweep, y=wheelrate_lst) */
-
+    wheelrate_function = cubic_spline (jounce_sweep, wheelrate_list, 101);
     pos_less_than_fifty = false;
 
     for (int i = 0; i < 3; i++) {
@@ -294,7 +291,7 @@ void DoubleWishbone::steer (double steer) {
 }
 
 double DoubleWishbone::motion_ratio () const {
-    motion_ratio_function (total_jounce);
+    return (*motion_ratio_function) (total_jounce);
 }
 
 double DoubleWishbone::wheelrate () const {
