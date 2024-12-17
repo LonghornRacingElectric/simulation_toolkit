@@ -1,6 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-from vehicle_model.assets.plotter import Plotter
 import numpy as np
 
 from unittest import main, TestCase
@@ -10,53 +9,53 @@ class LinkTest(TestCase):
     def test_link_init_direction_value(self):
         inboard = Node(position=[-1, 0, 0])
         outboard = Node(position=[1, 0, 0])
-        test_link = Link(inboard=inboard, outboard=outboard)
+        test_link = Link(inboard_node=inboard, outboard_node=outboard)
 
         self.assertListEqual(list(test_link.direction), [1, 0, 0])
     
     def test_link_init_direction_type(self):
         inboard = Node(position=[-1, 0, 0])
         outboard = Node(position=[1, 0, 0])
-        test_link = Link(inboard=inboard, outboard=outboard)
+        test_link = Link(inboard_node=inboard, outboard_node=outboard)
 
         self.assertIsInstance(test_link.direction, np.ndarray)
     
     def test_link_init_center_value(self):
         inboard = Node(position=[-3, 0, 0])
         outboard = Node(position=[1, 0, 0])
-        test_link = Link(inboard=inboard, outboard=outboard)
+        test_link = Link(inboard_node=inboard, outboard_node=outboard)
 
         self.assertListEqual(list(test_link.center), [-1, 0, 0])
 
     def test_link_init_center_type(self):
         inboard = Node(position=[-3, 0, 0])
         outboard = Node(position=[1, 0, 0])
-        test_link = Link(inboard=inboard, outboard=outboard)
+        test_link = Link(inboard_node=inboard, outboard_node=outboard)
 
         self.assertIsInstance(test_link.center, np.ndarray)
 
     def test_link_init_height_value(self):
         inboard = Node(position=[-3, 0, 0])
         outboard = Node(position=[1, 0, 0])
-        test_link = Link(inboard=inboard, outboard=outboard)
+        test_link = Link(inboard_node=inboard, outboard_node=outboard)
 
         self.assertEqual(test_link.height, 4)
 
     def test_link_init_height_type(self):
         inboard = Node(position=[-3, 0, 0])
         outboard = Node(position=[1, 0, 0])
-        test_link = Link(inboard=inboard, outboard=outboard)
+        test_link = Link(inboard_node=inboard, outboard_node=outboard)
 
         self.assertIsInstance(test_link.height, float)
 
     def test_link_yz_intersection_base(self):
         inboard_1 = Node(position=[0, 1, 1])
         outboard_1 = Node(position=[0, 2, 2])
-        test_link_1 = Link(inboard=inboard_1, outboard=outboard_1)
+        test_link_1 = Link(inboard_node=inboard_1, outboard_node=outboard_1)
 
         inboard_2 = Node(position=[0, 0, 2])
         outboard_2 = Node(position=[0, -1, 3])
-        test_link_2 = Link(inboard=inboard_2, outboard=outboard_2)
+        test_link_2 = Link(inboard_node=inboard_2, outboard_node=outboard_2)
 
         intersection = test_link_1.yz_intersection(test_link_2)
 
@@ -65,11 +64,11 @@ class LinkTest(TestCase):
     def test_link_yz_intersection_edge_1(self):
         inboard_1 = Node(position=[0, 1, 1])
         outboard_1 = Node(position=[0, 2, 1])
-        test_link_1 = Link(inboard=inboard_1, outboard=outboard_1)
+        test_link_1 = Link(inboard_node=inboard_1, outboard_node=outboard_1)
 
         inboard_2 = Node(position=[0, 1, 0])
         outboard_2 = Node(position=[0, 2, 0])
-        test_link_2 = Link(inboard=inboard_2, outboard=outboard_2)
+        test_link_2 = Link(inboard_node=inboard_2, outboard_node=outboard_2)
 
         intersection = test_link_1.yz_intersection(test_link_2)
 
@@ -78,11 +77,11 @@ class LinkTest(TestCase):
     def test_link_yz_intersection_edge_2(self):
         inboard_1 = Node(position=[0, 1, 1])
         outboard_1 = Node(position=[0, 2, 1])
-        test_link_1 = Link(inboard=inboard_1, outboard=outboard_1)
+        test_link_1 = Link(inboard_node=inboard_1, outboard_node=outboard_1)
 
         inboard_2 = Node(position=[0, 1, 1])
         outboard_2 = Node(position=[0, 2, 1])
-        test_link_2 = Link(inboard=inboard_2, outboard=outboard_2)
+        test_link_2 = Link(inboard_node=inboard_2, outboard_node=outboard_2)
 
         intersection = test_link_1.yz_intersection(test_link_2)
         
@@ -91,11 +90,11 @@ class LinkTest(TestCase):
     def test_link_xz_intersection(self):
         inboard_1 = Node(position=[1, 0, 1])
         outboard_1 = Node(position=[2, 0, 2])
-        test_link_1 = Link(inboard=inboard_1, outboard=outboard_1)
+        test_link_1 = Link(inboard_node=inboard_1, outboard_node=outboard_1)
 
         inboard_2 = Node(position=[0, 0, 2])
         outboard_2 = Node(position=[-1, 0, 3])
-        test_link_2 = Link(inboard=inboard_2, outboard=outboard_2)
+        test_link_2 = Link(inboard_node=inboard_2, outboard_node=outboard_2)
 
         intersection = test_link_1.xz_intersection(test_link_2)
 
@@ -104,11 +103,11 @@ class LinkTest(TestCase):
     def test_link_xz_intersection_edge_1(self):
         inboard_1 = Node(position=[1, 0, 1])
         outboard_1 = Node(position=[2, 0, 1])
-        test_link_1 = Link(inboard=inboard_1, outboard=outboard_1)
+        test_link_1 = Link(inboard_node=inboard_1, outboard_node=outboard_1)
 
         inboard_2 = Node(position=[1, 0, 0])
         outboard_2 = Node(position=[2, 0, 0])
-        test_link_2 = Link(inboard=inboard_2, outboard=outboard_2)
+        test_link_2 = Link(inboard_node=inboard_2, outboard_node=outboard_2)
 
         intersection = test_link_1.xz_intersection(test_link_2)
 
@@ -117,11 +116,11 @@ class LinkTest(TestCase):
     def test_link_xz_intersection_edge_2(self):
         inboard_1 = Node(position=[1, 0, 1])
         outboard_1 = Node(position=[2, 0, 1])
-        test_link_1 = Link(inboard=inboard_1, outboard=outboard_1)
+        test_link_1 = Link(inboard_node=inboard_1, outboard_node=outboard_1)
 
         inboard_2 = Node(position=[1, 0, 1])
         outboard_2 = Node(position=[2, 0, 1])
-        test_link_2 = Link(inboard=inboard_2, outboard=outboard_2)
+        test_link_2 = Link(inboard_node=inboard_2, outboard_node=outboard_2)
 
         intersection = test_link_1.xz_intersection(test_link_2)
         

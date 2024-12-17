@@ -1,8 +1,8 @@
-from typing import Sequence
+from typing import Sequence, Union
 import numpy as np
 
 
-def unit_vec(p1: Sequence[float], p2: Sequence[float]) -> np.ndarray:
+def unit_vec(p1: Union[np.ndarray, Sequence[float]], p2: Union[np.ndarray, Sequence[float]]) -> np.ndarray:
     """
     ## Unit Vector Calculation
 
@@ -11,9 +11,9 @@ def unit_vec(p1: Sequence[float], p2: Sequence[float]) -> np.ndarray:
     Parameters
     ----------
     p1 : Node
-        Ending point
-    p2 : Node
         Starting point
+    p2 : Node
+        Ending point
 
     Returns
     -------
@@ -22,12 +22,12 @@ def unit_vec(p1: Sequence[float], p2: Sequence[float]) -> np.ndarray:
     """
     p1 = np.array(p1)
     p2 = np.array(p2)
-    vector_AB = p1 - p2
-    vector_AB_mag = np.linalg.norm(p1 - p2)
+    vector_AB = p2 - p1
+    vector_AB_mag = np.linalg.norm(p2 - p1)
     
     return vector_AB / vector_AB_mag
 
-def rotation_matrix(unit_vec: np.array, theta: float) -> Sequence[Sequence[float]]:
+def rotation_matrix(unit_vec: Union[np.ndarray, Sequence[float]], theta: float) -> Sequence[Sequence[float]]:
     """
     ## Rotation Matrix
 

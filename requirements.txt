@@ -1,3 +1,4 @@
+# Computation
 pyvista
 imageio
 numpy
@@ -6,6 +7,14 @@ scipy
 pandas
 pyyaml
 dash
+
+# Testing
 pytest-cov
 pytest-html
+pytest-subtests
+mypy
+types-PyYAML
+types-scipy
+
+# Custom
 git+https://github.com/LonghornRacingElectric/tire_analysis@LHR_tire_toolkit_package

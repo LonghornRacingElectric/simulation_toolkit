@@ -1,5 +1,5 @@
 import vehicle_model.assets.misc_linalg as linalg
-from typing import Sequence
+from typing import Sequence, Union
 import numpy as np
 
 
@@ -15,7 +15,7 @@ class Node:
     Position : Sequence[float]
         Position of Node
     """
-    def __init__(self, position: Sequence[float]) -> None:
+    def __init__(self, position: Union[np.ndarray, Sequence[float]]) -> None:
         self.position = np.array(position)
         self.initial_position = np.array(position)
 
@@ -35,7 +35,7 @@ class Node:
         """
         self.position = self.initial_position
     
-    def translate(self, translation: Sequence[float]) -> None:
+    def translate(self, translation: Union[np.ndarray, Sequence[float]]) -> None:
         """
         ## Translate
 

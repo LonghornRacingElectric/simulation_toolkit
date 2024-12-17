@@ -17,7 +17,7 @@ class Processor:
 
         with open(self.file_path) as f:
             try:
-                self.raw_params = yaml.safe_load(f)
+                self.raw_params: dict[str, dict[str, dict]] = yaml.safe_load(f)
             except yaml.YAMLError as error:
                 print("Failed to import yaml file. Reason:\n")
                 print(error)
@@ -25,7 +25,7 @@ class Processor:
         self.desired_params = ["Environment", "Mass Properties", "Geometric Properties", "Suspension"]
         self.desired_fields = ['Value']
 
-        self.filtered_params = {}
+        self.filtered_params: dict[str, dict] = {}
 
         for key, value in self.raw_params.items():
             if key in self.desired_params:

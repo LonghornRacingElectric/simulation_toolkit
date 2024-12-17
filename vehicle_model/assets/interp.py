@@ -1,12 +1,11 @@
-from scipy.interpolate import griddata
-from scipy.interpolate import interpn
-from typing import Sequence
+from scipy.interpolate import griddata, interpn # type: ignore
+from typing import Sequence, Union
 import numpy as np
 
 
 class  interp4d:
-    def __init__(self, x: Sequence[Sequence[float]], y: Sequence[Sequence[float]], \
-                 z: Sequence[Sequence[float]], w: Sequence[Sequence[float]], v: Sequence[Sequence[float]]) -> None:
+    def __init__(self, x: Union[np.ndarray, Sequence[float]], y: Union[np.ndarray, Sequence[float]], 
+                 z: Union[np.ndarray, Sequence[float]], w: Union[np.ndarray, Sequence[float]], v: Union[np.ndarray, Sequence[float]]) -> None:
         
         self.x = x
         self.y = y
@@ -45,8 +44,8 @@ class  interp4d:
             return interpn(points=points, values=values, xi=(x, y, z, w), method='nearest')
 
 class  interp3d:
-    def __init__(self, x: Sequence[Sequence[float]], y: Sequence[Sequence[float]], \
-                 z: Sequence[Sequence[float]], v: Sequence[Sequence[float]]) -> None:
+    def __init__(self, x: Union[np.ndarray, Sequence[float]], y: Union[np.ndarray, Sequence[float]], 
+                 z: Union[np.ndarray, Sequence[float]], v: Union[np.ndarray, Sequence[float]]) -> None:
         
         self.x = x
         self.y = y
@@ -56,7 +55,6 @@ class  interp3d:
     def __call__(self, x: float, y: float, z: float) -> float:
         try:
             points = (self.x, self.y, self.z)
-            # values = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z)))
 
             if x > max(self.x):
                 x = max(self.x)
@@ -82,14 +80,14 @@ class  interp3d:
 
         except ValueError:
             points = (self.x, self.y, self.z)
-            values = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z)))
             values = self.v
 
             return interpn(points=points, values=values, xi=(x, y, z))
 
 
 class interp2d:
-    def __init__(self, x: Sequence[Sequence[float]], y: Sequence[Sequence[float]], z: Sequence[Sequence[float]]) -> None:
+    def __init__(self, x: Union[np.ndarray, Sequence[float]], y: Union[np.ndarray, Sequence[float]], 
+                 z: Union[np.ndarray, Sequence[float]]) -> None:
         
         self.x = x
         self.y = y

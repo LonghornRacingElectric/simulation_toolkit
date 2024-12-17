@@ -1,7 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
 from vehicle_model.assets.misc_linalg import unit_vec
-from typing import Sequence
-import pyvista as pv
 import numpy as np
 import warnings
 
@@ -20,10 +18,10 @@ class Link:
     outboard : Node
         Node representing outboard end of linkage
     """
-    def __init__(self, inboard: Node, outboard: Node) -> None:
+    def __init__(self, inboard_node: Node, outboard_node: Node) -> None:
         
-        self.inboard_node: Node = inboard
-        self.outboard_node: Node = outboard
+        self.inboard_node: Node = inboard_node
+        self.outboard_node: Node = outboard_node
     
     def yz_intersection(self, link: "Link") -> Node:
         """
@@ -65,7 +63,7 @@ class Link:
         try:
             y, z = np.linalg.solve(a=a, b=b).flatten()
         except np.linalg.LinAlgError:
-            warnings.warn("Singular Matrix Encountered | yz intersection assumed at infinity\nThis is not a critical error, but check results carefully")
+            warnings.warn("\nSingular Matrix Encountered | yz intersection assumed at infinity. This is not a critical error, but check results carefully.")
             y, z = np.inf, np.average([z_2, z_1])
 
         # Calculate x-value
@@ -118,7 +116,7 @@ class Link:
         try:
             x, z = np.linalg.solve(a=a, b=b).flatten()
         except:
-            warnings.warn("Singular Matrix Encountered | xz intersection assumed at infinity\nThis is not a critical error, but check results carefully")
+            warnings.warn("\nSingular Matrix Encountered | xz intersection assumed at infinity. This is not a critical error, but check results carefully.")
             x, z = np.inf, np.average([z_2, z_1])
 
         coords = [float(x) for x in [x, y, z]]
@@ -137,7 +135,7 @@ class Link:
         np.ndarray
             Direction of Link
         """
-        return unit_vec(self.outboard_node.position, self.inboard_node.position)
+        return unit_vec(p1=self.inboard_node.position, p2=self.outboard_node.position)
 
     @property
     def center(self) -> np.ndarray:
@@ -151,10 +149,7 @@ class Link:
         np.ndarray
             Center of link
         """
-        if 1e9 not in np.abs(self.inboard_node.position):
-            return (self.inboard_node.position + self.outboard_node.position) / 2
-        else:
-            return (self.outboard_node.position)
+        return (self.inboard_node.position + self.outboard_node.position) / 2
     
     @property
     def radius(self) -> float:
