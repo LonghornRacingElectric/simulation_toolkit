@@ -1,5 +1,6 @@
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-from vehicle_model.assets.misc_linalg import unit_vec
+from vehicle_model.assets.misc_linalg import unit_vec, rotation_matrix
+from typing import Sequence, Union, cast
 import numpy as np
 import warnings
 
@@ -15,14 +16,42 @@ class Link:
     ----------
     inboard : Node
         Node representing inboard end of linkage
+
     outboard : Node
         Node representing outboard end of linkage
+        
+    **kwargs : dict[str, Union[float, int, str]]
+        Optional keyword arguments. The following keys are supported:
+
+            `compliance` : Union[int, float]
+                Linear compliance of Link, by default None
+
+            `compliance_unit` : str
+                Unit of Link compliance. Options include:
+                
+                `N/m`
+                `N/mm`
+                `lbf/in`
+                `lb/in`
     """
-    def __init__(self, inboard_node: Node, outboard_node: Node) -> None:
+    def __init__(self, inboard_node: Node, outboard_node: Node, **kwargs) -> None:
         
         self.inboard_node: Node = inboard_node
         self.outboard_node: Node = outboard_node
-    
+        self.initial_length: Union[float, int] = np.linalg.norm((self.outboard_node - self.inboard_node).position).__float__()
+
+        self.compliance: Union[None, float, int] = None
+        self.compliance_unit: Union[None, str] = None
+
+        if "compliance" in kwargs:
+            self.compliance = kwargs.pop("compliance")
+
+        # if ("compliance" in kwargs) ^ ("compliance_units" in kwargs):
+        #     raise Exception("Both compliance and compliance_units need to be specified in Link object")
+        # elif "compliance" in kwargs:
+        #     self.compliance = kwargs.pop("compliance")
+        #     self.compliance_unit = kwargs.pop("compliance_unit")
+
     def yz_intersection(self, link: "Link") -> Node:
         """
         ## y-z Intersection
@@ -40,14 +69,14 @@ class Link:
             Coordinates of intersection
             - Averages x between the two links
         """
-        l_1i = self.inboard_node.position
-        l_1o = self.outboard_node.position
-        m_1 = (l_1o[2] - l_1i[2]) / (l_1o[1] - l_1i[1])
+        l_1i = self.inboard_node
+        l_1o = self.outboard_node
+        m_1 = (l_1o - l_1i)[2] / (l_1o - l_1i)[1]
         y_1, z_1 = l_1o[1], l_1o[2]
 
-        l_2i = link.inboard_node.position
-        l_2o = link.outboard_node.position
-        m_2 = (l_2o[2] - l_2i[2]) / (l_2o[1] - l_2i[1])
+        l_2i = link.inboard_node
+        l_2o = link.outboard_node
+        m_2 = (l_2o - l_2i)[2] / (l_2o - l_2i)[1]
         y_2, z_2 = l_2o[1], l_2o[2]
 
         a = np.array([
@@ -68,7 +97,7 @@ class Link:
 
         # Calculate x-value
         # I'll average between left and right halves for KinRC
-        x = np.average([l_1o[0], l_2o[0]])
+        x = np.average([l_1o[0], l_2o[0]]).__float__()
 
         return Node(position=[x, y, z])
 
@@ -81,7 +110,7 @@ class Link:
         Parameters
         ----------
         link : Link
-            Second luinkage which intersects self in x-z
+            Second linkage which intersects self in x-z
 
         Returns
         -------
@@ -89,14 +118,14 @@ class Link:
             Coordinates of intersection
             - Averages y between the two links
         """
-        l_1i = self.inboard_node.position
-        l_1o = self.outboard_node.position
-        m_1 = (l_1o[2] - l_1i[2]) / (l_1o[0] - l_1i[0])
+        l_1i = self.inboard_node
+        l_1o = self.outboard_node
+        m_1 = (l_1o - l_1i)[2] / (l_1o - l_1i)[0]
         x_1, z_1 = l_1o[0], l_1o[2]
 
-        l_2i = link.inboard_node.position
-        l_2o = link.outboard_node.position
-        m_2 = (l_2o[2] - l_2i[2]) / (l_2o[0] - l_2i[0])
+        l_2i = link.inboard_node
+        l_2o = link.outboard_node
+        m_2 = (l_2o - l_2i)[2] / (l_2o - l_2i)[0]
         x_2, z_2 = l_2o[0], l_2o[2]
 
         a = np.array([
@@ -122,9 +151,71 @@ class Link:
         coords = [float(x) for x in [x, y, z]]
 
         return Node(position=coords)
+
+    def link_centered_coords(self, node: Node) -> np.ndarray:
+        """
+        ## Link-Centered Coordinates
+
+        Calculates Node coordinates with Link treated as z-axis
+
+        Parameters
+        ----------
+        node : Node
+            Node to represent in Link reference frame
+
+        Returns
+        -------
+        Sequence[float]
+            Node coordinates in Link reference frame
+        """
+        ang_x, ang_y = self.rotation_angles
+        node_translated = node - self.inboard_node
+
+        x_rot = rotation_matrix(unit_vec=[1, 0, 0], theta=ang_x)
+        y_rot = rotation_matrix(unit_vec=[0, 1, 0], theta=-1 * ang_y)
+        
+        node_coords_rotated: np.ndarray = np.matmul(y_rot, np.matmul(x_rot, node_translated.position))
+        return node_coords_rotated
+
+    @property
+    def component_angles(self) -> Sequence[float]:
+        """
+        ## Component Angles
+
+        Calculates the smallest angles between the ground plane and the projection of Link on the principal planes
+        - For a kingpin Link, this gives kpi and caster, respectively
+
+        Returns
+        -------
+        Sequence[float]
+            Sequence of angles in radians [ang_x, ang_y]
+        """
+        origin_transform = self.outboard_node - self.inboard_node
+        ang_x = np.arctan(origin_transform[2] / origin_transform[1]).__float__()
+        ang_y = np.arctan(origin_transform[2] / origin_transform[0]).__float__()
+
+        return [ang_x, ang_y]
     
     @property
-    def direction(self) -> np.ndarray:
+    def rotation_angles(self) -> Sequence[float]:
+        """
+        ## Rotation Angles
+
+        Calculates the rotations about x and y which result in a vector pointing strictly in z
+
+        Returns
+        -------
+        Sequence[float]
+            Sequence of rotations in radians [x_rotation, y_rotation]
+        """
+        origin_transform = self.outboard_node - self.inboard_node
+        ang_x = np.arctan(origin_transform[1] / origin_transform[2]).__float__()
+        ang_y = np.sign(origin_transform[2]) * np.arcsin(origin_transform[0] / self.length).__float__()
+
+        return [ang_x, ang_y]
+    
+    @property
+    def direction(self) -> Sequence[float]:
         """
         ## Direction
 
@@ -138,7 +229,7 @@ class Link:
         return unit_vec(p1=self.inboard_node.position, p2=self.outboard_node.position)
 
     @property
-    def center(self) -> np.ndarray:
+    def center(self) -> Sequence[float]:
         """
         ## Center
         
@@ -149,7 +240,9 @@ class Link:
         np.ndarray
             Center of link
         """
-        return (self.inboard_node.position + self.outboard_node.position) / 2
+        new_node = (self.inboard_node + self.outboard_node) / 2
+
+        return new_node.position
     
     @property
     def radius(self) -> float:
@@ -166,15 +259,15 @@ class Link:
         return 0.015875 / 2
 
     @property
-    def height(self) -> float:
+    def length(self) -> float:
         """
-        ## Height
+        ## Length
 
-        Height (length) attribute of link
+        Length of link
 
         Returns
         -------
         float
             Length of link
         """
-        return float(np.linalg.norm(self.inboard_node.position - self.outboard_node.position))
+        return np.linalg.norm((self.outboard_node - self.inboard_node).position).__float__()

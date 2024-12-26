@@ -14,6 +14,7 @@ class Wishbone:
     ----------
     fore_link : Link
         Frontmost link of wishbone
+        
     aft_link : Link
         Rearmost link of wishbone
     """
@@ -21,7 +22,7 @@ class Wishbone:
         self.fore_link: Link = fore_link
         self.aft_link: Link = aft_link
 
-        self.direction: np.ndarray = unit_vec(p1=self.fore_link.inboard_node.position, p2=self.aft_link.inboard_node.position)
+        self.direction: Sequence[float] = unit_vec(p1=self.aft_link.inboard_node.position, p2=self.fore_link.inboard_node.position)
         self.angle: Union[float, int] = 0.0
 
     def rotate(self, angle: float) -> None:
@@ -35,12 +36,16 @@ class Wishbone:
         angle : float
             Angle of rotation in radians
         """
-        net_angle = self.angle + angle
-        self.rot_mat = rotation_matrix(self.direction, net_angle)
-        self.angle = net_angle
+        self.fore_link.outboard_node.reset()
+        self.aft_link.outboard_node.reset()
 
-        outboard_point = self.fore_link.outboard_node.position - self.fore_link.inboard_node.position
-        self.fore_link.outboard_node.position = np.matmul(self.rot_mat, outboard_point) + self.fore_link.inboard_node.position
+        self.rot_mat = rotation_matrix(self.direction, angle)
+        self.angle = angle
+
+        outboard_point = self.fore_link.outboard_node - self.fore_link.inboard_node
+        outboard_wrt_inboard = np.matmul(self.rot_mat, outboard_point.position)
+
+        self.fore_link.outboard_node.position = [x + y for x, y in zip(outboard_wrt_inboard, self.fore_link.inboard_node.position)]
 
     @property
     def plane(self) -> Sequence[float]:
@@ -55,8 +60,8 @@ class Wishbone:
         Sequence[float]
             Parameters defining plane: [a, b, c, x_0, y_0, z_0]
         """
-        PQ = self.fore_link.outboard_node.position - self.fore_link.inboard_node.position
-        PR = self.aft_link.outboard_node.position - self.aft_link.inboard_node.position
+        PQ = (self.fore_link.outboard_node - self.fore_link.inboard_node).position
+        PR = (self.aft_link.outboard_node - self.aft_link.inboard_node).position
 
         a, b, c = np.cross(PQ, PR)
         x_0, y_0, z_0 = self.fore_link.outboard_node.position
@@ -64,7 +69,7 @@ class Wishbone:
         return [a, b, c, x_0, y_0, z_0]
 
     @property
-    def direction_vec(self) -> np.ndarray:
+    def direction_vec(self) -> Sequence[float]:
         """
         ## Direction Vec
 
@@ -75,4 +80,4 @@ class Wishbone:
         Sequence[float]
             Unit vector pointing from inboard aft node to inboard fore node
         """
-        return unit_vec(p1=self.fore_link.inboard_node.position, p2=self.aft_link.inboard_node.position)
+        return unit_vec(p1=self.aft_link.inboard_node.position, p2=self.fore_link.inboard_node.position)

@@ -6,10 +6,10 @@ import numpy as np
 from unittest import main, TestCase
 
 
-class WishboneTest(TestCase):
+class TestWishbone(TestCase):
     def test_wishbone_base_direction(self):
-        inboard_fore = Node(position=[0, 0, 0])
-        inboard_aft = Node(position=[2, 0, 0])
+        inboard_fore = Node(position=[2, 0, 0])
+        inboard_aft = Node(position=[0, 0, 0])
         outboard = Node(position=[1, 2, 0])
 
         fore_link = Link(inboard_node=inboard_fore, outboard_node=outboard)
@@ -17,11 +17,11 @@ class WishboneTest(TestCase):
 
         wishbone = Wishbone(fore_link=fore_link, aft_link=aft_link)
 
-        self.assertListEqual(list(wishbone.direction), [1, 0, 0])
+        self.assertListEqual(wishbone.direction, [1, 0, 0])
 
     def test_wishbone_base_angle(self):
-        inboard_fore = Node(position=[0, 0, 0])
-        inboard_aft = Node(position=[2, 0, 0])
+        inboard_fore = Node(position=[2, 0, 0])
+        inboard_aft = Node(position=[0, 0, 0])
         outboard = Node(position=[1, 2, 0])
 
         fore_link = Link(inboard_node=inboard_fore, outboard_node=outboard)
@@ -32,8 +32,8 @@ class WishboneTest(TestCase):
         self.assertEqual(wishbone.angle, 0)
     
     def test_rotate(self):
-        inboard_fore = Node(position=[0, 0, 0])
-        inboard_aft = Node(position=[2, 0, 0])
+        inboard_fore = Node(position=[2, 0, 0])
+        inboard_aft = Node(position=[0, 0, 0])
         outboard = Node(position=[1, 2, 0])
 
         fore_link = Link(inboard_node=inboard_fore, outboard_node=outboard)
@@ -44,9 +44,9 @@ class WishboneTest(TestCase):
 
         self.assertListEqual([round(x, 7) for x in wishbone.fore_link.outboard_node.position], [1, 0, 2])
 
-    def test_plane(self):
-        inboard_fore = Node(position=[0, 0, 0])
-        inboard_aft = Node(position=[2, 0, 0])
+    def test_plane_xy(self):
+        inboard_fore = Node(position=[2, 0, 0])
+        inboard_aft = Node(position=[0, 0, 0])
         outboard = Node(position=[1, 2, 0])
 
         fore_link = Link(inboard_node=inboard_fore, outboard_node=outboard)
@@ -63,8 +63,8 @@ class WishboneTest(TestCase):
         self.assertListEqual([point_1, point_2, point_3], [0, 0, 0])
 
     def test_direction_vec(self):
-        inboard_fore = Node(position=[0, 0, 0])
-        inboard_aft = Node(position=[2, 0, 0])
+        inboard_fore = Node(position=[2, 0, 0])
+        inboard_aft = Node(position=[0, 0, 0])
         outboard = Node(position=[1, 2, 0])
 
         fore_link = Link(inboard_node=inboard_fore, outboard_node=outboard)
@@ -72,4 +72,4 @@ class WishboneTest(TestCase):
 
         wishbone = Wishbone(fore_link=fore_link, aft_link=aft_link)
 
-        self.assertListEqual(list(wishbone.direction_vec), [1, 0, 0])
+        self.assertListEqual(wishbone.direction_vec, [1, 0, 0])

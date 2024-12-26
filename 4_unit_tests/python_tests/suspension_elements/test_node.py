@@ -4,56 +4,44 @@ import numpy as np
 from unittest import main, TestCase
 
 
-class NodeTest(TestCase):
+class TestNode(TestCase):
     def test_node_init_position(self):
         test_node = Node(position=[1, 1, 1])
 
-        self.assertListEqual(list(test_node.position), [1, 1, 1])
-        self.assertIsInstance(test_node.position, np.ndarray)
+        self.assertListEqual(test_node.position, [1, 1, 1])
     
-    def test_node_init_type(self):
-        test_node = Node(position=[1, 1, 1])
-
-        self.assertIsInstance(test_node.position, np.ndarray)
-
     def test_node_translate_position(self):
         test_node = Node(position=[1, 1, 1])
         test_node.translate(translation=[-1, -1, -1])
         
-        self.assertListEqual(list(test_node.position), [0, 0, 0])
-
-    def test_node_translate_type(self):
-        test_node = Node(position=[1, 1, 1])
-        test_node.translate(translation=[-1, -1, -1])
-
-        self.assertIsInstance(test_node.position, np.ndarray)
+        self.assertListEqual(test_node.position, [0, 0, 0])
 
     def test_node_translate_initial_position(self):
         test_node = Node(position=[1, 1, 1])
         test_node.translate(translation=[-1, -1, -1])
         
-        self.assertListEqual(list(test_node.initial_position), [1, 1, 1])
+        self.assertListEqual(test_node.initial_position, [1, 1, 1])
 
     def test_node_rotate_base(self):
         origin_node = Node(position=[0, 0, 0])
         update_node = Node(position=[1, 1, 0])
 
         update_node.rotate(origin=origin_node, angle_z=np.pi)
-        self.assertListEqual(list([round(float(x)) for x in update_node.position]), [-1, -1, 0])
+        self.assertListEqual([round(float(x)) for x in update_node.position], [-1, -1, 0])
 
     def test_node_rotate_edge(self):
         origin_node = Node(position=[0, 0, 0])
         update_node = Node(position=[0, 0, 0])
 
         update_node.rotate(origin=origin_node, angle_z=np.pi)
-        self.assertListEqual(list([round(float(x)) for x in update_node.position]), [0, 0, 0])
+        self.assertListEqual([round(float(x)) for x in update_node.position], [0, 0, 0])
     
     def test_node_rotate_ND(self):
         origin_node = Node(position=[1, 1, 1])
         update_node = Node(position=[0, 0, 0])
 
         update_node.rotate(origin=origin_node, angle_x=np.pi, angle_y=np.pi/2)
-        self.assertListEqual(list([round(float(x)) for x in update_node.position]), [2, 2, 2])
+        self.assertListEqual([round(float(x)) for x in update_node.position], [2, 2, 2])
     
     def test_node_reset_position(self):
         origin_node = Node(position=[1, 1, 1])
@@ -63,18 +51,68 @@ class NodeTest(TestCase):
         update_node.rotate(origin=origin_node, angle_x=np.pi, angle_y=np.pi/2)
         update_node.reset()
 
-        self.assertListEqual(list(update_node.position), [0, 0, 0])
+        self.assertListEqual(update_node.position, [0, 0, 0])
     
-    def test_node_reset_type(self):
-        origin_node = Node(position=[1, 1, 1])
-        update_node = Node(position=[0, 0, 0])
+    def test_node_addition(self):
+        first_node = Node(position=[1, 1, 1])
+        second_node = Node(position=[1, 1, 1])
 
-        update_node.translate(translation=[-1, -1, -1])
-        update_node.rotate(origin=origin_node, angle_x=np.pi, angle_y=np.pi/2)
-        update_node.reset()
+        node_sum = first_node + second_node
 
-        self.assertIsInstance(update_node.position, np.ndarray)
+        self.assertListEqual(node_sum.position, [2, 2, 2])
+
+    def test_node_subtraction(self):
+        first_node = Node(position=[3, 3, 3])
+        second_node = Node(position=[2, 2, 2])
+
+        node_diff = first_node - second_node
+
+        self.assertListEqual(node_diff.position, [1, 1, 1])
     
+    def test_node_indexing(self):
+        node = Node(position=[1, 2, 3])
+
+        self.assertEqual(node[2], 3)
+    
+    def test_node_child(self):
+        node = Node(position=[0, 0, 0])
+        node_child = Node(position=[0, 0, 1])
+
+        node.add_child(node=node_child)
+
+        self.assertIn(node_child, node.child_nodes)
+    
+    def test_node_child_setitem(self):
+        node = Node(position=[0, 0, 0])
+        node_child = Node(position=[0, 0, 1])
+
+        node.add_child(node=node_child)
+
+        node[2] = -1
+
+        self.assertEqual(node_child[2], 0)
+    
+    def test_node_child_translation(self):
+        node = Node(position=[0, 0, 0])
+        node_child = Node(position=[0, 0, 1])
+
+        node.add_child(node=node_child)
+
+        node.translate(translation=[0, 0, 1])
+
+        self.assertEqual(node_child[2], 2)
+    
+    def test_node_child_reset(self):
+        node = Node(position=[0, 0, 0])
+        node_child = Node(position=[0, 0, 1])
+
+        node.add_child(node=node_child)
+
+        node.translate(translation=[0, 0, 1])
+        node.reset()
+
+        self.assertEqual(node_child[2], 1)
+
     # def test_plotter_base(self):
     #     test_plotter = Plotter()
 

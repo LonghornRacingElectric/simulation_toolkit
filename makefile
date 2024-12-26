@@ -25,18 +25,16 @@ clean:
 	mkdir 4_unit_tests/python_test_results
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
-test: 4_unit_tests/python_tests/
+unit_tests: 4_unit_tests/python_tests/
 	-$(PYTHON) -m pytest --cov=src --cov-branch --cov=4_unit_tests/python_tests --cov-report=html:4_unit_tests/python_test_results/coverage_html \
 	--html=4_unit_tests/python_test_results/test_results.html --self-contained-html --css=4_unit_tests/dark_mode.css
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf .mypy_cache
 	rm -rf .pytest_cache
 	rm .coverage*
-	setsid firefox 4_unit_tests/python_test_results/test_results.html
-	setsid firefox 4_unit_tests/python_test_results/coverage_html/index.html
 
 report:
-	setsid firefox 4_unit_tests/python_test_results/test_results.html
-	setsid firefox 4_unit_tests/python_test_results/coverage_html/index.html
+	setsid firefox-developer-edition 4_unit_tests/python_test_results/test_results.html &
+	setsid firefox-developer-edition 4_unit_tests/python_test_results/coverage_html/index.html &
 
-test: clean test
+test: clean unit_tests report

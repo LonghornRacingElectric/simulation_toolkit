@@ -2,7 +2,7 @@ from typing import Sequence, Union
 import numpy as np
 
 
-def unit_vec(p1: Union[np.ndarray, Sequence[float]], p2: Union[np.ndarray, Sequence[float]]) -> np.ndarray:
+def unit_vec(p1: Union[np.ndarray, Sequence[float]], p2: Union[np.ndarray, Sequence[float]]) -> Sequence[float]:
     """
     ## Unit Vector Calculation
 
@@ -25,7 +25,7 @@ def unit_vec(p1: Union[np.ndarray, Sequence[float]], p2: Union[np.ndarray, Seque
     vector_AB = p2 - p1
     vector_AB_mag = np.linalg.norm(p2 - p1)
     
-    return vector_AB / vector_AB_mag
+    return [float(x) for x in vector_AB / vector_AB_mag]
 
 def rotation_matrix(unit_vec: Union[np.ndarray, Sequence[float]], theta: float) -> Sequence[Sequence[float]]:
     """
