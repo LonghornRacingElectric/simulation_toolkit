@@ -1,6 +1,6 @@
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
-from vehicle_model.assets.misc_linalg import rotation_matrix, unit_vec
-from typing import Sequence, Union
+from vehicle_model.assets.misc_math import rotation_matrix, unit_vec
+from typing import Sequence, Tuple
 import numpy as np
 
 
@@ -23,7 +23,7 @@ class Wishbone:
         self.aft_link: Link = aft_link
 
         self.direction: Sequence[float] = unit_vec(p1=self.aft_link.inboard_node.position, p2=self.fore_link.inboard_node.position)
-        self.angle: Union[float, int] = 0.0
+        self.angle: float = 0.0
 
     def rotate(self, angle: float) -> None:
         """
@@ -39,13 +39,8 @@ class Wishbone:
         self.fore_link.outboard_node.reset()
         self.aft_link.outboard_node.reset()
 
-        self.rot_mat = rotation_matrix(self.direction, angle)
         self.angle = angle
-
-        outboard_point = self.fore_link.outboard_node - self.fore_link.inboard_node
-        outboard_wrt_inboard = np.matmul(self.rot_mat, outboard_point.position)
-
-        self.fore_link.outboard_node.position = [x + y for x, y in zip(outboard_wrt_inboard, self.fore_link.inboard_node.position)]
+        self.fore_link.outboard_node.rotate(origin=self.fore_link.inboard_node, direction=self.direction, angle=angle)
 
     @property
     def plane(self) -> Sequence[float]:

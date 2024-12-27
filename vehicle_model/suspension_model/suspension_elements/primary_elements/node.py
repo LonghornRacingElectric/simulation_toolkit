@@ -1,8 +1,8 @@
 from vehicle_model.assets.updateable import Updateable
 
-from vehicle_model.assets.misc_linalg import unit_vec, rotation_matrix
+from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
 
-from typing import Sequence, Union, List, Any
+from typing import Sequence, Tuple, Union, List, cast
 from copy import deepcopy
 import numpy as np
 
@@ -20,7 +20,7 @@ class Node:
         Position of Node
     """
     def __init__(self, position: Union[np.ndarray, Sequence[float]]) -> None:
-        self.listeners: Sequence[Updateable] = []
+        self.listeners: List[Updateable] = []
         self.child_nodes: List[Node] = []
 
         self.position: list = deepcopy(list(position))
@@ -41,6 +41,10 @@ class Node:
         None
         """
         self.position = self.initial_position
+        
+        for node in self.child_nodes:
+            node.reset()
+        
         self.__update_children__()
     
     def translate(self, translation: Union[np.ndarray, Sequence[float]]) -> None:
@@ -59,32 +63,75 @@ class Node:
         None
         """
         self.position = [x + y for x, y in zip(self.position, translation)]
+        
+        for node in self.child_nodes:
+            node.position = [x + y for x, y in zip(node.position, translation)]
+        
         self.__update_children__()
     
-    def rotate(self, origin: "Node", angle_x: float = 0, angle_y: float = 0, angle_z: float = 0) -> None:
+    def rotate(self, origin: "Node", 
+               direction: Union[None, Tuple[float, float, float], Sequence[float]] = None, 
+               angle: Union[None, float] = None,
+               ang_x: Union[None, float] = None,
+               ang_y: Union[None, float] = None,
+               ang_z: Union[None, float] = None) -> None:
         """
-        ## Flatten Rotate
+        ## Rotate
 
-        Rotates Node
-        - Used to re-orient vehicle such that contact patches intersect with x-y plane
+        Rotates Node with following options:
+            
+        1. Rotates Node about a given axis coincident with origin (provide `origin`, `direction`, `angle`)
+
+        2. Rotates Node by desired angles, treating position as a vector from origin to self (provide `origin`, `ang_x`, `ang_y`, `ang_z`)
 
         Parameters
         ----------
         origin : Node
-            Node representing origin of transformation
-        angle_x : float
-            Angle of rotation about x in radians
-        angle_y : float
-            Angle of rotation about y in radians
-        angle_z : float
-            Angle of rotation about z in radians
-        """
-        x_rot = rotation_matrix(unit_vec=[1, 0, 0], theta=angle_x)
-        y_rot = rotation_matrix(unit_vec=[0, 1, 0], theta=angle_y)
-        z_rot = rotation_matrix(unit_vec=[0, 0, 1], theta=angle_z)
+            Node representing origin of rotation
         
-        rotation_wrt_origin = np.matmul(z_rot, np.matmul(y_rot, np.matmul(x_rot, (self - origin).position)))
-        self.position =  [x + y for x, y in zip(rotation_wrt_origin, origin.position)]
+        direction : Tuple[float, float, float]
+            Unit vector specifying axis of rotation
+        
+        angle : float
+            angle of rotation in radians
+        
+        ang_x : float
+            Rotation about global x in radians
+        
+        ang_y : float
+            Rotation about global y in radians
+
+        ang_z : float
+            Rotation about global z in radians
+        """
+        if not ((direction == None) and (angle == None)):
+            if ang_x or ang_y or ang_z:
+                raise Exception("You cannot provide ang_x, and_y, or ang_z to Node.rotate() if direction and angle are also provided.")
+            
+            rot = rotation_matrix(unit_vec=cast(Tuple[float, float, float], direction), theta=cast(float, angle))
+            
+            self_rotated = np.matmul(rot, (self - origin).position)
+            self.position = [x + y for x, y in zip(self_rotated, origin.position)]
+            
+            for node in self.child_nodes:
+                node_rotated = np.matmul(rot, (node - origin).position)
+                node.position = [x + y for x, y in zip(node_rotated, origin.position)]
+        
+        elif (not (ang_x == None)) and (not (ang_y == None)) and (not (ang_z == None)):
+            x_rot = rotation_matrix(unit_vec=[1, 0, 0], theta=ang_x)
+            y_rot = rotation_matrix(unit_vec=[0, 1, 0], theta=ang_y)
+            z_rot = rotation_matrix(unit_vec=[0, 0, 1], theta=ang_z)
+            
+            self_rotated = np.matmul(z_rot, np.matmul(y_rot, np.matmul(x_rot, (self - origin).position)))
+            self.position =  [x + y for x, y in zip(self_rotated, origin.position)]
+
+            for node in self.child_nodes:
+                node_rotated = np.matmul(z_rot, np.matmul(y_rot, np.matmul(x_rot, (node - origin).position)))
+                node.position = [x + y for x, y in zip(node_rotated, origin.position)]
+        
+        else:
+            raise Exception("You must provide either: (direction and angle) OR (ang_x and ang_y and ang_z) to Node.rotate().")
+
         self.__update_children__()
     
     def add_child(self, node: "Node") -> None:
@@ -99,6 +146,19 @@ class Node:
             Child node to add to self
         """
         self.child_nodes.append(node)
+    
+    def add_listener(self, listener: Updateable) -> None:
+        """
+        ## Add Listener
+
+        Adds listener to self. Any time Node is updated, listener.update() is called
+
+        Parameters
+        ----------
+        node : Node
+            Listener to add to self
+        """
+        self.listeners.append(listener)
     
     def __add__(self, node: "Node") -> "Node":
         """
@@ -144,7 +204,7 @@ class Node:
 
         return Node(position=node_sub)
     
-    def __mul__(self, num: Union[float, int]):
+    def __mul__(self, num: float):
         """
         ## Overloaded Node Multiplication
 
@@ -152,14 +212,14 @@ class Node:
 
         Parameters
         ----------
-        num : Union[float, int]
+        num : float
             Number to multiply all entries by
         """
         node_mul = [x * num for x in self.position]
 
         return Node(position=node_mul)
 
-    def __truediv__(self, num: Union[float, int]):
+    def __truediv__(self, num: float):
         """
         ## Overloaded Node Division
 
@@ -167,7 +227,7 @@ class Node:
 
         Parameters
         ----------
-        num : Union[float, int]
+        num : float
             Number to divide all entries by
         """
         node_div = [x / num for x in self.position]
@@ -194,7 +254,7 @@ class Node:
 
         return value
     
-    def __setitem__(self, index: int, value: Union[float, int]) -> None:
+    def __setitem__(self, index: int, value: float) -> None:
         """
         ## Node Index Setting
 
@@ -205,7 +265,7 @@ class Node:
         index : int
             Position entry to set
 
-        value : Union[float, int]
+        value : float
             Value to set at position entry
         """
         self.position[index] = value
@@ -221,9 +281,5 @@ class Node:
         ----------
         None
         """
-        for node in self.child_nodes:
-            trans_vec = np.array(self.position) - np.array(self.initial_position)
-            node.position = list(np.array(node.initial_position) + trans_vec)
-
         for listener in self.listeners:
             listener.update()

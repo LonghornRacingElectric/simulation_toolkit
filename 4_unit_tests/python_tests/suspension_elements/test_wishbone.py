@@ -43,6 +43,23 @@ class TestWishbone(TestCase):
         wishbone.rotate(angle=np.pi/2)
 
         self.assertListEqual([round(x, 7) for x in wishbone.fore_link.outboard_node.position], [1, 0, 2])
+    
+    def test_child_rotate(self):
+        inboard_fore = Node(position=[2, 0, 0])
+        inboard_aft = Node(position=[0, 0, 0])
+        outboard = Node(position=[1, 2, 0])
+
+        fore_link = Link(inboard_node=inboard_fore, outboard_node=outboard)
+        aft_link = Link(inboard_node=inboard_aft, outboard_node=outboard)
+
+        wishbone = Wishbone(fore_link=fore_link, aft_link=aft_link)
+
+        child_node = Node(position=[1, 1, 0])
+        outboard.add_child(node=child_node)
+        
+        wishbone.rotate(angle=np.pi/2)
+
+        self.assertListEqual([round(x, 7) for x in child_node.position], [1, 0, 1])
 
     def test_plane_xy(self):
         inboard_fore = Node(position=[2, 0, 0])

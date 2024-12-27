@@ -72,3 +72,20 @@ class TestBellcrank(TestCase):
 
         for index, node in enumerate(bellcrank.nodes):
             self.assertListEqual([round(x, 3) for x in node.position], new_positions[index])
+    
+    def test_bellcrank_rotate_child(self):
+        node_one = Node(position=[0, 1, 0])
+        node_two = Node(position=[0, 1, 1])
+        node_three = Node(position=[0, 0, 1])
+
+        pivot_node = Node(position=[0, 0, 0])
+
+        pivot_direction = [1, 0, 0]
+
+        child_node = Node(position=[0, 0.5, 0])
+        node_one.add_child(node=child_node)
+
+        bellcrank = Bellcrank(node_one, node_two, node_three, pivot=pivot_node, pivot_direction=pivot_direction)
+        bellcrank.rotate(angle=np.pi.__float__() / 2)
+
+        self.assertListEqual([round(x, 7) for x in child_node.position], [0, 0, 0.5])

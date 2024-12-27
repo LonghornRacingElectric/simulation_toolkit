@@ -25,13 +25,13 @@ class Damper(Link):
         super().__init__(inboard_node=inboard_node, outboard_node=outboard_node)
         
         self.damping_curve = list(zip(*damping_curve))
-        self.velocity_reference: Sequence[Union[float, int]] = self.damping_curve[0]
-        self.force_reference: Sequence[Union[float, int]] = self.damping_curve[1]
+        self.velocity_reference: Sequence[float] = self.damping_curve[0]
+        self.force_reference: Sequence[float] = self.damping_curve[1]
         
-        self.velocity: Union[float, int] = 0
+        self.velocity: float = 0
     
     @property
-    def force(self) -> Union[float, int]:
+    def force(self) -> float:
         """
         ## Force
 
@@ -39,7 +39,7 @@ class Damper(Link):
 
         Returns
         -------
-        Union[float, int]
+        float
             Damper force
         """
         return np.interp(self.velocity, self.velocity_reference, self.force_reference).__float__()

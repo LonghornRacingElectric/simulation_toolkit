@@ -1,5 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-from vehicle_model.assets.misc_linalg import rotation_matrix
+from vehicle_model.assets.misc_math import rotation_matrix
 from typing import Sequence, Tuple, Union
 import numpy as np
 
@@ -18,17 +18,17 @@ class Bellcrank:
     pivot : Node
         Bellcrank pivot Node
 
-    pivot_direction : Tuple[Union[float, int], Union[float, int], Union[float, int]]
+    pivot_direction : Tuple[float, float, float]
         Unit vector representing Bellcrank pivot axis
     """
-    def __init__(self, *nodes: Node, pivot: Node, pivot_direction: Tuple[Union[float, int], Union[float, int], Union[float, int]]) -> None:
+    def __init__(self, *nodes: Node, pivot: Node, pivot_direction: Tuple[float, float, float]) -> None:
         self.nodes: Sequence[Node] = nodes
         self.pivot = pivot
         self.pivot_direction = pivot_direction
 
-        self.angle: Union[float, int] = 0
+        self.angle: float = 0
 
-    def rotate(self, angle: Union[float, int]) -> None:
+    def rotate(self, angle: float) -> None:
         """
         ## Rotate
 
@@ -36,15 +36,11 @@ class Bellcrank:
 
         Parameters
         ----------
-        angle : Union[float, int]
+        angle : float
             Angle of rotation in radians
         """
         for node in self.nodes:
             node.reset()
-
-            node_translated = node - self.pivot
-            rot = rotation_matrix(unit_vec=self.pivot_direction, theta=angle)
-
-            node.position = list(np.matmul(rot, node_translated.position) + np.array(self.pivot.position))
+            node.rotate(origin=self.pivot, direction=self.pivot_direction, angle=angle)
         
         self.angle = angle

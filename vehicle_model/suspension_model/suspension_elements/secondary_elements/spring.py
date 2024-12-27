@@ -19,20 +19,20 @@ class Spring(Link):
     outboard : Node
         Node representing outboard end of linkage
 
-    free_length : Union[float, int]
+    free_length : float
         Free length of spring
 
-    rate : Union[float, int]
+    rate : float
         Spring rate (force per unit compression)
     """
-    def __init__(self, inboard_node: Node, outboard_node: Node, free_length: Union[float, int], rate: Union[float, int]) -> None:
+    def __init__(self, inboard_node: Node, outboard_node: Node, free_length: float, rate: float) -> None:
         super().__init__(inboard_node=inboard_node, outboard_node=outboard_node, compliance=rate)
 
-        self.compliance: Union[float, int]
+        self.compliance: float
         self.free_length = free_length
 
     @property
-    def compression(self) -> Union[float, int]:
+    def compression(self) -> float:
         """
         ## Compression
 
@@ -40,7 +40,7 @@ class Spring(Link):
 
         Returns
         -------
-        Union[float, int]
+        float
             Spring compression
         """
         comp = self.free_length - self.length
@@ -51,7 +51,7 @@ class Spring(Link):
         return comp
 
     @property
-    def force(self) -> Union[float, int]:
+    def force(self) -> float:
         """
         ## Force
 
@@ -59,7 +59,7 @@ class Spring(Link):
 
         Returns
         -------
-        Union[float, int]
+        float
             Spring force
         """
         return self.compliance * self.compression

@@ -1,5 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-from vehicle_model.assets.misc_linalg import unit_vec, rotation_matrix
+from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
 from typing import Sequence, Union, cast
 import numpy as np
 import warnings
@@ -23,7 +23,7 @@ class Link:
     **kwargs : dict[str, Union[float, int, str]]
         Optional keyword arguments. The following keys are supported:
 
-            `compliance` : Union[int, float]
+            `compliance` : float
                 Linear compliance of Link, by default None
 
             `compliance_unit` : str
@@ -38,7 +38,7 @@ class Link:
         
         self.inboard_node: Node = inboard_node
         self.outboard_node: Node = outboard_node
-        self.initial_length: Union[float, int] = np.linalg.norm((self.outboard_node - self.inboard_node).position).__float__()
+        self.initial_length: float = np.linalg.norm((self.outboard_node - self.inboard_node).position).__float__()
 
         self.compliance: Union[None, float, int] = None
         self.compliance_unit: Union[None, str] = None

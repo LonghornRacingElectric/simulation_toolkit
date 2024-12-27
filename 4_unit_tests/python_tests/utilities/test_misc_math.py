@@ -1,0 +1,29 @@
+from vehicle_model.assets.misc_math import unit_vec, rotation_matrix, nearest_root
+import numpy as np
+
+from unittest import main, TestCase
+from typing import Sequence
+
+
+class TestMiscMath(TestCase):
+    def test_unit_vec(self):
+        p1=[0, 0, 0]
+        p2=[1, 1, 1]
+        
+        in_vec_known = [(p2[i] - val) / np.sqrt(sum([(p2[i] - val)**2 for i, val in enumerate(p1)])) for i, val in enumerate(p1)]
+        in_vec_check = list(unit_vec(p1=p1, p2=p2))
+        self.assertListEqual(in_vec_known, in_vec_check)
+    
+    def test_nearest_root_one(self):
+        f = lambda x, args: x - 0.2
+
+        soln = nearest_root(func=f, x0=1, bounds=(-5, 5), tol=1e-7)
+
+        self.assertEqual(round(soln, 7), 0.2)
+
+    def test_nearest_root_two(self):
+        f = lambda x, args: x - 0.2
+
+        soln = nearest_root(func=f, x0=-1, bounds=(-5, 5), tol=1e-7)
+
+        self.assertEqual(round(soln, 7), 0.2)

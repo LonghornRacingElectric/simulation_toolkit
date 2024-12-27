@@ -1,7 +1,7 @@
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-from vehicle_model.assets.misc_linalg import unit_vec, rotation_matrix
+from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
 # from scipy.interpolate import CubicSpline
 from typing import Sequence, Tuple, Union
 from scipy.optimize import fsolve # type: ignore
@@ -48,11 +48,11 @@ class QuarterCar:
         self.tie_rod_unsprung = self.kingpin.link_centered_coords(node=self.tie_rod.outboard_node)
 
         # Save steering contributions
-        self.rack_steer: Union[float, int] = 0
-        self.jounce_steer_contribution: Union[float, int] = 0
-        self.driver_steer_contribution: Union[float, int] = 0
+        self.rack_steer: float = 0
+        self.jounce_steer_contribution: float = 0
+        self.driver_steer_contribution: float = 0
 
-        self.wheel_angle: Union[float, int] = self.jounce_steer_contribution + self.driver_steer_contribution
+        self.wheel_angle: float = self.jounce_steer_contribution + self.driver_steer_contribution
 
     def jounce(self, jounce: float) -> None:
         """
