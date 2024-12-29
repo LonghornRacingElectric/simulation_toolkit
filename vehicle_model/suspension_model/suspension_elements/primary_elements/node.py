@@ -26,11 +26,21 @@ class Node:
         self.position: list = deepcopy(list(position))
         self.initial_position: list = deepcopy(list(position))
 
+        # Track previous translation
+        self.translation: Union[None, Sequence[float]] = None
+
+        # Track previous rotation
+        self.rotation_angle: Union[None, float] = None
+        self.rotation_origin: Union[None, Node] = None
+        self.rotation_direction: Union[None, Tuple[float, float, float]] = None
+
     def reset(self) -> None:
         """
         ## Reset
 
         Resets Node position to initial position
+
+        ###### Resets should only be performed before a translation or rotation
 
         Parameters
         ----------
@@ -42,10 +52,16 @@ class Node:
         """
         self.position = self.initial_position
         
+        self.translation = None
+        
+        self.rotation_angle = None
+        self.rotation_origin = None
+        self.rotation_direction = None
+        
         for node in self.child_nodes:
             node.reset()
         
-        self.__update_children__()
+        # self.__update_listeners__()
     
     def translate(self, translation: Union[np.ndarray, Sequence[float]]) -> None:
         """
@@ -62,12 +78,17 @@ class Node:
         ----------
         None
         """
+        self.reset()
+
         self.position = [x + y for x, y in zip(self.position, translation)]
         
         for node in self.child_nodes:
             node.position = [x + y for x, y in zip(node.position, translation)]
+            node.translation = list(translation)
         
-        self.__update_children__()
+        self.translation = list(translation)
+        
+        self.__update_listeners__()
     
     def rotate(self, origin: "Node", 
                direction: Union[None, Tuple[float, float, float], Sequence[float]] = None, 
@@ -104,18 +125,28 @@ class Node:
         ang_z : float
             Rotation about global z in radians
         """
+        self.reset()
+
         if not ((direction == None) and (angle == None)):
             if ang_x or ang_y or ang_z:
                 raise Exception("You cannot provide ang_x, and_y, or ang_z to Node.rotate() if direction and angle are also provided.")
             
             rot = rotation_matrix(unit_vec=cast(Tuple[float, float, float], direction), theta=cast(float, angle))
             
-            self_rotated = np.matmul(rot, (self - origin).position)
+            self_rotated = list(np.matmul(rot, (self - origin).position))
             self.position = [x + y for x, y in zip(self_rotated, origin.position)]
             
             for node in self.child_nodes:
                 node_rotated = np.matmul(rot, (node - origin).position)
                 node.position = [x + y for x, y in zip(node_rotated, origin.position)]
+
+                node.rotation_angle = angle
+                node.rotation_origin = origin
+                node.rotation_direction = cast(Tuple[float, float, float], direction)
+            
+            self.rotation_angle = angle
+            self.rotation_origin = origin
+            self.rotation_direction = cast(Tuple[float, float, float], direction)
         
         elif (not (ang_x == None)) and (not (ang_y == None)) and (not (ang_z == None)):
             x_rot = rotation_matrix(unit_vec=[1, 0, 0], theta=ang_x)
@@ -132,7 +163,7 @@ class Node:
         else:
             raise Exception("You must provide either: (direction and angle) OR (ang_x and ang_y and ang_z) to Node.rotate().")
 
-        self.__update_children__()
+        self.__update_listeners__()
     
     def add_child(self, node: "Node") -> None:
         """
@@ -269,9 +300,9 @@ class Node:
             Value to set at position entry
         """
         self.position[index] = value
-        self.__update_children__()
+        self.__update_listeners__()
     
-    def __update_children__(self) -> None:
+    def __update_listeners__(self) -> None:
         """
         ## Update Children
 

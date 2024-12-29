@@ -126,3 +126,50 @@ def nearest_root(func: Callable, x0: float, bounds: Tuple[float, float], tol: fl
             positive = not positive
     
     return soln
+
+def directional_root(func: Callable, x0: float, bounds: Tuple[float, float], tol: float, args: Sequence = []):
+    """
+    ## Directional Root
+
+    Finds the first root in a single direction, specified by the sign of bounds
+
+    Parameters
+    ----------
+    func : Callable
+        Optimization function. Follows the form: func(x: float, args: Sequence)
+
+    x0 : float
+        Initial guess
+
+    bounds : Tuple[float, float]
+        Bounds on solution inputs (should be entirely negative or entirely positive)
+
+    tol : float
+        Tolerance on solution
+
+    args : Sequence, optional
+        Args to func, by default []
+    """
+    # Solution value
+    soln = x0
+
+    # Steps
+    step_size = abs(bounds[1] - bounds[0]) / 10 * np.sign(np.average(bounds))
+
+    # Optimization parameters
+    residual: float = 1e9 * np.sign(func(soln, args))
+    previous_residual: float = 1e9 * np.sign(func(soln, args))
+
+    while abs(residual) > tol:
+        previous_residual = residual
+            
+        soln += step_size
+        residual = func(soln, args)
+
+        if np.sign(residual) == np.sign(previous_residual):
+            continue
+        else:
+            step_size /= 2
+            step_size *= -1
+    
+    return soln

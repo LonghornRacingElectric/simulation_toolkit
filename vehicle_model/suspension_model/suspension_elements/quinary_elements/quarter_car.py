@@ -1,7 +1,8 @@
+from vehicle_model.suspension_model.suspension_elements.quaternary_elements.push_pull_rod import PushPullRod
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
-from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
 from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
+
 # from scipy.interpolate import CubicSpline
 from typing import Sequence, Tuple, Union
 from scipy.optimize import fsolve # type: ignore
@@ -17,6 +18,9 @@ class QuarterCar:
 
     Parameters
     ----------
+    tire : Tire
+        Tire object
+
     lower_wishbone : Wishbone
         Lower wishbone object
 
@@ -26,15 +30,16 @@ class QuarterCar:
     tie_rod : Link
         Link object representing tie rod
         
-    push_pull_rod : Link
-        Link object representing push or pull rod
+    push_pull_rod : PushPullRod
+        PushPullRod object representing push or pull rod
     """
     def __init__(
             self,
+            # tire: Tire,
             lower_wishbone: Wishbone,
             upper_wishbone: Wishbone,
             tie_rod: Link,
-            push_pull_rod: Link):
+            push_pull_rod: PushPullRod):
 
         self.lower_wishbone = lower_wishbone
         self.upper_wishbone = upper_wishbone

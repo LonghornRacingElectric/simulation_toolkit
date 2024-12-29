@@ -62,6 +62,12 @@ class Stabar:
         self.right_rotation: float = 0
 
     def update(self) -> None:
+        """
+        ## Update
+
+        Updates Stabar to match initial geometry
+
+        """
         self.left_rotation = nearest_root(func=self._droplink_eqn, x0=0, bounds=(-np.pi/2, np.pi/2), tol=1e-10, args=[self.left_droplink])
         self.right_rotation = nearest_root(func=self._droplink_eqn, x0=0, bounds=(-np.pi/2, np.pi/2), tol=1e-10, args=[self.right_droplink])
 

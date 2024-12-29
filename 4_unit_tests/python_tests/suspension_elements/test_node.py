@@ -56,7 +56,31 @@ class TestNode(TestCase):
 
         update_node.rotate(origin=origin_node, direction=[0, 0, 1], angle=0)
         self.assertListEqual([round(float(x)) for x in update_node.position], [0, 0, 0])
-        
+    
+    def test_node_rotate_repeated_one(self):
+        origin_node = Node(position=[0, 0, 0])
+        update_node = Node(position=[0, 1, 0])
+
+        update_node.rotate(origin=origin_node, direction=[0, 0, 1], angle=np.pi/2)
+        update_node.rotate(origin=origin_node, direction=[0, 0, 1], angle=np.pi/2)
+        self.assertListEqual([round(float(x)) for x in update_node.position], [-1, 0, 0])
+    
+    def test_node_rotate_repeated_two(self):
+        origin_node = Node(position=[0, 0, 0])
+        update_node = Node(position=[0, 1, 0])
+
+        update_node.rotate(origin=origin_node, direction=[0, 0, 1], angle=np.pi/2)
+        update_node.rotate(origin=origin_node, direction=[0, 0, 1], angle=-np.pi/2)
+        self.assertListEqual([round(float(x)) for x in update_node.position], [1, 0, 0])
+
+    def test_node_rotate_repeated_three(self):
+        origin_node = Node(position=[0, 0, 0])
+        update_node = Node(position=[0, 1, 0])
+
+        update_node.rotate(origin=origin_node, direction=[0, 0, 1], angle=np.pi/2)
+        update_node.rotate(origin=origin_node, direction=[0, 0, 1], angle=0)
+        self.assertListEqual([round(float(x)) for x in update_node.position], [0, 1, 0])
+
     def test_node_reset_position(self):
         origin_node = Node(position=[1, 1, 1])
         update_node = Node(position=[0, 0, 0])

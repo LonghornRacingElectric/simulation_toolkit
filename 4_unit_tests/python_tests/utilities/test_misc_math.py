@@ -1,4 +1,4 @@
-from vehicle_model.assets.misc_math import unit_vec, rotation_matrix, nearest_root
+from vehicle_model.assets.misc_math import unit_vec, rotation_matrix, nearest_root, directional_root
 import numpy as np
 
 from unittest import main, TestCase
@@ -27,3 +27,17 @@ class TestMiscMath(TestCase):
         soln = nearest_root(func=f, x0=-1, bounds=(-5, 5), tol=1e-7)
 
         self.assertEqual(round(soln, 7), 0.2)
+    
+    def test_directional_root_positive(self):
+        f = lambda x, args: (x - 5)**2 - 25**2
+
+        soln = directional_root(func=f, x0=0, bounds=(0, 100), tol=1e-10)
+
+        self.assertEqual(round(soln, 7), 30)
+    
+    def test_directional_root_negative(self):
+        f = lambda x, args: (x - 5)**2 - 25**2
+
+        soln = directional_root(func=f, x0=0, bounds=(-100, 0), tol=1e-10)
+
+        self.assertEqual(round(soln, 7), -20)
