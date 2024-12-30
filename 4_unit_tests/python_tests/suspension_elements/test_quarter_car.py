@@ -1,28 +1,32 @@
 from vehicle_model.suspension_model.suspension_elements.quinary_elements.quarter_car import QuarterCar
 from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
+from vehicle_model.suspension_model.suspension_elements.secondary_elements.tire import Tire
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-import numpy as np
+from LHR_tire_toolkit.MF52 import MF52 # type: ignore
 
 from unittest import main, TestCase
+import numpy as np
 
 
 class TestQuarterCar(TestCase):
-    def test_jounce_lower(self):
+    def test_jounce_resid(self):
         # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
+        lower_inboard_fore = Node(position=[2, 0, 0.5])
+        lower_inboard_aft = Node(position=[0, 0, 0.5])
+        lower_outboard = Node(position=[1, 2, 0.5])
 
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
+        upper_inboard_fore = Node(position=[2, 0, 1.5])
+        upper_inboard_aft = Node(position=[0, 0, 1.5])
+        upper_outboard = Node(position=[1, 2, 1.5])
 
         tie_inboard = Node(position=[2, 0, 0.5])
-        tie_outboard = Node(position=[2, 2, 0.5])
+        tie_outboard = Node(position=[2, 2, 1])
 
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
+        pushrod_lower = Node(position=[1, 2, 1.5])
+        pushrod_upper = Node(position=[1, 0, 2.5])
+
+        contact_patch = Node(position=[1, 2.5, 0])
 
         # Links
         lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
@@ -39,29 +43,47 @@ class TestQuarterCar(TestCase):
         lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
         upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
 
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
+        # Tire
+        tire_mf52 = MF52(tire_name="test_tire", file_path="./1_model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir")
+        tire = Tire(tire=tire_mf52, contact_patch=contact_patch, outer_diameter=16*0.0254, width=7*0.0254, inner_diameter=10*0.0254)
 
-        double_wishbone.jounce(jounce=0.5)
-        self.assertEqual(round(lower_wishbone.angle * 180 / np.pi, 3), round(np.asin(0.5/2) * 180 / np.pi, 3))
-    
-    def test_jounce_lower_repeated(self):
+        quarter_car = QuarterCar(tire=tire,
+                                 lower_wishbone=lower_wishbone,
+                                 upper_wishbone=upper_wishbone,
+                                 tie_rod=tie_rod,
+                                 push_pull_rod=pushrod)
+
+        # Known outputs for jounce of 0.25 units
+        wishbone_angles = 7.18076 * np.pi / 180
+        wheel_angle = -3.67105 * np.pi / 180
+
+        # Manually set jounce
+        quarter_car.wheel_jounce = 0.25
+
+        # Calculate residuals and confirm residuals go to zero
+        residuals = quarter_car._geometry_resid_func(x=[wishbone_angles, wishbone_angles, wheel_angle])
+
+        rounded_residuals = [round(x, 2) for x in residuals]
+
+        self.assertListEqual(rounded_residuals, [0, 0, 0])
+
+    def test_update_geometry_one(self):
         # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
+        lower_inboard_fore = Node(position=[2, 0, 0.5])
+        lower_inboard_aft = Node(position=[0, 0, 0.5])
+        lower_outboard = Node(position=[1, 2, 0.5])
 
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
+        upper_inboard_fore = Node(position=[2, 0, 1.5])
+        upper_inboard_aft = Node(position=[0, 0, 1.5])
+        upper_outboard = Node(position=[1, 2, 1.5])
 
         tie_inboard = Node(position=[2, 0, 0.5])
-        tie_outboard = Node(position=[2, 2, 0.5])
+        tie_outboard = Node(position=[2, 2, 1])
 
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
+        pushrod_lower = Node(position=[1, 2, 1.5])
+        pushrod_upper = Node(position=[1, 0, 2.5])
+
+        contact_patch = Node(position=[1, 2.5, 0])
 
         # Links
         lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
@@ -78,70 +100,61 @@ class TestQuarterCar(TestCase):
         lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
         upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
 
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
+        # Tire
+        tire_mf52 = MF52(tire_name="test_tire", file_path="./1_model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir")
+        tire = Tire(tire=tire_mf52, contact_patch=contact_patch, outer_diameter=16*0.0254, width=7*0.0254, inner_diameter=10*0.0254)
+
+        quarter_car = QuarterCar(tire=tire,
+                                 lower_wishbone=lower_wishbone,
+                                 upper_wishbone=upper_wishbone,
+                                 tie_rod=tie_rod,
+                                 push_pull_rod=pushrod)
+
+        quarter_car.jounce(jounce=0.25)
+        quarter_car.steer(rack_displacement=0)
+
+        known_results = [-3.67, 7.18, 7.18, 1.0320141, 2.4832875, 0.25, 1.9979481, 1.9202853, 1.25]
+        test_results = [round(tire.steered_angle * 180 / np.pi, 2),
+                        round(lower_wishbone.angle * 180 / np.pi, 2),
+                        round(upper_wishbone.angle * 180 / np.pi, 2),
+                        round(tire.contact_patch[0], 7),
+                        round(tire.contact_patch[1], 7),
+                        round(tire.contact_patch[2], 7),
+                        round(tie_rod.outboard_node[0], 7),
+                        round(tie_rod.outboard_node[1], 7),
+                        round(tie_rod.outboard_node[2], 7)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z"]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertEqual(test_results[i], known_results[i], msg=corresponding_values[i])
         
-        double_wishbone.jounce(jounce=0.5)
-        double_wishbone.jounce(jounce=-0.5)
-
-        self.assertEqual(round(lower_wishbone.angle * 180 / np.pi, 3), round(-np.asin(0.5/2) * 180 / np.pi, 3))
-
-    def test_jounce_upper(self):
+    def test_update_geometry_two(self):
         # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
+        lower_inboard_fore = Node(position=[2, 0, 0.5])
+        lower_inboard_aft = Node(position=[0, 0, 0.5])
+        lower_outboard = Node(position=[1, 2, 0.5])
 
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
+        upper_inboard_fore = Node(position=[2, 0, 1.5])
+        upper_inboard_aft = Node(position=[0, 0, 1.5])
+        upper_outboard = Node(position=[1, 2, 1.5])
 
         tie_inboard = Node(position=[2, 0, 0.5])
-        tie_outboard = Node(position=[2, 2, 0.5])
+        tie_outboard = Node(position=[2, 2, 1])
 
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
+        pushrod_lower = Node(position=[1, 2, 1.5])
+        pushrod_upper = Node(position=[1, 0, 2.5])
 
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=0.5)
-        self.assertEqual(round(upper_wishbone.angle * 180 / np.pi, 3), round(np.asin(0.5/2) * 180 / np.pi, 3))
-    
-    def test_jounce_upper_repeated(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0.5])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
+        contact_patch = Node(position=[1, 2.5, 0])
 
         # Links
         lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
@@ -158,722 +171,40 @@ class TestQuarterCar(TestCase):
         lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
         upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
 
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=0.5)
-        double_wishbone.jounce(jounce=-0.5)
-
-        self.assertEqual(round(upper_wishbone.angle * 180 / np.pi, 3), round(-np.asin(0.5/2) * 180 / np.pi, 3))
-    
-    def test_rack_displacement_one(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0.25)
-
-        self.assertEqual(double_wishbone.tie_rod.inboard_node[1], 0.25)
-    
-    def test_rack_displacement_two(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0.5])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0.25)
-
-        self.assertEqual(double_wishbone.tie_rod.inboard_node[1], 0.25)
-    
-    def test_rack_displacement_three(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 1])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0.25)
-
-        self.assertEqual(double_wishbone.tie_rod.inboard_node[1], 0.25)
-    
-    def test_combined_steer_one(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=0)
-        double_wishbone.steer(rack_translation=0.25)
-
-        known_angle = 14.46 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_two(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=-1)
-        double_wishbone.steer(rack_translation=0.25)
-
-        known_angle = 30.86 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_three(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=1)
-        double_wishbone.steer(rack_translation=0.25)
-
-        known_angle = -3.89 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_four(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=1)
-        double_wishbone.steer(rack_translation=0)
-
-        known_angle = -18.59 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_five(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=1)
-        double_wishbone.steer(rack_translation=-0.25)
-
-        known_angle = -35.45 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_six(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=-1)
-        double_wishbone.steer(rack_translation=-0.25)
-
-        known_angle = 1.03 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_seven(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.jounce(jounce=-1)
-        double_wishbone.steer(rack_translation=0)
-
-        known_angle = 15.52 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-
-        ####################################################################################
-
-    def test_combined_steer_eight(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0.25)
-        double_wishbone.jounce(jounce=0)
-
-        known_angle = 14.46 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_nine(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0.25)
-        double_wishbone.jounce(jounce=-1)
-
-        known_angle = 30.86 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_ten(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0.25)
-        double_wishbone.jounce(jounce=1)
-
-        known_angle = -3.89 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_eleven(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0)
-        double_wishbone.jounce(jounce=1)
-
-        known_angle = -18.59 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_twelve(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=-0.25)
-        double_wishbone.jounce(jounce=1)
-
-        known_angle = -35.45 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_thirteen(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=-0.25)
-        double_wishbone.jounce(jounce=-1)
-
-        known_angle = 1.03 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
-    
-    def test_combined_steer_fourteen(self):
-        # Nodes
-        lower_inboard_fore = Node(position=[2, 0, 0])
-        lower_inboard_aft = Node(position=[0, 0, 0])
-        lower_outboard = Node(position=[1, 2, 0])
-
-        upper_inboard_fore = Node(position=[2, 0, 1])
-        upper_inboard_aft = Node(position=[0, 0, 1])
-        upper_outboard = Node(position=[1, 2, 1])
-
-        tie_inboard = Node(position=[2, 0, 0])
-        tie_outboard = Node(position=[2, 2, 0.5])
-
-        pushrod_lower = Node(position=[1, 2, 1])
-        pushrod_upper = Node(position=[1, 0, 2])
-
-        # Links
-        lower_fore_link = Link(inboard_node=lower_inboard_fore, outboard_node=lower_outboard)
-        lower_aft_link = Link(inboard_node=lower_inboard_aft, outboard_node=lower_outboard)
-
-        upper_fore_link = Link(inboard_node=upper_inboard_fore, outboard_node=upper_outboard)
-        upper_aft_link = Link(inboard_node=upper_inboard_aft, outboard_node=upper_outboard)
-
-        tie_rod = Link(inboard_node=tie_inboard, outboard_node=tie_outboard)
-
-        pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
-
-        # Wishbones
-        lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
-        upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
-        double_wishbone = QuarterCar(lower_wishbone=lower_wishbone,
-                                         upper_wishbone=upper_wishbone,
-                                         tie_rod=tie_rod,
-                                         push_pull_rod=pushrod)
-
-        double_wishbone.steer(rack_translation=0)
-        double_wishbone.jounce(jounce=-1)
-
-        known_angle = 15.52 # Found using Solidworks
-        self.assertEqual(round(double_wishbone.wheel_angle * 180 / np.pi, 2), known_angle)
+        # Tire
+        tire_mf52 = MF52(tire_name="test_tire", file_path="./1_model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir")
+        tire = Tire(tire=tire_mf52, contact_patch=contact_patch, outer_diameter=16*0.0254, width=7*0.0254, inner_diameter=10*0.0254)
+
+        quarter_car = QuarterCar(tire=tire,
+                                 lower_wishbone=lower_wishbone,
+                                 upper_wishbone=upper_wishbone,
+                                 tie_rod=tie_rod,
+                                 push_pull_rod=pushrod)
+
+        quarter_car.jounce(jounce=-0.5)
+        quarter_car.steer(rack_displacement=-0.25)
+
+        known_results = [-7.18, -14.48, -14.48, 1.0624769, 2.4325730, -0.5, 1.9921626, 1.8115379, 0.5]
+        test_results = [round(tire.steered_angle * 180 / np.pi, 2),
+                        round(lower_wishbone.angle * 180 / np.pi, 2),
+                        round(upper_wishbone.angle * 180 / np.pi, 2),
+                        round(tire.contact_patch[0], 7),
+                        round(tire.contact_patch[1], 7),
+                        round(tire.contact_patch[2], 7),
+                        round(tie_rod.outboard_node[0], 7),
+                        round(tie_rod.outboard_node[1], 7),
+                        round(tie_rod.outboard_node[2], 7)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z"]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertEqual(test_results[i], known_results[i], msg=corresponding_values[i])

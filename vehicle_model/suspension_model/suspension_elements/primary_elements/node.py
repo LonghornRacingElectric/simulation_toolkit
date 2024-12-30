@@ -90,7 +90,9 @@ class Node:
         
         self.__update_listeners__()
     
-    def rotate(self, origin: "Node", 
+    def rotate(self, 
+               origin: "Node",
+               persistent: bool = False, 
                direction: Union[None, Tuple[float, float, float], Sequence[float]] = None, 
                angle: Union[None, float] = None,
                ang_x: Union[None, float] = None,
@@ -110,6 +112,9 @@ class Node:
         origin : Node
             Node representing origin of rotation
         
+        persistent : bool, optional
+            Whether to keep previous state of Node, by default False
+        
         direction : Tuple[float, float, float]
             Unit vector specifying axis of rotation
         
@@ -125,7 +130,8 @@ class Node:
         ang_z : float
             Rotation about global z in radians
         """
-        self.reset()
+        if not persistent:
+            self.reset()
 
         if not ((direction == None) and (angle == None)):
             if ang_x or ang_y or ang_z:
