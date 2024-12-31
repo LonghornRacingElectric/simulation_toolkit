@@ -90,40 +90,29 @@ def nearest_root(func: Callable, x0: float, bounds: Tuple[float, float], tol: fl
     args : Sequence, optional
         Args to func, by default []
     """
-    # Optimization parameters
-    residual: float = 1e9
-    previous_residual: float = 1e9
+    # Solution value
+    soln = x0
 
-    # Check direction to iterate in
-    positive: bool = True
+    # Optimization parameters
+    residual: float = func(soln, args)
+
+    # Steps
+    bisection = abs(bounds[1] - bounds[0]) / 2
 
     positive_check: float = abs(func(x0+tol, args))
     negative_check: float = abs(func(x0-tol, args))
 
     if positive_check > negative_check:
-        positive = False
-
-    # Solution value
-    soln = x0
-
-    # Steps
-    step_size = (bounds[1] - bounds[0]) / 10
+        bisection *= -1
 
     while abs(residual) > tol:
-        previous_residual = residual
+        previous_residual: float = residual
 
-        if positive:
-            soln += step_size
-        else:
-            soln -= step_size
-
+        soln += bisection
         residual = func(soln, args)
 
-        if abs(residual) < abs(previous_residual):
-            continue
-        else:
-            step_size /= 2
-            positive = not positive
+        if abs(residual) > abs(previous_residual):
+            bisection /= -2
     
     return soln
 
@@ -150,18 +139,19 @@ def directional_root(func: Callable, x0: float, bounds: Tuple[float, float], tol
     args : Sequence, optional
         Args to func, by default []
     """
+    # This method is typically used when the solution value is small. The semi-linear approach has advantages because of this.
+
     # Solution value
-    soln = x0
+    soln = min([abs(x) for x in bounds])
 
     # Steps
     step_size = abs(bounds[1] - bounds[0]) / 10 * np.sign(np.average(bounds))
 
     # Optimization parameters
-    residual: float = 1e9 * np.sign(func(soln, args))
-    previous_residual: float = 1e9 * np.sign(func(soln, args))
+    residual: float = func(soln, args)
 
     while abs(residual) > tol:
-        previous_residual = residual
+        previous_residual: float = residual
             
         soln += step_size
         residual = func(soln, args)
@@ -169,7 +159,6 @@ def directional_root(func: Callable, x0: float, bounds: Tuple[float, float], tol
         if np.sign(residual) == np.sign(previous_residual):
             continue
         else:
-            step_size /= 2
-            step_size *= -1
+            step_size /= -2
     
     return soln

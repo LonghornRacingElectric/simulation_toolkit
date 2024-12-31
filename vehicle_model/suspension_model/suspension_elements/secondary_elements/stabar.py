@@ -1,6 +1,6 @@
 from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
-from vehicle_model.assets.misc_math import nearest_root
+from vehicle_model.assets.misc_math import rotation_matrix, nearest_root
 
 from typing import Sequence, Tuple
 
@@ -71,6 +71,9 @@ class Stabar:
         self.left_rotation = nearest_root(func=self._droplink_eqn, x0=0, bounds=(-np.pi/2, np.pi/2), tol=1e-10, args=[self.left_droplink])
         self.right_rotation = nearest_root(func=self._droplink_eqn, x0=0, bounds=(-np.pi/2, np.pi/2), tol=1e-10, args=[self.right_droplink])
 
+        self.left_droplink.outboard_node.rotate(origin=self.bar.inboard_node, direction=self.bar.direction, angle=self.left_rotation)
+        self.right_droplink.outboard_node.rotate(origin=self.bar.inboard_node, direction=self.bar.direction, angle=self.right_rotation)
+
     def _droplink_eqn(self, x: float, args: Tuple[Link]) -> float:
         """
         ## Droplink Equation
@@ -93,10 +96,13 @@ class Stabar:
         rotation=x
         droplink = args[0]
 
-        droplink.outboard_node.reset()
+        # Calculating transformations manually for runtime. 
+        node = droplink.outboard_node
 
-        droplink.outboard_node.rotate(origin=self.bar.inboard_node, direction=self.bar.direction, angle=rotation)
-
+        rot = rotation_matrix(unit_vec=self.bar.direction, theta=rotation)
+        node.position = [float(x) for x in np.matmul(rot, np.array(node.initial_position) - np.array(self.bar.inboard_node.initial_position) \
+                         + self.bar.inboard_node.initial_position)]
+        
         return droplink.length - droplink.initial_length
 
     @property

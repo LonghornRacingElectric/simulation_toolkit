@@ -16,16 +16,16 @@ class PushPullRod:
     Parameters
     ----------
     outboard_rod : Link
-        Link representing push or pull rod
+        Link representing push or pull rod. If connecting to bellcrank, share Node across Link and Bellcrank.
 
     spring : Spring
-        Spring attached to rigid Link
+        Spring attached to rigid Link. Share Node between Link and Spring
         
     inboard_rod : Union[Link, None], optional
         Link representing rod from bellcrank to Spring -> frame, by default None
 
     bellcrank : Union[Bellcrank, None], optional
-        Bellcrank connecting outboard_rod to inboard_rod, by default None
+        Bellcrank connecting outboard_rod to inboard_rod, by default None. Share Nodes with connecting elements.
     """
     """
     **kwargs : dict[str, Union[str, Link, str]]
@@ -70,7 +70,7 @@ class PushPullRod:
     def update(self):
         outb_p = self.outboard_rod.outboard_node
 
-        if not outb_p.rotation_angle:
+        if outb_p.rotation_angle == None:
             differential_point = np.array(outb_p.initial_position) + np.array(outb_p.translation) / 1000
         else:
             diff_rot_mat = rotation_matrix(unit_vec=outb_p.rotation_direction, theta=np.sign(outb_p.rotation_angle) * 0.01 * np.pi / 180)
@@ -90,15 +90,15 @@ class PushPullRod:
             self.tension = False
             f_vec = unit_vec(p1=outb_p.initial_position, p2=self.outboard_rod.inboard_node.position)
         else:
-            raise Exception("Desired bellcrank rotation inverts linkage")
+            return
 
         moment = np.cross(r_vec, f_vec)
         projected_moment = np.dot(moment, self.bellcrank.pivot_direction)
 
         if projected_moment > 0:
-            self.bellcrank_angle = directional_root(func=self._bellcrank_eqn, x0=0, bounds=(0, np.pi/2), tol=1e-5, args=[])
+            self.bellcrank_angle = directional_root(func=self._bellcrank_eqn, x0=0, bounds=(0, np.pi/2), tol=1e-6, args=[])
         else:
-            self.bellcrank_angle = directional_root(func=self._bellcrank_eqn, x0=0, bounds=(-np.pi/2, 0), tol=1e-5, args=[])
+            self.bellcrank_angle = directional_root(func=self._bellcrank_eqn, x0=0, bounds=(-np.pi/2, 0), tol=1e-6, args=[])
 
     def _bellcrank_eqn(self, x: float, args: Sequence):
         self.bellcrank.rotate(x)

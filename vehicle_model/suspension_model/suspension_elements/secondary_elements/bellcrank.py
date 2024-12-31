@@ -15,6 +15,9 @@ class Bellcrank:
     *nodes : Sequence[Node]
         All distinct pickup Nodes on bellcrank
 
+        - First entry should connect to push/pull rod
+        - Final entry should connect to inboard rod/shock
+
     pivot : Node
         Bellcrank pivot Node
 

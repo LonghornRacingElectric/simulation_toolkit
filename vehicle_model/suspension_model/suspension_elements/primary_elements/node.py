@@ -149,6 +149,7 @@ class Node:
                 node.rotation_angle = angle
                 node.rotation_origin = origin
                 node.rotation_direction = cast(Tuple[float, float, float], direction)
+                node.__update_listeners__()
             
             self.rotation_angle = angle
             self.rotation_origin = origin
@@ -165,6 +166,9 @@ class Node:
             for node in self.child_nodes:
                 node_rotated = np.matmul(z_rot, np.matmul(y_rot, np.matmul(x_rot, (node - origin).position)))
                 node.position = [x + y for x, y in zip(node_rotated, origin.position)]
+
+                if node.listeners:
+                    raise NotImplementedError("Listeners not supported for x, y, and z rotations. Please switch rotation to unit vector + angle.")
         
         else:
             raise Exception("You must provide either: (direction and angle) OR (ang_x and ang_y and ang_z) to Node.rotate().")

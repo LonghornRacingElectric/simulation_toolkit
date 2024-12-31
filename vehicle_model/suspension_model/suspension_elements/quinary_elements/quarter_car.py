@@ -99,8 +99,11 @@ class QuarterCar:
     def _update_geometry(self) -> None:
         # Update rack here so it's only updated once
         self.tie_rod.inboard_node.position[1] = self.rack_displacement
-        fsolve(func=self._geometry_resid_func, x0=[0, 0, 0])
+        upper_rot, lower_rot, _ = fsolve(func=self._geometry_resid_func, x0=[0, 0, 0])
         
+        self.upper_wishbone.rotate(angle=upper_rot)
+        self.lower_wishbone.rotate(angle=lower_rot)
+
     def _geometry_resid_func(self, x: Sequence[float]) -> Sequence[float]:
         """
         ## Geometry Residual Function
@@ -121,9 +124,20 @@ class QuarterCar:
         lower_wishbone_rot = x[1]
         wheel_angle = x[2]
 
-        # Apply wishbone rotations
-        self.upper_wishbone.rotate(angle=upper_wishbone_rot)
-        self.lower_wishbone.rotate(angle=lower_wishbone_rot)
+        # Apply wishbone rotations. The Node.rotate() method updates the entire system of links, so we'll do this manually.
+        # Doing this is about four times quicker.
+        upper_rot = rotation_matrix(unit_vec=self.upper_wishbone.direction, theta=upper_wishbone_rot)
+        lower_rot = rotation_matrix(unit_vec=self.lower_wishbone.direction, theta=lower_wishbone_rot)
+        
+        upper_node = self.upper_wishbone.fore_link.outboard_node
+        upper_ref = self.upper_wishbone.fore_link.inboard_node
+        lower_node = self.lower_wishbone.fore_link.outboard_node
+        lower_ref = self.lower_wishbone.fore_link.inboard_node
+
+        upper_node.position = [float(x) for x in np.matmul(upper_rot, np.array(upper_node.initial_position) - np.array(upper_ref.initial_position)) \
+                               + np.array(upper_ref.initial_position)]
+        lower_node.position = [float(x) for x in np.matmul(lower_rot, np.array(lower_node.initial_position) - np.array(lower_ref.initial_position)) \
+                               + np.array(lower_ref.initial_position)]
 
         # Rotation angles
         ang_x, ang_y = self.LCA_to_UCA.rotation_angles
