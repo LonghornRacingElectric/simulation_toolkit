@@ -1,7 +1,7 @@
 #ifndef MISC_LINALG_H
 #define MISC_LINALG_H
 
-#include <blaze/Math.h>
+#include "../third_party/blaze/blaze/math/Math.h"
 using namespace blaze;
 
 /* Generates rotation matrix

@@ -50,6 +50,14 @@ void testNode::testNodeRotateBase () {
     resetTestPosition();
 }
 
+void testnode::testNodeRotateEdge () {
+    StaticVector<double, 3UL> rotation = {M_PI/2, M_PI/2, M_PI/2};
+    test_node.flatten_rotate(rotation);
+    StaticVector<double, 3UL> expected_position = {-1.0, 1.0, -1.0};
+
+    
+}
+
 void testNode::testNodeResetPosition () {
     StaticVector<double, 3UL> rotation = {M_PI/2, M_PI/2, M_PI/2};
     test_node.flatten_rotate(rotation);
