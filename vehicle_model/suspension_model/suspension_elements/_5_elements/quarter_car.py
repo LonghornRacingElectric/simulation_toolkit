@@ -1,7 +1,7 @@
-from vehicle_model.suspension_model.suspension_elements.quaternary_elements.push_pull_rod import PushPullRod
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.tire import Tire
-from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
+from vehicle_model.suspension_model.suspension_elements._4_elements.push_pull_rod import PushPullRod
+from vehicle_model.suspension_model.suspension_elements._2_elements.wishbone import Wishbone
+from vehicle_model.suspension_model.suspension_elements._2_elements.tire import Tire
+from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
 
 # from scipy.interpolate import CubicSpline
@@ -75,7 +75,7 @@ class QuarterCar:
         -------
         None
         """
-        self.wheel_jounce = jounce
+        self.wheel_jounce = self.tire.contact_patch.initial_position[2] + jounce
         self._update_geometry()
     
     def steer(self, rack_displacement: float) -> None:
@@ -98,7 +98,7 @@ class QuarterCar:
     
     def _update_geometry(self) -> None:
         # Update rack here so it's only updated once
-        self.tie_rod.inboard_node.position[1] = self.rack_displacement
+        self.tie_rod.inboard_node.position[1] = self.tie_rod.inboard_node.initial_position[1] + self.rack_displacement
         upper_rot, lower_rot, _ = fsolve(func=self._geometry_resid_func, x0=[0, 0, 0])
         
         self.upper_wishbone.rotate(angle=upper_rot)

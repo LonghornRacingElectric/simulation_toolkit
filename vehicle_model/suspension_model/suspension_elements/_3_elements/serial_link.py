@@ -1,4 +1,4 @@
-from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
+from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.assets.misc_math import unit_vec
 
 import numpy as np

@@ -113,6 +113,8 @@ def nearest_root(func: Callable, x0: float, bounds: Tuple[float, float], tol: fl
 
         if abs(residual) > abs(previous_residual):
             bisection /= -2
+        if abs((residual - previous_residual) / residual * 100) < 1:
+            bisection *= 2
     
     return soln
 

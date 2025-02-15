@@ -1,7 +1,7 @@
-from vehicle_model.suspension_model.suspension_elements.tertiary_elements.serial_link import SerialLink
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.bellcrank import Bellcrank
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.spring import Spring
-from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
+from vehicle_model.suspension_model.suspension_elements._3_elements.serial_link import SerialLink
+from vehicle_model.suspension_model.suspension_elements._2_elements.bellcrank import Bellcrank
+from vehicle_model.suspension_model.suspension_elements._2_elements.spring import Spring
+from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.assets.misc_math import directional_root, rotation_matrix, unit_vec
 from typing import Sequence, Union, Tuple, cast
 import numpy as np

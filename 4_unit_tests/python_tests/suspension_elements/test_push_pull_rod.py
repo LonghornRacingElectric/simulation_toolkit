@@ -1,8 +1,8 @@
-from vehicle_model.suspension_model.suspension_elements.quaternary_elements.push_pull_rod import PushPullRod
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.bellcrank import Bellcrank
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.spring import Spring
-from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
-from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.suspension_model.suspension_elements._4_elements.push_pull_rod import PushPullRod
+from vehicle_model.suspension_model.suspension_elements._2_elements.bellcrank import Bellcrank
+from vehicle_model.suspension_model.suspension_elements._2_elements.spring import Spring
+from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
+from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 
 from unittest import main, TestCase
 import numpy as np

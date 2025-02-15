@@ -1,10 +1,10 @@
-from vehicle_model.suspension_model.suspension_elements.quaternary_elements.push_pull_rod import PushPullRod
-from vehicle_model.suspension_model.suspension_elements.quinary_elements.quarter_car import QuarterCar
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.spring import Spring
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.tire import Tire
-from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
-from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.suspension_model.suspension_elements._4_elements.push_pull_rod import PushPullRod
+from vehicle_model.suspension_model.suspension_elements._5_elements.quarter_car import QuarterCar
+from vehicle_model.suspension_model.suspension_elements._2_elements.wishbone import Wishbone
+from vehicle_model.suspension_model.suspension_elements._2_elements.spring import Spring
+from vehicle_model.suspension_model.suspension_elements._2_elements.tire import Tire
+from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
+from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 from LHR_tire_toolkit.MF52 import MF52 # type: ignore
 
 from unittest import main, TestCase

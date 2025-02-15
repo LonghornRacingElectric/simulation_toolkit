@@ -1,11 +1,11 @@
-from vehicle_model.suspension_model.suspension_elements.quaternary_elements.push_pull_rod import PushPullRod
-from vehicle_model.suspension_model.suspension_elements.quinary_elements.quarter_car import QuarterCar
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.bellcrank import Bellcrank
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.wishbone import Wishbone
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.spring import Spring
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.tire import Tire
-from vehicle_model.suspension_model.suspension_elements.primary_elements.link import Link
-from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.suspension_model.suspension_elements._4_elements.push_pull_rod import PushPullRod
+from vehicle_model.suspension_model.suspension_elements._5_elements.quarter_car import QuarterCar
+from vehicle_model.suspension_model.suspension_elements._2_elements.bellcrank import Bellcrank
+from vehicle_model.suspension_model.suspension_elements._2_elements.wishbone import Wishbone
+from vehicle_model.suspension_model.suspension_elements._2_elements.spring import Spring
+from vehicle_model.suspension_model.suspension_elements._2_elements.tire import Tire
+from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
+from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 from LHR_tire_toolkit.MF52 import MF52 # type: ignore
 
 from unittest import main, TestCase
@@ -32,7 +32,7 @@ class TestQuarterCar(TestCase):
     pushrod_upper = Node(position=[1, 0.5, 2.5])
     inboard_rod_outboard = Node(position=[1, 0, 3])
     rod_to_spring = Node(position=[1, -1, 3])
-    spring_upper = Node(position=[1, -2, 3])
+    spring_inboard = Node(position=[1, -2, 3])
 
     contact_patch = Node(position=[1, 2.5, 0])
 
@@ -49,14 +49,14 @@ class TestQuarterCar(TestCase):
     pushrod = Link(inboard_node=pushrod_upper, outboard_node=pushrod_lower)
     bellcrank = Bellcrank(pushrod_upper, inboard_rod_outboard, pivot=bellcrank_pivot, pivot_direction=bellcrank_direction)
     inboard_rod = Link(inboard_node=rod_to_spring, outboard_node=inboard_rod_outboard)
-    spring = Spring(inboard_node=spring_upper, outboard_node=rod_to_spring, free_length=1, rate=1)
+    spring = Spring(inboard_node=spring_inboard, outboard_node=rod_to_spring, free_length=1, rate=1)
 
     push_pull_rod = PushPullRod(outboard_rod=pushrod, spring=spring, inboard_rod=inboard_rod, bellcrank=bellcrank)
 
     # Wishbones
     lower_wishbone = Wishbone(fore_link=lower_fore_link, aft_link=lower_aft_link)
     upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
-
+    
     # Tire
     tire_mf52 = MF52(tire_name="test_tire", file_path="./1_model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir")
     tire = Tire(tire=tire_mf52, contact_patch=contact_patch, outer_diameter=16*0.0254, width=7*0.0254, inner_diameter=10*0.0254)
@@ -65,10 +65,10 @@ class TestQuarterCar(TestCase):
     upper_outboard.add_child(node=pushrod_lower)
 
     quarter_car = QuarterCar(tire=tire,
-                                lower_wishbone=lower_wishbone,
-                                upper_wishbone=upper_wishbone,
-                                tie_rod=tie_rod,
-                                push_pull_rod=pushrod)
+                             lower_wishbone=lower_wishbone,
+                             upper_wishbone=upper_wishbone,
+                             tie_rod=tie_rod,
+                             push_pull_rod=pushrod)
     
     def test_jounce_resid(self):
         # Known outputs for jounce of 0.25 units

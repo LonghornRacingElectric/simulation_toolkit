@@ -1,5 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements.tertiary_elements.tire import Tire
-from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 from typing import Sequence, Union
 from pyvista import PolyData
 from typing import Callable

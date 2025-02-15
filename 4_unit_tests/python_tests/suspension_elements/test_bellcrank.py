@@ -1,5 +1,5 @@
-from vehicle_model.suspension_model.suspension_elements.secondary_elements.bellcrank import Bellcrank
-from vehicle_model.suspension_model.suspension_elements.primary_elements.node import Node
+from vehicle_model.suspension_model.suspension_elements._2_elements.bellcrank import Bellcrank
+from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 
 from unittest import main, TestCase
 import numpy as np

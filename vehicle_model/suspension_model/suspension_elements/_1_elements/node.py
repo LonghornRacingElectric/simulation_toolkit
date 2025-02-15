@@ -324,3 +324,8 @@ class Node:
         """
         for listener in self.listeners:
             listener.update()
+    
+    def __str__(self) -> str:
+        str_rep = f"Current position: {self.position} | Initial position: {self.initial_position}"
+
+        return str_rep

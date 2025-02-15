@@ -53,7 +53,9 @@ Mass Properties:
     Value: 170
   SI:
     Description: Sprung mass inertia tensor
-    Type: list[list[float], list[float], list[float]]
+    Type: Tuple[Tuple[float, float, float], 
+                Tuple[float, float, float],
+                Tuple[float, float, float]]
     Unit: kg*m^2
     Value: [[119.8, 0, 0], 
             [0, 33.4, 0], 
@@ -203,88 +205,16 @@ Brake Properties:
     Unit: (-)
     Value: [0.50, 0.50, 0.50, 0.50]
 
-# ### POWERTRAIN ###
-# Powertrain Properties:
-
-#   HVBV:
-#     Description: Nominal HV battery voltage (V)
-#     Type: float
-#     Value: 350
-
-#   LVP:
-#     Description: Average LV power draw (W)
-#     Type: float
-#     Value: 50
-
-#   ST:
-#     Description: Maximum torque output by motor (Nm)
-#     Type: float
-#     Value: 230
-
-#   # Adding separate input file for motor data sheet (torque vs speed, efficiency map, peak current draw, etc.)
-
-#   GR:
-#     Description: Gear ratio (-)
-#     Type: float
-#     Value: 3.38
-  
-#   PL:
-#     Description: Power limit (W)
-#     Type: float
-#     Value: 80000
-  
-#   DiffMB:
-#     Description: Differential mechanical bias (-)
-#     Type: float
-#     Value: 0.607
-  
-#   DiffPL:
-#     Description: Preload on differential (Nm)
-#     Type: float
-#     Value: 
-
-#   DTEff:
-#     Description: Drivetrain efficiency (-)
-#     Type: float
-#     Value: 0.90
-
-### AERODYNAMICS ###
-Aerodynamics Properties:
-
-# Need F(z, theta, phi) and COP(z, theta, phi) for accurate model
-
-  ClTot:
-    Description: Coefficient of lift with all aero elements mounted (-)
-    Type: float
-    Value: 4.384
-
-  CdTot:
-    Description: Coefficient of drag with all aero elements mounted (-)
-    Type: float
-    Value: 1.028
-
-  CsTot:
-    Description: Coefficient of sideforce with all aero elements mounted (-)
-    Type: float
-    Value: 5.673
-
-  Cl0:
-    Description: Coefficient of lift with NO aero elements mounted (-)
-    Type: float
-    Value: 0
-
-  Cd0:
-    Description: Coefficient of drag with NO aero elements mounted (-)
-    Type: float
-    Value: 0.7155
-
-  Cs0:
-    Description: Coefficient of sideforce with NO aero elements mounted (-)
-    Type: float
-    Value: 8.43
-
-  COP:
-    Description: Center of pressure with the origin at center of front track (m, m, m)
-    Type: list[float]
-    Value: [0.5, 0, 0]
-
+### Structural Relationships ###
+Structure:
+  Fr:
+    Tire: UCA
+    Tire: LCA
+    Tire: TieRod
+    UCA: Pushrod
+  Rr:
+    Tire: UCA
+    Tire: LCA
+    Tire: TieRod
+    UCA: Pushrod
+    LCA: Stabar
