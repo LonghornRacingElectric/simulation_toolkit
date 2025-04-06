@@ -4,7 +4,6 @@ from vehicle_model.suspension_model.suspension_elements._2_elements.bellcrank im
 from vehicle_model.suspension_model.suspension_elements._2_elements.wishbone import Wishbone
 from vehicle_model.suspension_model.suspension_elements._2_elements.stabar import Stabar
 from vehicle_model.suspension_model.suspension_elements._2_elements.spring import Spring
-from vehicle_model.suspension_model.suspension_elements._6_elements.axle import Axle
 from vehicle_model.suspension_model.suspension_elements._2_elements.tire import Tire
 from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
@@ -13,8 +12,9 @@ from LHR_tire_toolkit.MF52 import MF52 # type: ignore
 from unittest import main, TestCase
 import numpy as np
 
+# Basic axle test uses control arms configured as a parallelogram
 
-class TestAxle(TestCase):
+class TestAxleBasic(TestCase):
     ### Left corner
     # Nodes
     lower_inboard_fore_L = Node(position=[2, 2, 0])
@@ -210,6 +210,50 @@ class TestAxle(TestCase):
         for i in range(len(known_results)):
             with self.subTest(i=i):
                 self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
+            
+    def test_update_geometry_one_left_repeated(self):
+        self.quarter_car_L.jounce(jounce=0.125)
+        self.quarter_car_L.steer(rack_displacement=0.1)
+        self.quarter_car_L.jounce(jounce=0.25)
+        self.quarter_car_L.steer(rack_displacement=0)
+
+        known_results = [-3.67, 7.18, 7.18, 1.032014, 4.483288, -0.25, 1.997948, 3.920285, 0.75, 0.794828]
+        test_results = [round(self.tire_L.steered_angle * 180 / np.pi, 2),
+                        round(self.lower_wishbone_L.angle * 180 / np.pi, 2),
+                        round(self.upper_wishbone_L.angle * 180 / np.pi, 2),
+                        round(self.tire_L.contact_patch[0], 6),
+                        round(self.tire_L.contact_patch[1], 6),
+                        round(self.tire_L.contact_patch[2], 6),
+                        round(self.tie_rod_L.outboard_node[0], 6),
+                        round(self.tie_rod_L.outboard_node[1], 6),
+                        round(self.tie_rod_L.outboard_node[2], 6),
+                        round(self.spring_L.length, 6)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z",
+                                "spring_length"]
+        
+        tolerances = [0.01 * np.pi / 180,
+                            0.01 * np.pi / 180,
+                            0.01 * np.pi / 180,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
     
     def test_update_geometry_two_left(self):
         self.quarter_car_L.jounce(jounce=0.5)
@@ -252,8 +296,96 @@ class TestAxle(TestCase):
         for i in range(len(known_results)):
             with self.subTest(i=i):
                 self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
+    
+    def test_update_geometry_two_left_repeated(self):
+        self.quarter_car_L.jounce(jounce=0.125)
+        self.quarter_car_L.steer(rack_displacement=0.1)
+        self.quarter_car_L.jounce(jounce=0.5)
+        self.quarter_car_L.steer(rack_displacement=-0.15)
+
+        known_results = [-16.51, 14.48, 14.48, 1.142094, 4.415876, 0.0, 1.958769, 3.652304, 1.0, 0.650041]
+        test_results = [round(self.tire_L.steered_angle * 180 / np.pi, 2),
+                        round(self.lower_wishbone_L.angle * 180 / np.pi, 2),
+                        round(self.upper_wishbone_L.angle * 180 / np.pi, 2),
+                        round(self.tire_L.contact_patch[0], 6),
+                        round(self.tire_L.contact_patch[1], 6),
+                        round(self.tire_L.contact_patch[2], 6),
+                        round(self.tie_rod_L.outboard_node[0], 6),
+                        round(self.tie_rod_L.outboard_node[1], 6),
+                        round(self.tie_rod_L.outboard_node[2], 6),
+                        round(self.spring_L.length, 6)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z",
+                                "spring_length"]
+
+        tolerances = [0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
 
     def test_update_geometry_three_left(self):
+        self.quarter_car_L.jounce(jounce=-0.1)
+        self.quarter_car_L.steer(rack_displacement=0.25)
+
+        known_results = [15.93, -2.87, -2.87, 0.862744, 4.478290, -0.6, 1.961584, 4.272010, 0.4, 1.117498]
+        test_results = [round(self.tire_L.steered_angle * 180 / np.pi, 2),
+                        round(self.lower_wishbone_L.angle * 180 / np.pi, 2),
+                        round(self.upper_wishbone_L.angle * 180 / np.pi, 2),
+                        round(self.tire_L.contact_patch[0], 6),
+                        round(self.tire_L.contact_patch[1], 6),
+                        round(self.tire_L.contact_patch[2], 6),
+                        round(self.tie_rod_L.outboard_node[0], 6),
+                        round(self.tie_rod_L.outboard_node[1], 6),
+                        round(self.tie_rod_L.outboard_node[2], 6),
+                        round(self.spring_L.length, 6)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z",
+                                "spring_length"]
+
+        tolerances = [0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
+    
+    def test_update_geometry_three_left_repeated(self):
+        self.quarter_car_L.jounce(jounce=0.125)
+        self.quarter_car_L.steer(rack_displacement=0.1)
         self.quarter_car_L.jounce(jounce=-0.1)
         self.quarter_car_L.steer(rack_displacement=0.25)
 
@@ -352,7 +484,95 @@ class TestAxle(TestCase):
             with self.subTest(i=i):
                 self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
     
+    def test_update_geometry_one_right_repeated(self):
+        self.quarter_car_L.jounce(jounce=0.125)
+        self.quarter_car_L.steer(rack_displacement=0.1)
+        self.quarter_car_R.jounce(jounce=0.25)
+        self.quarter_car_R.steer(rack_displacement=0)
+
+        known_results = [3.67, -7.18, -7.18, 1.032014, -4.483288, -0.25, 1.997948, -3.920285, 0.75, 0.794828]
+        test_results = [round(self.tire_R.steered_angle * 180 / np.pi, 2),
+                        round(self.lower_wishbone_R.angle * 180 / np.pi, 2),
+                        round(self.upper_wishbone_R.angle * 180 / np.pi, 2),
+                        round(self.tire_R.contact_patch[0], 6),
+                        round(self.tire_R.contact_patch[1], 6),
+                        round(self.tire_R.contact_patch[2], 6),
+                        round(self.tie_rod_R.outboard_node[0], 6),
+                        round(self.tie_rod_R.outboard_node[1], 6),
+                        round(self.tie_rod_R.outboard_node[2], 6),
+                        round(self.spring_R.length, 6)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z",
+                                "spring_length"]
+        
+        tolerances = [0.01 * np.pi / 180,
+                            0.01 * np.pi / 180,
+                            0.01 * np.pi / 180,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254,
+                            0.001 * 0.0254]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
+    
     def test_update_geometry_two_right(self):
+        self.quarter_car_R.jounce(jounce=0.5)
+        self.quarter_car_R.steer(rack_displacement=-0.15)
+
+        known_results = [-0.93, -14.48, -14.48, 0.99185802, -4.43642538, 0.0, 1.99986741, -3.95277563, 1.0, 0.650041]
+        test_results = [round(self.tire_R.steered_angle * 180 / np.pi, 2),
+                        round(self.lower_wishbone_R.angle * 180 / np.pi, 2),
+                        round(self.upper_wishbone_R.angle * 180 / np.pi, 2),
+                        round(self.tire_R.contact_patch[0], 6),
+                        round(self.tire_R.contact_patch[1], 6),
+                        round(self.tire_R.contact_patch[2], 6),
+                        round(self.tie_rod_R.outboard_node[0], 6),
+                        round(self.tie_rod_R.outboard_node[1], 6),
+                        round(self.tie_rod_R.outboard_node[2], 6),
+                        round(self.spring_R.length, 6)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z",
+                                "spring_length"]
+
+        tolerances = [0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
+    
+    def test_update_geometry_two_right_repeated(self):
+        self.quarter_car_L.jounce(jounce=0.125)
+        self.quarter_car_L.steer(rack_displacement=0.1)
         self.quarter_car_R.jounce(jounce=0.5)
         self.quarter_car_R.steer(rack_displacement=-0.15)
 
@@ -436,7 +656,61 @@ class TestAxle(TestCase):
             with self.subTest(i=i):
                 self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
     
+    def test_update_geometry_three_right_repeated(self):
+        self.quarter_car_L.jounce(jounce=0.125)
+        self.quarter_car_L.steer(rack_displacement=0.1)
+        self.quarter_car_R.jounce(jounce=-0.1)
+        self.quarter_car_R.steer(rack_displacement=0.25)
+
+        known_results = [13.02, 2.87, 2.87, 1.11264350, -4.48464466, -0.6, 1.97429245, -3.77221144, 0.4, 1.117498]
+        test_results = [round(self.tire_R.steered_angle * 180 / np.pi, 2),
+                        round(self.lower_wishbone_R.angle * 180 / np.pi, 2),
+                        round(self.upper_wishbone_R.angle * 180 / np.pi, 2),
+                        round(self.tire_R.contact_patch[0], 6),
+                        round(self.tire_R.contact_patch[1], 6),
+                        round(self.tire_R.contact_patch[2], 6),
+                        round(self.tie_rod_R.outboard_node[0], 6),
+                        round(self.tie_rod_R.outboard_node[1], 6),
+                        round(self.tie_rod_R.outboard_node[2], 6),
+                        round(self.spring_R.length, 6)]
+
+        corresponding_values = ["wheel_angle",
+                                "lower_wishbone_angle",
+                                "upper_wishbone_angle",
+                                "contact_patch_x",
+                                "contact_patch_y",
+                                "contact_patch_z",
+                                "tie_rod_x",
+                                "tie_rod_y",
+                                "tie_rod_z",
+                                "spring_length"]
+
+        tolerances = [0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.01 * np.pi / 180,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254,
+                      0.001 * 0.0254]
+
+        for i in range(len(known_results)):
+            with self.subTest(i=i):
+                self.assertLess(abs(test_results[i] - known_results[i]), tolerances[i], msg=corresponding_values[i])
+    
     def test_stabar_one(self):
+        self.quarter_car_L.jounce(jounce=0.5)
+        self.quarter_car_R.jounce(jounce=0.5)
+
+        known_result = 0
+
+        self.assertEqual(self.stabar.rotation, known_result)
+    
+    def test_stabar_one_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
         self.quarter_car_L.jounce(jounce=0.5)
         self.quarter_car_R.jounce(jounce=0.5)
 
@@ -445,6 +719,16 @@ class TestAxle(TestCase):
         self.assertEqual(self.stabar.rotation, known_result)
 
     def test_stabar_two(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=-0.125)
+
+        known_result = 0
+
+        self.assertEqual(self.stabar.rotation, known_result)
+    
+    def test_stabar_two_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
         self.quarter_car_L.jounce(jounce=-0.125)
         self.quarter_car_R.jounce(jounce=-0.125)
 
@@ -460,7 +744,27 @@ class TestAxle(TestCase):
 
         self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
     
+    def test_stabar_three_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
+        self.quarter_car_L.jounce(jounce=0.5)
+        self.quarter_car_R.jounce(jounce=0)
+
+        known_result = 27.57
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
     def test_stabar_four(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0)
+
+        known_result = -6.16
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
+    def test_stabar_four_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
         self.quarter_car_L.jounce(jounce=-0.125)
         self.quarter_car_R.jounce(jounce=0)
 
@@ -476,7 +780,27 @@ class TestAxle(TestCase):
 
         self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
     
+    def test_stabar_five_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
+        self.quarter_car_L.jounce(jounce=0)
+        self.quarter_car_R.jounce(jounce=0.5)
+
+        known_result = -27.57
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
     def test_stabar_six(self):
+        self.quarter_car_L.jounce(jounce=0)
+        self.quarter_car_R.jounce(jounce=-0.125)
+
+        known_result = 6.16
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
+    def test_stabar_six_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
         self.quarter_car_L.jounce(jounce=0)
         self.quarter_car_R.jounce(jounce=-0.125)
 
@@ -492,7 +816,27 @@ class TestAxle(TestCase):
 
         self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
     
+    def test_stabar_seven_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
+        self.quarter_car_L.jounce(jounce=0.25)
+        self.quarter_car_R.jounce(jounce=-0.125)
+
+        known_result = 19.02
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
     def test_stabar_eight(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
+
+        known_result = -19.02
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
+    def test_stabar_eight_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
         self.quarter_car_L.jounce(jounce=-0.125)
         self.quarter_car_R.jounce(jounce=0.25)
 
@@ -508,7 +852,27 @@ class TestAxle(TestCase):
 
         self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
     
+    def test_stabar_nine_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
+        self.quarter_car_L.jounce(jounce=0.5)
+        self.quarter_car_R.jounce(jounce=-0.125)
+
+        known_result = 33.74
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
     def test_stabar_ten(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.5)
+
+        known_result = -33.74
+
+        self.assertEqual(round(self.stabar.rotation * 180 / np.pi, 2), known_result)
+    
+    def test_stabar_ten_repeated(self):
+        self.quarter_car_L.jounce(jounce=-0.125)
+        self.quarter_car_R.jounce(jounce=0.25)
         self.quarter_car_L.jounce(jounce=-0.125)
         self.quarter_car_R.jounce(jounce=0.5)
 

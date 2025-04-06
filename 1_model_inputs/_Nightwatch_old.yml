@@ -1,0 +1,220 @@
+### GENERAL ###
+Description:
+  VN:
+    Description: Name of vehicle
+    Type: string
+    Unit: N/A
+    Value: Nightwatch
+  V:
+    Description: Internal version number for vehicle
+    Type: string
+    Unit: N/A
+    Value: 1.1.0
+    Changes: Decreased font scrub. Made FLCAs more acute. Moved fore Rr_LCA negative in x. Removed bump steer in rear.
+
+Environment:
+  G:
+    Description: Acceleration due to gravity
+    Type: float
+    Unit: m/s^2
+    Value: 9.81
+  AT:
+    Description: Ambient air temperature
+    Type: float
+    Unit: K
+    Value: 298
+  AP:
+    Description: Ambient pressure
+    Type: float
+    Unit: Pa
+    Value: 101325
+
+### MASS ###
+Mass Properties:
+  DM:
+    Description: Mass of the driver
+    Type: float
+    Unit: kg
+    Value: 70
+  FrUM:
+    Description: Mass of front wheel assemblies + half the front suspension linkages
+    Type: float
+    Unit: kg
+    Value: 16.328
+  RrUM:
+    Description: Mass of rear wheel assemblies + half the rear suspension linkages
+    Type: float
+    Unit: kg
+    Value: 18.611
+  SM:
+    Description: Sprung mass = Total mass - driver mass - unsprung mass
+    Type: float
+    Unit: kg
+    Value: 170
+  SI:
+    Description: Sprung mass inertia tensor
+    Type: Tuple[Tuple[float, float, float], 
+                Tuple[float, float, float],
+                Tuple[float, float, float]]
+    Unit: kg*m^2
+    Value: [[119.8, 0, 0], 
+            [0, 33.4, 0], 
+            [0, 0, 108.2]]
+  CGBX:
+    Description: CG bias forward
+    Type: float
+    Unit: (-)
+    Value: 0.50
+  CGBY:
+    Description: CG bias leftward
+    Type: float
+    Unit: (-)
+    Value: 0.50
+  CGZ:
+    Description: CG height from ground plane
+    Type: float
+    Unit: m
+    Value: 0.28448
+
+### Hardpoints ###
+# Assuming vehicle symmetry about x-z to keep this shorter
+Geometric Properties:
+  FLIP:
+    Description: Front left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [0.11226939, 0.2159, 0.205],
+      [-0.11226939, 0.2159, 0.205],
+      [0.112776, 0.2159, 0.09],
+      [-0.09525, 0.2159, 0.09],
+      [0.05786492484, 0.2159, 0.11684],
+      [0, 0.27638715, 0.08312027]]
+  FLOP:
+    Description: Front left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-0.00634805, 0.52578, 0.295],
+      [-0.00634805, 0.52578, 0.295],
+      [0, 0.5565, 0.125],
+      [0, 0.5565, 0.125],
+      [0.05537382, 0.57, 0.17080855205739529],
+      [-0.00002554, 0.51228060, 0.25244758]]
+  FL_Up:
+    Description: True if push/pull rod mounts to upper wishbone
+    Type: bool
+    Unit: N/A
+    Value: True
+  FLBC:
+    Description: Front left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    Type: list[list[float]]
+    Unit: m
+    Value: []
+  FLCP:
+    Description: Front left contact patch location
+    Type: list[float]
+    Unit: m
+    Value: [0.00000000, 0.6096, 0.00000000]
+  RLIP:
+    Description: Rear left inboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.28834, 0.2822252, 0.235],
+      [-1.50424, 0.2822252, 0.235],
+      [-1.28834, 0.2822252, 0.09],
+      [-1.50424, 0.2822252, 0.09],
+      [-1.3741112098571429, 0.27745, 0.14525],
+      [-1.47573900, 0.30957935, 0.11471471]]
+  RLOP:
+    Description: Rear left outboard points [[Upper Fore], [Upper Aft], [Lower Fore], [Lower Aft], [Tie Rod], [Push/Pull Rod]]
+    Type: list[list[float]]
+    Unit: m
+    Value: [
+      [-1.6002, 0.555, 0.2952369],
+      [-1.6002, 0.555, 0.2952369],
+      [-1.554986, 0.580, 0.10541],
+      [-1.554986, 0.580, 0.10541],
+      [-1.45744993, 0.58648783, 0.18387381224876337],
+      [-1.55040452, 0.51228235, 0.29667004]]
+  RL_Up:
+    Description: True if push/pull rod mounts to upper wishbone
+    Type: bool
+    Unit: N/A
+    Value: True
+  RLBC:
+    Description: Rear left bellcrank parameters [[Pivot], [Pivot Direction], [Shock Outboard], [Shock Inboard]]
+    Type: list[list[float]]
+    Unit: m
+    Value: []
+  RLCP:
+    Description: Rear left contact patch location
+    Type: list[float]
+    Unit: m
+    Value: [-1.5494, 0.6096, 0.000]
+  IA:
+    Description: Inclination angle of tires [FL, RL]
+    Type: float
+    Unit: deg
+    Value: [1, 0]
+  Toe:
+    Description: Toe angle of tires [FL, RL], follows sign convention of slip angle
+    Type: Float
+    Unit: deg
+    Value: [0, 0]
+
+### SUSPENSION ###
+Suspension:
+  K:
+    Description: Linear rate of suspension springs [FL, FR, RL, RR]
+    Type: list[float]
+    Unit: N/m
+    Value: [78807.0755905515, 78807.0755905515, 70050.733858268, 70050.733858268]
+  ARBK:
+    Description: Linear stiffness of torsion bars from eye to eye [FR, RR]
+    Type: float
+    Unit: N/m
+    Value: [0, 0]
+  ARBMR:
+    Description: Wheel travel / vertical travel of stabars [FR, RR]
+    Type: float
+    Unit: (-)
+    Value: [1, 1]
+
+### BRAKES ###
+Brake Properties:
+  EffR:
+    Description: Planar distance from hub center to cetroid of brake caliper [FL, FR, RL, RR]
+    Type: float
+    Unit: m
+    Value: [0.072644, 0.072644, 0.072644, 0.072644]
+  MCSA:
+    Description: Surface area of master cylinder pistons [FR, RR]
+    Type: float
+    Unit: m^2
+    Value: [0.00015393517, 0.00015393517]
+  CSA:
+    Description: Surface area of caliper pistons [FL, FR, RL, RR]
+    Type: float
+    Unit: m^2
+    Value: [0.00181586733, 0.00181586733, 0.00181586733, 0.00181586733]
+  BMu:
+    Description: Average friction coefficient of brake pads [FL, FR, RL, RR]
+    Type: float
+    Unit: (-)
+    Value: [0.50, 0.50, 0.50, 0.50]
+
+### Structural Relationships ###
+Structure:
+  Fr:
+    Tire: UCA
+    Tire: LCA
+    Tire: TieRod
+    UCA: Pushrod
+  Rr:
+    Tire: UCA
+    Tire: LCA
+    Tire: TieRod
+    UCA: Pushrod
+    LCA: Stabar
