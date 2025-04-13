@@ -13,6 +13,7 @@ class Tire:
                  static_gamma: float = 0) -> None:
         
         self.tire = tire
+        self.center = Node(position=[contact_patch[0], contact_patch[1], outer_diameter / 2])
         self.contact_patch = contact_patch
         self.outer_diameter = outer_diameter
         self.width = width
@@ -75,3 +76,9 @@ class Tire:
             Tire direction unit vector
         """
         pass
+
+    def __str__(self):
+        tire_name = self.tire.tire_name
+        tire_center = self.center.position
+
+        return f"Tire Name: {tire_name}\nTire Center: {tire_center}"

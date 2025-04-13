@@ -329,3 +329,27 @@ class Node:
         str_rep = f"Current position: {self.position} | Initial position: {self.initial_position}"
 
         return str_rep
+    
+    @property
+    def mirrored_xy(self):
+        x_pos = self.initial_position[0]
+        y_pos = self.initial_position[1]
+        z_pos = self.initial_position[2] * -1
+
+        return Node(position=[x_pos, y_pos, z_pos])
+    
+    @property
+    def mirrored_xz(self):
+        x_pos = self.initial_position[0]
+        y_pos = self.initial_position[1] * -1
+        z_pos = self.initial_position[2]
+
+        return Node(position=[x_pos, y_pos, z_pos])
+
+    @property
+    def mirrored_yz(self):
+        x_pos = self.initial_position[0] * -1
+        y_pos = self.initial_position[1]
+        z_pos = self.initial_position[2]
+
+        return Node(position=[x_pos, y_pos, z_pos])
