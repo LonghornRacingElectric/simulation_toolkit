@@ -1,11 +1,14 @@
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
+from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
+from vehicle_model.assets.misc_math import rotation_matrix
 
 from LHR_tire_toolkit.MF52 import MF52 # type: ignore
+import numpy as np
 
 class Tire:
     def __init__(self, 
                  tire: MF52, 
-                 contact_patch: Node, 
+                 contact_patch: Node,
                  outer_diameter: float, 
                  width: float, 
                  inner_diameter: float,
@@ -13,7 +16,6 @@ class Tire:
                  static_gamma: float = 0) -> None:
         
         self.tire = tire
-        self.center = Node(position=[contact_patch[0], contact_patch[1], outer_diameter / 2])
         self.contact_patch = contact_patch
         self.outer_diameter = outer_diameter
         self.width = width
@@ -23,6 +25,16 @@ class Tire:
         self.static_toe: float = static_toe
         self.static_gamma: float = static_gamma
 
+        # This only works for Z-up SAE J670 coords
+        x_rot = np.array(rotation_matrix(unit_vec=[1, 0, 0], theta=static_gamma * np.pi / 180))
+        z_rot = np.array(rotation_matrix(unit_vec=[0, 0, 1], theta=static_toe * np.pi / 180))
+        
+        center_vec = np.array([0, 0, outer_diameter / 2])
+        front_vec = np.array([outer_diameter / 2, 0, outer_diameter / 2])
+
+        self.center_node = Node(position=np.array(contact_patch.position) + z_rot @ x_rot @ center_vec)
+        self.front_node = Node(position=np.array(contact_patch.position) + z_rot @ x_rot @ front_vec)
+        
     @property
     def delta(self) -> float:
         """
@@ -58,6 +70,24 @@ class Tire:
             Tire inclination angle in radians
         """
         pass
+    
+    @property
+    def center(self):
+        """
+        ## Tire Center
+
+        Calculates the centroid of the tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Sequence[float]
+            Centroid of the tire
+        """
+        return self.center_node.position
 
     @property
     def direction(self):
@@ -75,10 +105,17 @@ class Tire:
         float
             Tire direction unit vector
         """
-        pass
+        pt_1 = np.array(self.contact_patch.position)
+        pt_2 = np.array(self.center_node.position)
+        pt_3 = np.array(self.front_node.position)
+        
+        vec_12 = pt_2 - pt_1
+        vec_13 = pt_3 - pt_1
+
+        return np.cross(vec_12, vec_13)
 
     def __str__(self):
         tire_name = self.tire.tire_name
-        tire_center = self.center.position
+        tire_center = self.center_node.position
 
         return f"Tire Name: {tire_name}\nTire Center: {tire_center}"

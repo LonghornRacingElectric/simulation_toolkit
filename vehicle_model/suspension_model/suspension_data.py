@@ -8,7 +8,7 @@ from vehicle_model.suspension_model.suspension_elements._2_elements.tire import 
 from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 
-from LHR_tire_toolkit.MF52 import MF52
+from LHR_tire_toolkit.MF52 import MF52 # type: ignore
 import yaml
 
 class SuspensionData:
@@ -30,23 +30,26 @@ class SuspensionData:
                 print("Failed to import yaml file. Reason:\n")
                 print(error)
 
-        self.FL_nodes: dict[float, Node] = {}
-        self.FR_nodes: dict[float, Node] = {}
-        self.RL_nodes: dict[float, Node] = {}
-        self.RR_nodes: dict[float, Node] = {}
+        self.FL_nodes: dict[str, Node] = {}
+        self.FR_nodes: dict[str, Node] = {}
+        self.RL_nodes: dict[str, Node] = {}
+        self.RR_nodes: dict[str, Node] = {}
 
-        self.FL_links: dict[float, Link] = {}
-        self.FR_links: dict[float, Link] = {}
-        self.RL_links: dict[float, Link] = {}
-        self.RR_links: dict[float, Link] = {}
+        self.FL_links: dict[str, Link] = {}
+        self.FR_links: dict[str, Link] = {}
+        self.RL_links: dict[str, Link] = {}
+        self.RR_links: dict[str, Link] = {}
 
-        self.FL_bellcranks: dict[float, Bellcrank] = {}
-        self.FR_bellcranks: dict[float, Bellcrank] = {}
-        self.RL_bellcranks: dict[float, Bellcrank] = {}
-        self.RR_bellcranks: dict[float, Bellcrank] = {}
+        self.FL_bellcranks: dict[str, Bellcrank] = {}
+        self.FR_bellcranks: dict[str, Bellcrank] = {}
+        self.RL_bellcranks: dict[str, Bellcrank] = {}
+        self.RR_bellcranks: dict[str, Bellcrank] = {}
 
-        self.Fr_springs: dict[float, Link] = {}
-        self.Rr_springs: dict[float, Link] = {}
+        self.Fr_springs: dict[str, Link] = {}
+        self.Rr_springs: dict[str, Link] = {}
+
+        self.Fr_stabar: dict[str, Link] = {}
+        self.Rr_stabar: dict[str, Link] = {}
 
         if "FL QuarterCar" in raw_params.keys():
             
@@ -133,6 +136,12 @@ class SuspensionData:
 
             else:
                 raise Exception('Vehicle definition yaml must contain "tie_rod" under "FL QuarterCar"')
+            
+            if raw_params["FL QuarterCar"]["steering_ratio"]["Value"]:
+                self.steering_ratio = raw_params["FL QuarterCar"]["steering_ratio"]["Value"]
+            
+            else:
+                raise Exception("You must set a steering ratio")
 
             # Push/pull rod
             if "push_pull_rod" in raw_params["FL QuarterCar"].keys():
@@ -141,7 +150,7 @@ class SuspensionData:
                 FL_ppr_outboard_outboard = Node(position=FL_ppr_params["outboard_rod"]["outboard_node"]["Value"])
                 
                 FL_ppr_spring_inboard = Node(position=FL_ppr_params["spring"]["inboard_node"]["Value"])
-                FL_ppr_spring_outboard = Node(position=FL_ppr_params["spring"]["outboard_node"]["Value"])
+                FL_ppr_spring_outboard = FL_ppr_outboard_inboard
 
                 if FL_ppr_params["connection"]["Value"] not in list(self.FL_nodes.keys()):
                         raise Exception(f"Push/pull rod connection must be one of the following: {list(self.FL_nodes.keys())}")
@@ -153,7 +162,7 @@ class SuspensionData:
                     FL_ppr_inboard_outboard = Node(position=FL_ppr_params["inboard_rod"]["outboard_node"]["Value"])
 
                     FL_bc_pivot = Node(position=FL_ppr_params["bellcrank"]["pivot"]["Value"])
-                    FL_bc_direction = Node(position=FL_ppr_params["bellcrank"]["pivot_direction"]["Value"])
+                    FL_bc_direction = FL_ppr_params["bellcrank"]["pivot_direction"]["Value"]
                     FL_bc_nodes = [Node(position=pos) for pos in FL_ppr_params["bellcrank"]["nodes"]]
 
                     FL_ppr_outboard_rod = Link(inboard_node=FL_ppr_outboard_inboard, outboard_node=FL_ppr_outboard_outboard)
@@ -165,6 +174,7 @@ class SuspensionData:
 
                     self.FL_nodes["push_pull_rod_inboard_inboard"] = FL_ppr_inboard_inboard
                     self.FL_nodes["push_pull_rod_inboard_outboard"] = FL_ppr_inboard_outboard
+                    self.FL_nodes["push_pull_rod_spring_outboard"] = FL_ppr_spring_outboard
                     self.FL_nodes["bellcrank_pivot"] = FL_bc_pivot
 
                     self.FL_links["push_pull_inboard"] = FL_inboard_rod
@@ -175,9 +185,11 @@ class SuspensionData:
 
                 else:
                     FL_ppr_outboard_rod = Link(inboard_node=FL_ppr_outboard_inboard, outboard_node=FL_ppr_outboard_outboard)
-                    FL_spring = Spring(inboard_node=FL_ppr_spring_inboard, outboard_node=FL_ppr_spring_outboard,
+                    FL_spring = Spring(inboard_node=FL_ppr_spring_inboard, outboard_node=FL_ppr_outboard_inboard,
                                        free_length=FL_ppr_params["spring"]["free_length"]["Value"], rate=FL_ppr_params["spring"]["rate"]["Value"])
                     FL_ppr = PushPullRod(outboard_rod=FL_ppr_outboard_rod, spring=FL_spring)
+
+                    self.FL_nodes["push_pull_rod_spring_outboard"] = FL_ppr_outboard_inboard
                 
                 self.FL_links["push_pull_outboard"] = FL_ppr_outboard_rod
                 self.Fr_springs["FL_spring"] = FL_spring
@@ -185,7 +197,6 @@ class SuspensionData:
                 self.FL_nodes["push_pull_rod_outboard_inboard"] = FL_ppr_outboard_inboard
                 self.FL_nodes["push_pull_rod_outboard_outboard"] = FL_ppr_outboard_outboard
                 self.FL_nodes["push_pull_rod_spring_inboard"] = FL_ppr_spring_inboard
-                self.FL_nodes["push_pull_rod_spring_outboard"] = FL_ppr_spring_outboard
 
                 self.FL_quarter_car = QuarterCar(tire=self.FL_tire,
                                                  lower_wishbone=FL_lower_wb,
@@ -207,8 +218,8 @@ class SuspensionData:
             FR_tire_od = FR_tire_params["outer_diameter"]["Value"]
             FR_tire_id = FR_tire_params["inner_diameter"]["Value"]
             FR_tire_width = FR_tire_params["width"]["Value"]
-            FR_tire_toe = FR_tire_params["static_toe"]["Value"]
-            FR_tire_camber = FR_tire_params["static_camber"]["Value"]
+            FR_tire_toe = -FR_tire_params["static_toe"]["Value"]
+            FR_tire_camber = -FR_tire_params["static_camber"]["Value"]
 
             FR_mf52 = MF52(tire_name="FR_tire", file_path=FR_tir_file_path)
             self.FR_tire = Tire(tire=FR_mf52, contact_patch=FR_contact_patch, outer_diameter=FR_tire_od, width=FR_tire_width,
@@ -275,7 +286,7 @@ class SuspensionData:
             if FR_ppr_params["connection"]["Value"] not in list(self.FR_nodes.keys()):
                     raise Exception(f"Push/pull rod connection must be one of the following: {list(self.FR_nodes.keys())}")
             else:
-                self.FR_nodes[FR_ppr_params["connection"]["Value"]].add_child(node=FL_ppr_outboard_outboard)
+                self.FR_nodes[FR_ppr_params["connection"]["Value"]].add_child(node=FR_ppr_outboard_outboard)
 
             if FR_ppr_params["inboard_rod"]["inboard_node"]["Value"]:
                 FR_ppr_inboard_inboard = Node(position=FR_ppr_params["inboard_rod"]["inboard_node"]["Value"]).mirrored_xz
@@ -294,6 +305,7 @@ class SuspensionData:
 
                 self.FR_nodes["push_pull_rod_inboard_inboard"] = FR_ppr_inboard_inboard
                 self.FR_nodes["push_pull_rod_inboard_outboard"] = FR_ppr_inboard_outboard
+                self.FR_nodes["push_pull_rod_spring_outboard"] = FR_ppr_spring_outboard
                 self.FR_nodes["bellcrank_pivot"] = FR_bc_pivot
                 
                 self.FR_links["push_pull_inboard"] = FR_inboard_rod
@@ -304,9 +316,11 @@ class SuspensionData:
 
             else:
                 FR_ppr_outboard_rod = Link(inboard_node=FR_ppr_outboard_inboard, outboard_node=FR_ppr_outboard_outboard)
-                FR_spring = Spring(inboard_node=FR_ppr_spring_inboard, outboard_node=FR_ppr_spring_outboard,
+                FR_spring = Spring(inboard_node=FR_ppr_spring_inboard, outboard_node=FR_ppr_outboard_inboard,
                                     free_length=FR_ppr_params["spring"]["free_length"]["Value"], rate=FR_ppr_params["spring"]["rate"]["Value"])
                 FR_ppr = PushPullRod(outboard_rod=FR_ppr_outboard_rod, spring=FR_spring)
+
+                self.FR_nodes["push_pull_rod_spring_outboard"] = FR_ppr_outboard_inboard
 
             self.FR_links["push_pull_outboard"] = FR_ppr_outboard_rod
             self.Fr_springs["FR_spring"] = FR_spring
@@ -314,7 +328,6 @@ class SuspensionData:
             self.FR_nodes["push_pull_rod_outboard_inboard"] = FR_ppr_outboard_inboard
             self.FR_nodes["push_pull_rod_outboard_outboard"] = FR_ppr_outboard_outboard
             self.FR_nodes["push_pull_rod_spring_inboard"] = FR_ppr_spring_inboard
-            self.FR_nodes["push_pull_rod_spring_outboard"] = FR_ppr_spring_outboard
 
             self.FR_quarter_car = QuarterCar(tire=self.FR_tire,
                                              lower_wishbone=FR_lower_wb,
@@ -348,7 +361,11 @@ class SuspensionData:
                                    bar_right_end=Fr_bar_right_end, 
                                    torsional_stiffness=Fr_torsional_stiffness)
 
-                self.Fr_springs["torsion_bar"] = Fr_stabar.bar
+                self.Fr_stabar["torsion_bar"] = Fr_stabar.bar
+                self.Fr_stabar["arm_left"] = Fr_stabar.left_arm
+                self.Fr_stabar["arm_right"] = Fr_stabar.right_arm
+                self.Fr_stabar["droplink_left"] = Fr_stabar.left_droplink
+                self.Fr_stabar["droplink_right"] = Fr_stabar.right_droplink
 
                 Fr_left_droplink_end.add_listener(Fr_stabar)
                 Fr_right_droplink_end.add_listener(Fr_stabar)
@@ -461,7 +478,7 @@ class SuspensionData:
                     RL_ppr_inboard_outboard = Node(position=RL_ppr_params["inboard_rod"]["outboard_node"]["Value"])
 
                     RL_bc_pivot = Node(position=RL_ppr_params["bellcrank"]["pivot"]["Value"])
-                    RL_bc_direction = Node(position=RL_ppr_params["bellcrank"]["pivot_direction"]["Value"])
+                    RL_bc_direction = RL_ppr_params["bellcrank"]["pivot_direction"]["Value"]
                     RL_bc_nodes = [Node(position=pos) for pos in RL_ppr_params["bellcrank"]["nodes"]]
 
                     RL_ppr_outboard_rod = Link(inboard_node=RL_ppr_outboard_inboard, outboard_node=RL_ppr_outboard_outboard)
@@ -473,6 +490,7 @@ class SuspensionData:
 
                     self.RL_nodes["push_pull_rod_inboard_inboard"] = RL_ppr_inboard_inboard
                     self.RL_nodes["push_pull_rod_inboard_outboard"] = RL_ppr_inboard_outboard
+                    self.RL_nodes["push_pull_rod_spring_outboard"] = RL_ppr_spring_outboard
                     self.RL_nodes["bellcrank_pivot"] = RL_bc_pivot
 
                     self.RL_links["push_pull_inboard"] = RL_inboard_rod
@@ -483,9 +501,11 @@ class SuspensionData:
 
                 else:
                     RL_ppr_outboard_rod = Link(inboard_node=RL_ppr_outboard_inboard, outboard_node=RL_ppr_outboard_outboard)
-                    RL_spring = Spring(inboard_node=RL_ppr_spring_inboard, outboard_node=RL_ppr_spring_outboard,
+                    RL_spring = Spring(inboard_node=RL_ppr_spring_inboard, outboard_node=RL_ppr_outboard_inboard,
                                        free_length=RL_ppr_params["spring"]["free_length"]["Value"], rate=RL_ppr_params["spring"]["rate"]["Value"])
                     RL_ppr = PushPullRod(outboard_rod=RL_ppr_outboard_rod, spring=RL_spring)
+
+                    self.RL_nodes["push_pull_rod_spring_outboard"] = RL_ppr_outboard_inboard
 
                 self.RL_links["push_pull_outboard"] = RL_ppr_outboard_rod
                 self.Rr_springs["RL_spring"] = RL_spring
@@ -493,7 +513,6 @@ class SuspensionData:
                 self.RL_nodes["push_pull_rod_outboard_inboard"] = RL_ppr_outboard_inboard
                 self.RL_nodes["push_pull_rod_outboard_outboard"] = RL_ppr_outboard_outboard
                 self.RL_nodes["push_pull_rod_spring_inboard"] = RL_ppr_spring_inboard
-                self.RL_nodes["push_pull_rod_spring_outboard"] = RL_ppr_spring_outboard
 
                 self.RL_quarter_car = QuarterCar(tire=self.RL_tire,
                                                  lower_wishbone=RL_lower_wb,
@@ -515,8 +534,8 @@ class SuspensionData:
             RR_tire_od = RR_tire_params["outer_diameter"]["Value"]
             RR_tire_id = RR_tire_params["inner_diameter"]["Value"]
             RR_tire_width = RR_tire_params["width"]["Value"]
-            RR_tire_toe = RR_tire_params["static_toe"]["Value"]
-            RR_tire_camber = RR_tire_params["static_camber"]["Value"]
+            RR_tire_toe = -RR_tire_params["static_toe"]["Value"]
+            RR_tire_camber = -RR_tire_params["static_camber"]["Value"]
 
             RR_mf52 = MF52(tire_name="RR_tire", file_path=RR_tir_file_path)
             self.RR_tire = Tire(tire=RR_mf52, contact_patch=RR_contact_patch, outer_diameter=RR_tire_od, width=RR_tire_width,
@@ -583,7 +602,7 @@ class SuspensionData:
             if RR_ppr_params["connection"]["Value"] not in list(self.RR_nodes.keys()):
                     raise Exception(f"Push/pull rod connection must be one of the following: {list(self.RR_nodes.keys())}")
             else:
-                self.RR_nodes[RR_ppr_params["connection"]["Value"]].add_child(node=FL_ppr_outboard_outboard)
+                self.RR_nodes[RR_ppr_params["connection"]["Value"]].add_child(node=RR_ppr_outboard_outboard)
 
             if RR_ppr_params["inboard_rod"]["inboard_node"]["Value"]:
                 RR_ppr_inboard_inboard = Node(position=RR_ppr_params["inboard_rod"]["inboard_node"]["Value"]).mirrored_xz
@@ -602,6 +621,7 @@ class SuspensionData:
 
                 self.RR_nodes["push_pull_rod_inboard_inboard"] = RR_ppr_inboard_inboard
                 self.RR_nodes["push_pull_rod_inboard_outboard"] = RR_ppr_inboard_outboard
+                self.RR_nodes["push_pull_rod_spring_outboard"] = RR_ppr_spring_outboard
                 self.RR_nodes["bellcrank_pivot"] = RR_bc_pivot
                 
                 self.RR_links["push_pull_inboard"] = RR_inboard_rod
@@ -612,9 +632,11 @@ class SuspensionData:
 
             else:
                 RR_ppr_outboard_rod = Link(inboard_node=RR_ppr_outboard_inboard, outboard_node=RR_ppr_outboard_outboard)
-                RR_spring = Spring(inboard_node=RR_ppr_spring_inboard, outboard_node=RR_ppr_spring_outboard,
+                RR_spring = Spring(inboard_node=RR_ppr_spring_inboard, outboard_node=RR_ppr_outboard_inboard,
                                     free_length=RR_ppr_params["spring"]["free_length"]["Value"], rate=RR_ppr_params["spring"]["rate"]["Value"])
                 RR_ppr = PushPullRod(outboard_rod=RR_ppr_outboard_rod, spring=RR_spring)
+
+                self.RR_nodes["push_pull_rod_spring_outboard"] = RR_ppr_outboard_inboard
 
             self.RR_links["push_pull_outboard"] = RR_ppr_outboard_rod
             self.Rr_springs["RR_spring"] = RR_spring
@@ -622,7 +644,6 @@ class SuspensionData:
             self.RR_nodes["push_pull_rod_outboard_inboard"] = RR_ppr_outboard_inboard
             self.RR_nodes["push_pull_rod_outboard_outboard"] = RR_ppr_outboard_outboard
             self.RR_nodes["push_pull_rod_spring_inboard"] = RR_ppr_spring_inboard
-            self.RR_nodes["push_pull_rod_spring_outboard"] = RR_ppr_spring_outboard
 
             self.RR_quarter_car = QuarterCar(tire=self.RR_tire,
                                              lower_wishbone=RR_lower_wb,
@@ -655,8 +676,12 @@ class SuspensionData:
                                    bar_left_end=Rr_bar_left_end, 
                                    bar_right_end=Rr_bar_right_end, 
                                    torsional_stiffness=Rr_torsional_stiffness)
-
-                self.Rr_springs["torsion_bar"] = Fr_stabar.bar
+                
+                self.Rr_stabar["torsion_bar"] = Rr_stabar.bar
+                self.Rr_stabar["arm_left"] = Rr_stabar.left_arm
+                self.Rr_stabar["arm_right"] = Rr_stabar.right_arm
+                self.Rr_stabar["droplink_left"] = Rr_stabar.left_droplink
+                self.Rr_stabar["droplink_right"] = Rr_stabar.right_droplink
 
                 Rr_left_droplink_end.add_listener(Rr_stabar)
                 Rr_right_droplink_end.add_listener(Rr_stabar)

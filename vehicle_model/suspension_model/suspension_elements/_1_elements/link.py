@@ -65,8 +65,8 @@ class Link:
 
         Returns
         -------
-        np.ndarray
-            Coordinates of intersection
+        Node
+            Node coincident with intersection
             - Averages x between the two links
         """
         l_1i = self.inboard_node

@@ -54,7 +54,9 @@ class QuarterCar:
 
         # Save relative coordinates for fixed geometry (relative to outboard pickup on lower wishbone)
         self.tie_rod_wrt_LCA = self.LCA_to_UCA.link_centered_coords(node=self.tie_rod.outboard_node)
-        self.tire_wrt_LCA = self.LCA_to_UCA.link_centered_coords(node=self.tire.contact_patch)
+        self.tire_cp_wrt_LCA = self.LCA_to_UCA.link_centered_coords(node=self.tire.contact_patch)
+        self.tire_center_wrt_LCA = self.LCA_to_UCA.link_centered_coords(node=self.tire.center_node)
+        self.tire_front_wrt_LCA = self.LCA_to_UCA.link_centered_coords(node=self.tire.front_node)
 
         # Save jounce and rack conditions
         self.wheel_jounce: float = 0
@@ -94,6 +96,26 @@ class QuarterCar:
         None
         """
         self.rack_displacement = rack_displacement
+        self._update_geometry()
+    
+    def _jounce_persistent(self, jounce: float) -> None:
+        """
+        ## Jounce Persistent
+
+        Updates double wishbone geometry for given vertical travel of the contact patch from the current state.
+
+        Differs from jounce() by updating from the current state rather than the initial state.
+
+        Parameters
+        ----------
+        jounce : float, optional
+            Vertical travel of the contact patch in meters
+                
+        Returns
+        -------
+        None
+        """
+        self.wheel_jounce = self.tire.contact_patch.initial_position[2] + self.wheel_jounce + jounce
         self._update_geometry()
     
     def _update_geometry(self) -> None:
@@ -144,14 +166,26 @@ class QuarterCar:
         x_rot = rotation_matrix(unit_vec=[1, 0, 0], theta=-1 * ang_x)
         y_rot = rotation_matrix(unit_vec=[0, 1, 0], theta=ang_y)
 
-        # Calculate contact patch location under jounce condition
-        self.tire.contact_patch.position = np.matmul(x_rot, np.matmul(y_rot, self.tire_wrt_LCA)) + self.lower_wishbone.fore_link.outboard_node.position
+        # Calculate tire location under jounce condition
+        self.tire.contact_patch.position = np.matmul(x_rot, np.matmul(y_rot, self.tire_cp_wrt_LCA)) + self.lower_wishbone.fore_link.outboard_node.position
+        self.tire.center_node.position = np.matmul(x_rot, np.matmul(y_rot, self.tire_center_wrt_LCA)) + self.lower_wishbone.fore_link.outboard_node.position
+        self.tire.front_node.position = np.matmul(x_rot, np.matmul(y_rot, self.tire_front_wrt_LCA)) + self.lower_wishbone.fore_link.outboard_node.position
 
         # Update tie rod pickup consistent with upright (length is NOT preserved)
         self.tie_rod.outboard_node.position = np.matmul(x_rot, np.matmul(y_rot, self.tie_rod_wrt_LCA)) + self.lower_wishbone.fore_link.outboard_node.position
 
         # Rotate contact_patch and outboard tie_rod pickup position
         self.tire.contact_patch.rotate(origin=self.lower_wishbone.fore_link.outboard_node,
+                                       persistent=True,
+                                       direction=self.LCA_to_UCA.direction,
+                                       angle=wheel_angle)
+        
+        self.tire.center_node.rotate(origin=self.lower_wishbone.fore_link.outboard_node,
+                                       persistent=True,
+                                       direction=self.LCA_to_UCA.direction,
+                                       angle=wheel_angle)
+        
+        self.tire.front_node.rotate(origin=self.lower_wishbone.fore_link.outboard_node,
                                        persistent=True,
                                        direction=self.LCA_to_UCA.direction,
                                        angle=wheel_angle)

@@ -1,0 +1,323 @@
+Plot One:
+  Title: "Bump Camber"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Camber"
+    Unit: "deg"
+    Outputs:
+      FL: "gamma"
+      FR: "gamma"
+      RL: "gamma"
+      RR: "gamma"
+    Multipliers:
+      FL: -1
+      FR: 1
+      RL: -1
+      RR: 1
+  Grid: True
+
+Plot Two:
+  Title: "Bump Toe"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Toe"
+    Unit: "deg"
+    Outputs:
+      FL: "delta"
+      FR: "delta"
+      RL: "delta"
+      RR: "delta"
+    Multipliers:
+      FL: -1
+      FR: 1
+      RL: -1
+      RR: 1
+  Grid: True
+
+Plot Three:
+  Title: "Bump Caster"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Caster"
+    Unit: "deg"
+    Outputs:
+      FL: "caster"
+      FR: "caster"
+      RL: "caster"
+      RR: "caster"
+    Multipliers:
+      FL: 1
+      FR: 1
+      RL: 1
+      RR: 1
+  Grid: True
+
+Plot Four:
+  Title: "Bump KPI"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Kingpin inclination"
+    Unit: "deg"
+    Outputs:
+      FL: "kpi"
+      FR: "kpi"
+      RL: "kpi"
+      RR: "kpi"
+    Multipliers:
+      FL: 1
+      FR: 1
+      RL: 1
+      RR: 1
+  Grid: True
+
+Plot Five:
+  Title: "Bump Mechanical Trail"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Mechanical Trail"
+    Unit: "mm"
+    Outputs:
+      FL: "mech_trail"
+      FR: "mech_trail"
+      RL: "mech_trail"
+      RR: "mech_trail"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot Six:
+  Title: "Bump Scrub Radius"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Scrub Radius"
+    Unit: "mm"
+    Outputs:
+      FL: "scrub"
+      FR: "scrub"
+      RL: "scrub"
+      RR: "scrub"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot Six:
+  Title: "Bump FVIC y-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "FVIC y-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "FVIC_y"
+      FR: "FVIC_y"
+      RL: "FVIC_y"
+      RR: "FVIC_y"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot Seven:
+  Title: "Bump FVIC z-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "FVIC z-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "FVIC_z"
+      FR: "FVIC_z"
+      RL: "FVIC_z"
+      RR: "FVIC_z"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot Eight:
+  Title: "Bump SVIC x-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "SVIC x-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "SVIC_x"
+      FR: "SVIC_x"
+      RL: "SVIC_x"
+      RR: "SVIC_x"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot Nine:
+  Title: "Bump SVIC z-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "SVIC z-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "SVIC_z"
+      FR: "SVIC_z"
+      RL: "SVIC_z"
+      RR: "SVIC_z"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot Ten:
+  Title: "Bump RC y-Migration"
+  Corners:
+    FL: True
+    FR: False
+    RL: True
+    RR: False
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "RC y-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "RC_y"
+      FR: 
+      RL: "RC_y"
+      RR: 
+    Multipliers:
+      FL: 1000
+      FR: 
+      RL: 1000
+      RR: 
+  Grid: True
+
+Plot Eleven:
+  Title: "Bump RC z-Migration"
+  Corners:
+    FL: True
+    FR: False
+    RL: True
+    RR: False
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "RC z-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "RC_z"
+      FR: 
+      RL: "RC_z"
+      RR: 
+    Multipliers:
+      FL: 1000
+      FR: 
+      RL: 1000
+      RR: 
+  Grid: True

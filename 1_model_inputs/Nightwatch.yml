@@ -9,7 +9,7 @@ Version:
   Value: 2.1.0
   Changes: Reformatted for new kin model
 
-# TODO: implement this in SuspensionAssembler and jounce calculation
+# TODO: implement this in SuspensionData and jounce calculation
 Coordinates:
   Description: Coordinate system for calculations
   Longitudinal: x
@@ -61,7 +61,7 @@ Mass Properties:
     Value: [[119.8, 0, 0], 
             [0, 33.4, 0], 
             [0, 0, 108.2]]
-  
+
   CGBX:
     Description: CG bias forward
     Unit: (-)
@@ -76,7 +76,34 @@ Mass Properties:
     Description: CG height from ground plane
     Unit: m
     Value: 0.28448
-
+  
+  Part Masses:
+    Lumped:
+      Active: True
+      CG:
+        Description: Lumped CG Location
+        Unit: m
+        Value: [0, 0, 0]
+      Inertia:
+        Description: Lumped inertia tensor
+        Unit: kg*m^2
+        Value: [[119.8,   0,      0    ],
+                [0,       33.4,   0    ],
+                [0,       0,      108.2]]
+    Individual:
+      Active: False
+      Part1:
+        Connection: "sprung mass"
+        Mass: 1
+        Inertia: 1
+      Part2:
+        Connection: "sprung mass"
+        Mass: 1
+        Inertia: 1
+      Part3:
+        Connection: "sprung mass"
+        Mass: 1
+        Inertia: 1
 
 # Assuming vehicle symmetry about x-z to keep this shorter
 FL QuarterCar:
@@ -107,8 +134,8 @@ FL QuarterCar:
       Value: 0
     static_camber:
       Type: float
-      Unit: deg
-      Value: 0
+      Unit: deg (positive leans toward car)
+      Value: 1
 
   lower_wishbone:
     fore_inboard:
@@ -147,6 +174,11 @@ FL QuarterCar:
       Type: Tuple[float, float, float]
       Unit: in
       Value: [0.056000, 0.532333, 0.164821]
+  
+  steering_ratio:
+    Type: float
+    Unit: m/rev (rack travel per handwheel revolution)
+    Value: 0.0889
     
   stabar:
     connection:
@@ -231,7 +263,7 @@ RL QuarterCar:
     contact_patch:
       Type: Tuple[float, float, float]
       Unit: in
-      Value: [-61, 24, 0]
+      Value: [-1.5494, 0.609600, 0]
     outer_diameter:
       Type: float
       Unit: m

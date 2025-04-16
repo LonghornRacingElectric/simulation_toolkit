@@ -14,6 +14,8 @@ COVERAGE := $(PYTHON) -m coverage
 PYDOC    := $(PYTHON) -m pydoc
 AUTOPEP8 := $(PYTHON) -m autopep8
 
+SIM ?= kin
+
 .PHONY: init remove_dep clean unit_tests report test
 
 init:
@@ -38,3 +40,6 @@ report:
 	$(PYTHON) -c "import webbrowser, os; webbrowser.open_new_tab(os.path.abspath('4_unit_tests/python_test_results/coverage_html/index.html'))"
 
 test: clean unit_tests remove_dep report
+
+sim:
+	python3 kernel.py $(SIM)
