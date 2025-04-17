@@ -13,6 +13,8 @@ class Kinematics:
     def __init__(self):
         sus_data = SuspensionData(path="./1_model_inputs/Nightwatch.yml")
         self.sus = Suspension(sus_data=sus_data)
+
+        roll_n_steps = 5
         
         with open("./simulations/kin/kin_inputs/kin.yml") as f:
             try:
@@ -25,6 +27,9 @@ class Kinematics:
 
         plots = []
 
+        total_evals = sum([x["x-axis"]["Number Steps"] for x in self.plot_config.values()])
+        eval_num = 0
+
         for _, value in self.plot_config.items():
             num_plots = [x[1] for x in value["Corners"].items()].count(True)
             if num_plots == 2:
@@ -36,10 +41,14 @@ class Kinematics:
                 if value["x-axis"]["Label"].lower() == "jounce":
                     jounce_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
 
-                    if value["x-axis"]["Unit"] == "mm":
+                    if value["x-axis"]["Unit"].lower() == "mm":
                         sweep = jounce_sweep / 1000
+                    else:
+                        sweep = jounce_sweep
                     
                     for jounce_val in sweep:
+                        eval_num += 1
+                        print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
                         self.sus.heave(heave=None)
                         self.sus.heave(heave=jounce_val)
                         
@@ -62,9 +71,52 @@ class Kinematics:
                     axes[0].plot(jounce_sweep, axle_vals[0])
                     axes[1].plot(jounce_sweep, axle_vals[1])
 
-                    if value["Grid"]:
-                        axes[0].grid()
-                        axes[1].grid()
+                    if max(axle_vals[0]) - min(axle_vals[0]) < 1e-3:
+                        axes[0].set_ylim([-1e-3 + np.mean(axle_vals[0]), 1e-3 + np.mean(axle_vals[0])])
+                    if max(axle_vals[1]) - min(axle_vals[1]) < 1e-3:
+                        axes[1].set_ylim([-1e-3 + np.mean(axle_vals[1]), 1e-3 + np.mean(axle_vals[1])])
+                
+                elif value["x-axis"]["Label"].lower() == "roll":
+                    roll_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
+
+                    if value["x-axis"]["Unit"].lower() == "rad":
+                        sweep = roll_sweep * 180 / np.pi
+                    else:
+                        sweep = roll_sweep
+
+                    for roll_val in sweep:
+                        eval_num += 1
+                        print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
+                        self.sus.heave(heave=None)
+                        self.sus.roll(roll=roll_val, n_steps=roll_n_steps)
+                        
+                        for _, val in value["y-axis"]["Outputs"].items():
+                            if (val not in self.outputs) and not (val == None):
+                                raise Exception(f"Invalid output specified in {value["Title"]} ({val}). Please use one of the following: {", ".join(self.outputs)}")
+                            
+                        axle_vals[0].append(self.sus.state["Fr_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
+                        axle_vals[1].append(self.sus.state["Rr_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
+                    
+                    axes[0].set_title(f"Fr {value["Title"]}", fontsize=14)
+                    axes[1].set_title(f"Rr {value["Title"]}", fontsize=14)
+                    
+                    axes[0].set_xlabel(f"{value["x-axis"]["Label"]} ({value["x-axis"]["Unit"]})", fontsize=12)
+                    axes[1].set_xlabel(f"{value["x-axis"]["Label"]} ({value["x-axis"]["Unit"]})", fontsize=12)
+
+                    axes[0].set_ylabel(f"Fr {value["y-axis"]["Label"]} ({value["y-axis"]["Unit"]})", fontsize=12)
+                    axes[1].set_ylabel(f"Rr {value["y-axis"]["Label"]} ({value["y-axis"]["Unit"]})", fontsize=12)
+                    
+                    axes[0].plot(roll_sweep, axle_vals[0])
+                    axes[1].plot(roll_sweep, axle_vals[1])
+                    
+                    if max(axle_vals[0]) - min(axle_vals[0]) < 1e-3:
+                        axes[0].set_ylim([-1e-3 + np.mean(axle_vals[0]), 1e-3 + np.mean(axle_vals[0])])
+                    if max(axle_vals[1]) - min(axle_vals[1]) < 1e-3:
+                        axes[1].set_ylim([-1e-3 + np.mean(axle_vals[1]), 1e-3 + np.mean(axle_vals[1])])
+
+                if value["Grid"]:
+                    axes[0].grid()
+                    axes[1].grid()
                         
             elif num_plots == 4:
                 corner_vals = [[], [], [], []]
@@ -75,10 +127,14 @@ class Kinematics:
                 if value["x-axis"]["Label"].lower() == "jounce":
                     jounce_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
 
-                    if value["x-axis"]["Unit"] == "mm":
+                    if value["x-axis"]["Unit"].lower() == "mm":
                         sweep = jounce_sweep / 1000
+                    else:
+                        sweep = jounce_sweep
                     
                     for jounce_val in sweep:
+                        eval_num += 1
+                        print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
                         self.sus.heave(heave=None)
                         self.sus.heave(heave=jounce_val)
                         
@@ -110,18 +166,29 @@ class Kinematics:
                     axes[0, 1].plot(jounce_sweep, corner_vals[1])
                     axes[1, 0].plot(jounce_sweep, corner_vals[2])
                     axes[1, 1].plot(jounce_sweep, corner_vals[3])
+
+                    if max(corner_vals[0]) - min(corner_vals[0]) < 1e-3:
+                        axes[0, 0].set_ylim([-1e-3 + np.mean(corner_vals[0]), 1e-3 + np.mean(corner_vals[0])])
+                    if max(corner_vals[1]) - min(corner_vals[1]) < 1e-3:
+                        axes[0, 1].set_ylim([-1e-3 + np.mean(corner_vals[1]), 1e-3 + np.mean(corner_vals[1])])
+                    if max(corner_vals[2]) - min(corner_vals[2]) < 1e-3:
+                        axes[1, 0].set_ylim([-1e-3 + np.mean(corner_vals[2]), 1e-3 + np.mean(corner_vals[2])])
+                    if max(corner_vals[3]) - min(corner_vals[3]) < 1e-3:
+                        axes[1, 1].set_ylim([-1e-3 + np.mean(corner_vals[3]), 1e-3 + np.mean(corner_vals[3])])
                 
                 elif value["x-axis"]["Label"].lower() == "roll":
                     roll_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
 
-                    if value["x-axis"]["Unit"] == "deg":
-                        sweep = roll_sweep * np.pi / 180
-                    
+                    if value["x-axis"]["Unit"].lower() == "rad":
+                        sweep = roll_sweep * 180 / np.pi
+                    else:
+                        sweep = roll_sweep
+
                     for roll_val in sweep:
-                        # self.sus.FL_jounce(jounce=jounce_val)
-                        # self.sus.FR_jounce(jounce=jounce_val)
-                        # self.sus.RL_jounce(jounce=jounce_val)
-                        # self.sus.RR_jounce(jounce=jounce_val)
+                        eval_num += 1
+                        print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
+                        self.sus.heave(heave=None)
+                        self.sus.roll(roll=roll_val, n_steps=roll_n_steps)
 
                         corner_vals[0].append(self.sus.state["FL_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
                         corner_vals[1].append(self.sus.state["FR_" + value["y-axis"]["Outputs"]["FR"]] * value["y-axis"]["Multipliers"]["FR"])
@@ -143,10 +210,19 @@ class Kinematics:
                     axes[1, 0].set_ylabel(f"RL {value["y-axis"]["Label"]} ({value["y-axis"]["Unit"]})")
                     axes[1, 1].set_ylabel(f"RR {value["y-axis"]["Label"]} ({value["y-axis"]["Unit"]})")
 
-                    axes[0, 0].plot(jounce_sweep, corner_vals[0])
-                    axes[0, 1].plot(jounce_sweep, corner_vals[1])
-                    axes[1, 0].plot(jounce_sweep, corner_vals[2])
-                    axes[1, 1].plot(jounce_sweep, corner_vals[3])
+                    axes[0, 0].plot(roll_sweep, corner_vals[0])
+                    axes[0, 1].plot(roll_sweep, corner_vals[1])
+                    axes[1, 0].plot(roll_sweep, corner_vals[2])
+                    axes[1, 1].plot(roll_sweep, corner_vals[3])
+
+                    if max(corner_vals[0]) - min(corner_vals[0]) < 1e-3:
+                        axes[0, 0].set_ylim([-1e-3 + np.mean(corner_vals[0]), 1e-3 + np.mean(corner_vals[0])])
+                    if max(corner_vals[1]) - min(corner_vals[1]) < 1e-3:
+                        axes[0, 1].set_ylim([-1e-3 + np.mean(corner_vals[1]), 1e-3 + np.mean(corner_vals[1])])
+                    if max(corner_vals[2]) - min(corner_vals[2]) < 1e-3:
+                        axes[1, 0].set_ylim([-1e-3 + np.mean(corner_vals[2]), 1e-3 + np.mean(corner_vals[2])])
+                    if max(corner_vals[3]) - min(corner_vals[3]) < 1e-3:
+                        axes[1, 1].set_ylim([-1e-3 + np.mean(corner_vals[3]), 1e-3 + np.mean(corner_vals[3])])
                 
                 if value["Grid"]:
                     axes[0, 0].grid()

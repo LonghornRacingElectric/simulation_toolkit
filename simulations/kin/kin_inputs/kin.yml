@@ -1,4 +1,8 @@
-Plot One:
+##################
+### Bump Plots ###
+##################
+
+Plot1:
   Title: "Bump Camber"
   Corners:
     FL: True
@@ -25,7 +29,7 @@ Plot One:
       RR: 1
   Grid: True
 
-Plot Two:
+Plot2:
   Title: "Bump Toe"
   Corners:
     FL: True
@@ -52,7 +56,7 @@ Plot Two:
       RR: 1
   Grid: True
 
-Plot Three:
+Plot3:
   Title: "Bump Caster"
   Corners:
     FL: True
@@ -79,7 +83,7 @@ Plot Three:
       RR: 1
   Grid: True
 
-Plot Four:
+Plot4:
   Title: "Bump KPI"
   Corners:
     FL: True
@@ -106,7 +110,7 @@ Plot Four:
       RR: 1
   Grid: True
 
-Plot Five:
+Plot5:
   Title: "Bump Mechanical Trail"
   Corners:
     FL: True
@@ -133,7 +137,7 @@ Plot Five:
       RR: 1000
   Grid: True
 
-Plot Six:
+Plot6:
   Title: "Bump Scrub Radius"
   Corners:
     FL: True
@@ -160,7 +164,7 @@ Plot Six:
       RR: 1000
   Grid: True
 
-Plot Six:
+Plot7:
   Title: "Bump FVIC y-Migration"
   Corners:
     FL: True
@@ -187,7 +191,7 @@ Plot Six:
       RR: 1000
   Grid: True
 
-Plot Seven:
+Plot8:
   Title: "Bump FVIC z-Migration"
   Corners:
     FL: True
@@ -214,7 +218,7 @@ Plot Seven:
       RR: 1000
   Grid: True
 
-Plot Eight:
+Plot9:
   Title: "Bump SVIC x-Migration"
   Corners:
     FL: True
@@ -241,7 +245,7 @@ Plot Eight:
       RR: 1000
   Grid: True
 
-Plot Nine:
+Plot10:
   Title: "Bump SVIC z-Migration"
   Corners:
     FL: True
@@ -268,7 +272,7 @@ Plot Nine:
       RR: 1000
   Grid: True
 
-Plot Ten:
+Plot11:
   Title: "Bump RC y-Migration"
   Corners:
     FL: True
@@ -295,7 +299,7 @@ Plot Ten:
       RR: 
   Grid: True
 
-Plot Eleven:
+Plot12:
   Title: "Bump RC z-Migration"
   Corners:
     FL: True
@@ -320,4 +324,440 @@ Plot Eleven:
       FR: 
       RL: 1000
       RR: 
+  Grid: True
+
+Plot13:
+  Title: "Bump Spring MRs"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Bump Spring MR"
+    Unit: "mm/mm"
+    Outputs:
+      FL: "spring_MR"
+      FR: "spring_MR"
+      RL: "spring_MR"
+      RR: "spring_MR"
+    Multipliers:
+      FL: 1
+      FR: 1
+      RL: 1
+      RR: 1
+  Grid: True
+
+Plot14:
+  Title: "Bump Stabar MR"
+  Corners:
+    FL: True
+    FR: False
+    RL: True
+    RR: False
+  x-axis:
+    Label: "Jounce"
+    Unit: "mm"
+    Values: [-40, 40]
+    Number Steps: 20
+  y-axis:
+    Label: "Stabar MR"
+    Unit: "mm/mm"
+    Outputs:
+      FL: "stabar_MR_trans"
+      FR: 
+      RL: "stabar_MR_trans"
+      RR: 
+    Multipliers:
+      FL: 1
+      FR: 
+      RL: 1
+      RR: 
+  Grid: True
+
+##################
+### Roll Plots ###
+##################
+
+Plot15:
+  Title: "Roll Camber"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Camber"
+    Unit: "deg"
+    Outputs:
+      FL: "gamma"
+      FR: "gamma"
+      RL: "gamma"
+      RR: "gamma"
+    Multipliers:
+      FL: -1
+      FR: 1
+      RL: -1
+      RR: 1
+  Grid: True
+
+Plot16:
+  Title: "Roll Toe"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Toe"
+    Unit: "deg"
+    Outputs:
+      FL: "delta"
+      FR: "delta"
+      RL: "delta"
+      RR: "delta"
+    Multipliers:
+      FL: -1
+      FR: 1
+      RL: -1
+      RR: 1
+  Grid: True
+
+Plot17:
+  Title: "Roll Caster"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Caster"
+    Unit: "deg"
+    Outputs:
+      FL: "caster"
+      FR: "caster"
+      RL: "caster"
+      RR: "caster"
+    Multipliers:
+      FL: 1
+      FR: 1
+      RL: 1
+      RR: 1
+  Grid: True
+
+Plot18:
+  Title: "Roll KPI"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Kingpin inclination"
+    Unit: "deg"
+    Outputs:
+      FL: "kpi"
+      FR: "kpi"
+      RL: "kpi"
+      RR: "kpi"
+    Multipliers:
+      FL: 1
+      FR: 1
+      RL: 1
+      RR: 1
+  Grid: True
+
+Plot19:
+  Title: "Roll Mechanical Trail"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Mechanical Trail"
+    Unit: "mm"
+    Outputs:
+      FL: "mech_trail"
+      FR: "mech_trail"
+      RL: "mech_trail"
+      RR: "mech_trail"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot20:
+  Title: "Roll Scrub Radius"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Scrub Radius"
+    Unit: "mm"
+    Outputs:
+      FL: "scrub"
+      FR: "scrub"
+      RL: "scrub"
+      RR: "scrub"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot21:
+  Title: "Roll FVIC y-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "FVIC y-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "FVIC_y"
+      FR: "FVIC_y"
+      RL: "FVIC_y"
+      RR: "FVIC_y"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot22:
+  Title: "Roll FVIC z-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "FVIC z-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "FVIC_z"
+      FR: "FVIC_z"
+      RL: "FVIC_z"
+      RR: "FVIC_z"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot23:
+  Title: "Roll SVIC x-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "SVIC x-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "SVIC_x"
+      FR: "SVIC_x"
+      RL: "SVIC_x"
+      RR: "SVIC_x"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot24:
+  Title: "Roll SVIC z-Migration"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "SVIC z-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "SVIC_z"
+      FR: "SVIC_z"
+      RL: "SVIC_z"
+      RR: "SVIC_z"
+    Multipliers:
+      FL: 1000
+      FR: 1000
+      RL: 1000
+      RR: 1000
+  Grid: True
+
+Plot25:
+  Title: "Roll RC y-Migration"
+  Corners:
+    FL: True
+    FR: False
+    RL: True
+    RR: False
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "RC y-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "RC_y"
+      FR: 
+      RL: "RC_y"
+      RR: 
+    Multipliers:
+      FL: 1000
+      FR: 
+      RL: 1000
+      RR: 
+  Grid: True
+
+Plot26:
+  Title: "Roll RC z-Migration"
+  Corners:
+    FL: True
+    FR: False
+    RL: True
+    RR: False
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "RC z-Position"
+    Unit: "mm"
+    Outputs:
+      FL: "RC_z"
+      FR: 
+      RL: "RC_z"
+      RR: 
+    Multipliers:
+      FL: 1000
+      FR: 
+      RL: 1000
+      RR: 
+  Grid: True
+
+Plot27:
+  Title: "Roll Stabar MR"
+  Corners:
+    FL: True
+    FR: False
+    RL: True
+    RR: False
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Stabar MR"
+    Unit: "deg/deg"
+    Outputs:
+      FL: "stabar_MR_rot"
+      FR: 
+      RL: "stabar_MR_rot"
+      RR: 
+    Multipliers:
+      FL: 1
+      FR: 
+      RL: 1
+      RR: 
+  Grid: True
+
+Plot28:
+  Title: "Roll Spring MRs"
+  Corners:
+    FL: True
+    FR: True
+    RL: True
+    RR: True
+  x-axis:
+    Label: "Roll"
+    Unit: "deg"
+    Values: [-1.5, 1.5]
+    Number Steps: 20
+  y-axis:
+    Label: "Roll Spring MR"
+    Unit: "mm/mm"
+    Outputs:
+      FL: "spring_MR"
+      FR: "spring_MR"
+      RL: "spring_MR"
+      RR: "spring_MR"
+    Multipliers:
+      FL: 1
+      FR: 1
+      RL: 1
+      RR: 1
   Grid: True

@@ -10,10 +10,11 @@ from vehicle_model.suspension_model.suspension_elements._1_elements.node import 
 from vehicle_model.suspension_model.suspension_data import SuspensionData
 from vehicle_model.assets.misc_math import rotation_matrix
 
-from typing import Sequence, Union, Callable
+from typing import Sequence, Tuple, Union
 from dataclasses import dataclass
 import pyvista as pv
 import numpy as np
+from copy import deepcopy
 
 
 @dataclass
@@ -81,7 +82,15 @@ class Suspension:
                                         "Fr_RC_y": self.Fr_RC[1],
                                         "Fr_RC_z": self.Fr_RC[2],
                                         "Rr_RC_y": self.Rr_RC[1],
-                                        "Rr_RC_z": self.Rr_RC[2]}
+                                        "Rr_RC_z": self.Rr_RC[2],
+                                        "FL_spring_MR": self.FL_spring_MR,
+                                        "FR_spring_MR": self.FR_spring_MR,
+                                        "RL_spring_MR": self.RL_spring_MR,
+                                        "RR_spring_MR": self.RR_spring_MR,
+                                        "Fr_stabar_MR_rot": self.Fr_stabar_MR[0],
+                                        "Rr_stabar_MR_rot": self.Rr_stabar_MR[0],
+                                        "Fr_stabar_MR_trans": self.Fr_stabar_MR[1],
+                                        "Rr_stabar_MR_trans": self.Rr_stabar_MR[1],}
 
         self.FL_nodes = self.sus_data.FL_nodes
         self.FL_links = self.sus_data.FL_links
@@ -105,11 +114,15 @@ class Suspension:
         plotter = pv.Plotter()
         plotter.show_axes() # type: ignore
 
-        self.FL_jounce(jounce=2 * 0.0254)
-        self.FR_jounce(jounce=-2 * 0.0254)
-        self.RL_jounce(jounce=2 * 0.0254)
-        self.RR_jounce(jounce=-2 * 0.0254)
+        # self.FL_jounce(jounce=2 * 0.0254)
+        # self.FR_jounce(jounce=-2 * 0.0254)
+        # self.RL_jounce(jounce=2 * 0.0254)
+        # self.RR_jounce(jounce=-2 * 0.0254)
 
+        # self.roll(roll=10, n_steps=10)
+
+        # Transform everything
+        
         # for key, node in self.FL_nodes.items():
         #     self.FL_nodes[key] = self._sprung_to_global(node=node)
         
@@ -149,59 +162,56 @@ class Suspension:
         # for i, node in enumerate(self.tire_nodes):
         #     self.tire_nodes[i] = self._sprung_to_global(node=node)
 
+        # # Plot shit
 
+        # for _, node in self.FL_nodes.items():
+        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
+        #     plotter.add_mesh(sphere, color='red')
 
-
-
-
-        for _, node in self.FL_nodes.items():
-            sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-            plotter.add_mesh(sphere, color='red')
-
-        for _, link in self.FL_links.items():
-            cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-            plotter.add_mesh(cylinder, color='gray')
+        # for _, link in self.FL_links.items():
+        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
+        #     plotter.add_mesh(cylinder, color='gray')
         
-        for _, node in self.FR_nodes.items():
-            sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-            plotter.add_mesh(sphere, color='red')
+        # for _, node in self.FR_nodes.items():
+        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
+        #     plotter.add_mesh(sphere, color='red')
 
-        for _, link in self.FR_links.items():
-            cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-            plotter.add_mesh(cylinder, color='gray')
+        # for _, link in self.FR_links.items():
+        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
+        #     plotter.add_mesh(cylinder, color='gray')
 
-        for _, node in self.RL_nodes.items():
-            sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-            plotter.add_mesh(sphere, color='red')
+        # for _, node in self.RL_nodes.items():
+        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
+        #     plotter.add_mesh(sphere, color='red')
 
-        for _, link in self.RL_links.items():
-            cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-            plotter.add_mesh(cylinder, color='gray')
+        # for _, link in self.RL_links.items():
+        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
+        #     plotter.add_mesh(cylinder, color='gray')
         
-        for _, node in self.RR_nodes.items():
-            sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-            plotter.add_mesh(sphere, color='red')
+        # for _, node in self.RR_nodes.items():
+        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
+        #     plotter.add_mesh(sphere, color='red')
 
-        for _, link in self.RR_links.items():
-            cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-            plotter.add_mesh(cylinder, color='gray')
+        # for _, link in self.RR_links.items():
+        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
+        #     plotter.add_mesh(cylinder, color='gray')
 
-        for node in self.tire_nodes:
-            sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-            plotter.add_mesh(sphere, color='red')
+        # for node in self.tire_nodes:
+        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
+        #     plotter.add_mesh(sphere, color='red')
 
-        for tire in self.tires:
-            tube = pv.CylinderStructured(radius=[tire.outer_diameter / 2, tire.inner_diameter / 2], height=tire.width, 
-                                         center=self._sprung_to_global(node=Node(position=tire.center)).position, direction=self._sprung_to_global(Node(position=tire.direction), align_axes=False).position)
-            plotter.add_mesh(tube, color='black', opacity=0.5)
+        # for tire in self.tires:
+        #     tube = pv.CylinderStructured(radius=[tire.outer_diameter / 2, tire.inner_diameter / 2], height=tire.width, 
+        #                                  center=self._sprung_to_global(node=Node(position=tire.center)).position, direction=self._sprung_to_global(Node(position=tire.direction), align_axes=False).position)
+        #     plotter.add_mesh(tube, color='black', opacity=0.5)
 
-        ground = pv.Plane(center=[-61 / 2 * 0.0254, 0, 0], direction=[0, 0, 1], i_size=(61 / 2 + 8) * 0.0254 * 2, j_size=(48 / 2 + 3.5) * 0.0254 * 2)
-        plotter.add_mesh(ground)
+        # ground = pv.Plane(center=[-61 / 2 * 0.0254, 0, 0], direction=[0, 0, 1], i_size=(61 / 2 + 8) * 0.0254 * 2, j_size=(48 / 2 + 3.5) * 0.0254 * 2)
+        # plotter.add_mesh(ground)
 
-        Fr_RC = pv.Sphere(radius=0.5 * 0.0254, center=self.Fr_RC)
-        Rr_RC = pv.Sphere(radius=0.5 * 0.0254, center=self.Rr_RC)
-        plotter.add_mesh(Fr_RC)
-        plotter.add_mesh(Rr_RC)
+        # Fr_RC = pv.Sphere(radius=0.5 * 0.0254, center=self.Fr_RC)
+        # Rr_RC = pv.Sphere(radius=0.5 * 0.0254, center=self.Rr_RC)
+        # plotter.add_mesh(Fr_RC)
+        # plotter.add_mesh(Rr_RC)
 
         # ic_1 = pv.Sphere(radius=1e8 * 0.0254, center=self.FL_SVIC)
         # ic_2 = pv.Sphere(radius=1e8 * 0.0254, center=self.FR_SVIC)
@@ -213,9 +223,7 @@ class Suspension:
         # plotter.add_mesh(ic_3)
         # plotter.add_mesh(ic_4)
 
-        plotter.show(auto_close=False)
-
-        self._sprung_to_global(node=self.FL_nodes["contact_patch"])
+        # plotter.show(auto_close=False)
 
     def steer(self, hwa: float) -> None:
         """
@@ -236,7 +244,7 @@ class Suspension:
         self.FR_quarter_car.steer(rack_displacement = hwa / 360 * self.sus_data.steering_ratio)
         self._update_state()
     
-    def heave(self, heave: Union[None, float]):
+    def heave(self, heave: Union[None, float]) -> None:
         """
         ## Heave
 
@@ -263,6 +271,87 @@ class Suspension:
             self.RR_quarter_car._jounce_persistent(jounce=heave)
         
         self._update_state()
+    
+    def pitch(self, pitch: Union[None, float], n_steps: int) -> None:
+        """
+        ## Pitch
+
+        Pitches vehicle about kinematic pitch center
+
+        Parameters
+        ----------
+        pitch : float
+            Vehicle pitch in degrees
+        n_steps : int
+            Number of increments to reach desired pitch
+        
+        Returns
+        -------
+        None
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        
+    def roll(self, roll: Union[None, float], n_steps: int = 1, update_state: bool = True) -> None:
+        """
+        ## Roll
+
+        Rolls vehicle about kinematic roll center
+
+        Parameters
+        ----------
+        roll : float
+            Vehicle roll in degrees
+        n_steps : int
+            Number of increments to reach desired roll
+        update_state : bool
+            Whether to update all variables for the new state
+        
+        Returns
+        -------
+        None
+        """
+        for i in range(n_steps):
+            FL_cp = self.FL_quarter_car.tire.contact_patch
+            FR_cp = self.FR_quarter_car.tire.contact_patch
+            RL_cp = self.RL_quarter_car.tire.contact_patch
+            RR_cp = self.RR_quarter_car.tire.contact_patch
+
+            Fr_roll = -180 / np.pi * np.arctan(FL_cp[2] - FR_cp[2]) / (FL_cp[1] - FR_cp[1])
+            Rr_roll = -180 / np.pi * np.arctan(RL_cp[2] - RR_cp[2]) / (RL_cp[1] - RR_cp[1])
+
+            FL_cp = self._sprung_to_global(node=FL_cp)
+            FR_cp = self._sprung_to_global(node=FR_cp)
+            RL_cp = self._sprung_to_global(node=RL_cp)
+            RR_cp = self._sprung_to_global(node=RR_cp)
+            
+            Fr_RC = self.Fr_RC
+            Rr_RC = self.Rr_RC
+
+            FL_jounce = (Fr_RC[1] - FL_cp.position[1]) * np.tan((roll - Fr_roll) / (n_steps - i) * np.pi / 180)
+            FR_jounce = (Fr_RC[1] - FR_cp.position[1]) * np.tan((roll - Fr_roll) / (n_steps - i) * np.pi / 180)
+
+            RL_jounce = (Rr_RC[1] - RL_cp.position[1]) * np.tan((roll - Rr_roll) / (n_steps - i) * np.pi / 180)
+            RR_jounce = (Rr_RC[1] - RR_cp.position[1]) * np.tan((roll - Rr_roll) / (n_steps - i) * np.pi / 180)
+
+            self.FL_quarter_car._jounce_persistent(jounce=FL_jounce)
+            self.FR_quarter_car._jounce_persistent(jounce=FR_jounce)
+            self.RL_quarter_car._jounce_persistent(jounce=RL_jounce)
+            self.RR_quarter_car._jounce_persistent(jounce=RR_jounce)
+        
+        if update_state:
+            self._update_state()
+
+        # FL_cp = self.FL_quarter_car.tire.contact_patch
+        # FR_cp = self.FR_quarter_car.tire.contact_patch
+        # RL_cp = self.RL_quarter_car.tire.contact_patch
+        # RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        # Fr_roll = np.arctan(abs(FL_cp[2] - FR_cp[2]) / abs(FL_cp[1] - FR_cp[1]))
+        # Rr_roll = np.arctan(abs(RL_cp[2] - RR_cp[2]) / abs(RL_cp[1] - RR_cp[1]))
+
+        # print(Fr_roll * 180 / np.pi)
+        # print(Rr_roll * 180 / np.pi)
 
     def FL_jounce(self, jounce: float) -> None:
         """
@@ -1208,6 +1297,216 @@ class Suspension:
 
         return rc_node.position
 
+    @property
+    def FL_spring_MR(self) -> float:
+        """
+        ## Front-Left Spring MR
+
+        Motion ratio of the front-left spring, defined disp(wheel)/disp(spring)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            motion ratio of the front-left spring
+        """
+
+        # Apply small displacement
+        self.FL_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.FL_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.FL_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.FL_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.FL_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+
+    @property
+    def FR_spring_MR(self) -> float:
+        """
+        ## Front-Right Spring MR
+
+        Motion ratio of the front-right spring, defined disp(wheel)/disp(spring)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Motion ratio of the front-right spring
+        """
+
+        # Apply small displacement
+        self.FR_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.FR_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.FR_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.FR_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.FR_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+    
+    @property
+    def RL_spring_MR(self) -> float:
+        """
+        ## Rear-Left Spring MR
+
+        Motion ratio of the rear-left spring, defined disp(wheel)/disp(spring)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Motion ratio of the rear-left spring
+        """
+
+        # Apply small displacement
+        self.RL_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.RL_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.RL_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.RL_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.RL_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+    
+    @property
+    def RR_spring_MR(self) -> float:
+        """
+        ## Rear-Right Spring MR
+
+        Motion ratio of the rear-right spring, defined disp(wheel)/disp(stabar arm)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Motion ratio of the rear-right spring
+        """
+
+        # Apply small displacement
+        self.RR_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.RR_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.RR_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.RR_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.RR_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+    
+    @property
+    def Fr_stabar_MR(self) -> Tuple[float, float]:
+        """
+        ## Front Stabar MR
+
+        Motion ratios of the front anti-roll bar, defined [roll/ang(stabar arm), disp(wheel)/disp(stabar arm)]
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float]
+            Motion ratios of the front anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
+        """
+        self_copy = deepcopy(self)
+
+        Fr_stabar = self_copy.sus_data.Fr_stabar
+
+        if not Fr_stabar:
+            return (0, 0)
+
+        # Apply small rotation
+        self_copy.roll(roll=-0.01, update_state=False)
+        stabar_rot_1 = Fr_stabar.rotation * 180 / np.pi
+
+        # Must rotate by 0.02 to reach 0.01 relative to the original state
+        self_copy.roll(roll=0.02, update_state=False)
+        stabar_rot_2 = Fr_stabar.rotation * 180 / np.pi
+
+        angle_mr = abs((0.02) / (stabar_rot_2 - stabar_rot_1))
+
+        # Apply small displacement
+        self_copy.FL_quarter_car._jounce_persistent(jounce=-0.001)
+        stabar_arm_pos_1 = Fr_stabar.left_arm.outboard_node.position[2]
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self_copy.FL_quarter_car._jounce_persistent(jounce=0.002)
+        stabar_arm_pos_2 = Fr_stabar.left_arm.outboard_node.position[2]
+
+        trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
+
+        return (angle_mr, trans_mr)
+
+    @property
+    def Rr_stabar_MR(self) -> Tuple[float, float]:
+        """
+        ## Rear Stabar MR
+
+        Motion ratios of the rear anti-roll bar, defined [roll/ang(stabar arm), disp(wheel)/disp(stabar arm)]
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float]
+            Motion ratios of the rear anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
+        """
+        self_copy = deepcopy(self)
+        
+        Rr_stabar = self_copy.sus_data.Rr_stabar
+
+        if not Rr_stabar:
+            return (0, 0)
+
+        # Apply small rotation
+        self_copy.roll(roll=-0.01, update_state=False)
+        stabar_rot_1 = Rr_stabar.rotation * 180 / np.pi
+
+        # Must rotate by 0.02 to reach 0.01 relative to the original state
+        self_copy.roll(roll=0.02, update_state=False)
+        stabar_rot_2 = Rr_stabar.rotation * 180 / np.pi
+
+        angle_mr = abs((0.02) / (stabar_rot_2 - stabar_rot_1))
+
+        # Apply small displacement
+        self_copy.RL_quarter_car._jounce_persistent(jounce=-0.001)
+        stabar_arm_pos_1 = Rr_stabar.left_arm.outboard_node.position[2]
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self_copy.RL_quarter_car._jounce_persistent(jounce=0.002)
+        stabar_arm_pos_2 = Rr_stabar.left_arm.outboard_node.position[2]
+
+        trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
+
+        return (angle_mr, trans_mr)
+    
     def _caster_calculation(self, CP_1: Node, CP_2: Node, CP_3: Node, quarter_car: QuarterCar):
         """
         ## Caster Calculation
@@ -1518,7 +1817,15 @@ class Suspension:
         self.state["Fr_RC_z"] = self.Fr_RC[2]
         self.state["Rr_RC_y"] = self.Rr_RC[1]
         self.state["Rr_RC_z"] = self.Rr_RC[2]
-    
+        self.state["FL_spring_MR"] = self.FL_spring_MR
+        self.state["FR_spring_MR"] = self.FR_spring_MR
+        self.state["RL_spring_MR"] = self.RL_spring_MR
+        self.state["RR_spring_MR"] = self.RR_spring_MR
+        self.state["Fr_stabar_MR_rot"] = self.Fr_stabar_MR[0]
+        self.state["Rr_stabar_MR_rot"] = self.Rr_stabar_MR[0]
+        self.state["Fr_stabar_MR_trans"] = self.Fr_stabar_MR[1]
+        self.state["Rr_stabar_MR_trans"] = self.Rr_stabar_MR[1]
+
     def _sprung_to_global(self, node: Node, align_axes: bool = True) -> Node:
         FL_cp = np.array(self.FL_quarter_car.tire.contact_patch.position)
         FR_cp = np.array(self.FR_quarter_car.tire.contact_patch.position)

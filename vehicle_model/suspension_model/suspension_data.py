@@ -9,6 +9,7 @@ from vehicle_model.suspension_model.suspension_elements._1_elements.link import 
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 
 from LHR_tire_toolkit.MF52 import MF52 # type: ignore
+from typing import Union
 import yaml
 
 class SuspensionData:
@@ -48,8 +49,11 @@ class SuspensionData:
         self.Fr_springs: dict[str, Link] = {}
         self.Rr_springs: dict[str, Link] = {}
 
-        self.Fr_stabar: dict[str, Link] = {}
-        self.Rr_stabar: dict[str, Link] = {}
+        self.Fr_stabar_links: dict[str, Link] = {}
+        self.Rr_stabar_links: dict[str, Link] = {}
+
+        self.Fr_stabar: Union[Stabar, None]
+        self.Rr_stabar: Union[Stabar, None]
 
         if "FL QuarterCar" in raw_params.keys():
             
@@ -353,25 +357,28 @@ class SuspensionData:
                 self.FR_nodes["stabar_droplink_end"] = Fr_right_droplink_end
                 self.FR_nodes["stabar_bar_end"] = Fr_bar_right_end
 
-                Fr_stabar = Stabar(left_arm_end=Fr_left_arm_end, 
-                                   right_arm_end=Fr_right_arm_end, 
-                                   left_droplink_end=Fr_left_droplink_end, 
-                                   right_droplink_end=Fr_right_droplink_end, 
-                                   bar_left_end=Fr_bar_left_end, 
-                                   bar_right_end=Fr_bar_right_end, 
-                                   torsional_stiffness=Fr_torsional_stiffness)
+                self.Fr_stabar = Stabar(left_arm_end=Fr_left_arm_end, 
+                                        right_arm_end=Fr_right_arm_end, 
+                                        left_droplink_end=Fr_left_droplink_end, 
+                                        right_droplink_end=Fr_right_droplink_end, 
+                                        bar_left_end=Fr_bar_left_end, 
+                                        bar_right_end=Fr_bar_right_end, 
+                                        torsional_stiffness=Fr_torsional_stiffness)
 
-                self.Fr_stabar["torsion_bar"] = Fr_stabar.bar
-                self.Fr_stabar["arm_left"] = Fr_stabar.left_arm
-                self.Fr_stabar["arm_right"] = Fr_stabar.right_arm
-                self.Fr_stabar["droplink_left"] = Fr_stabar.left_droplink
-                self.Fr_stabar["droplink_right"] = Fr_stabar.right_droplink
+                self.Fr_stabar_links["torsion_bar"] = self.Fr_stabar.bar
+                self.Fr_stabar_links["arm_left"] = self.Fr_stabar.left_arm
+                self.Fr_stabar_links["arm_right"] = self.Fr_stabar.right_arm
+                self.Fr_stabar_links["droplink_left"] = self.Fr_stabar.left_droplink
+                self.Fr_stabar_links["droplink_right"] = self.Fr_stabar.right_droplink
 
-                Fr_left_droplink_end.add_listener(Fr_stabar)
-                Fr_right_droplink_end.add_listener(Fr_stabar)
+                Fr_left_droplink_end.add_listener(self.Fr_stabar)
+                Fr_right_droplink_end.add_listener(self.Fr_stabar)
 
                 self.FL_nodes[FL_ppr_params["connection"]["Value"]].add_child(node=Fr_left_droplink_end)
                 self.FR_nodes[FL_ppr_params["connection"]["Value"]].add_child(node=Fr_right_droplink_end)
+            
+            else:
+                self.Fr_stabar = None
             
         if "RL QuarterCar" in raw_params.keys():
             
@@ -669,25 +676,28 @@ class SuspensionData:
                 self.RR_nodes["stabar_droplink_end"] = Rr_right_droplink_end
                 self.RR_nodes["stabar_bar_end"] = Rr_bar_right_end
 
-                Rr_stabar = Stabar(left_arm_end=Rr_left_arm_end, 
-                                   right_arm_end=Rr_right_arm_end, 
-                                   left_droplink_end=Rr_left_droplink_end, 
-                                   right_droplink_end=Rr_right_droplink_end, 
-                                   bar_left_end=Rr_bar_left_end, 
-                                   bar_right_end=Rr_bar_right_end, 
-                                   torsional_stiffness=Rr_torsional_stiffness)
+                self.Rr_stabar = Stabar(left_arm_end=Rr_left_arm_end, 
+                                        right_arm_end=Rr_right_arm_end, 
+                                        left_droplink_end=Rr_left_droplink_end, 
+                                        right_droplink_end=Rr_right_droplink_end, 
+                                        bar_left_end=Rr_bar_left_end, 
+                                        bar_right_end=Rr_bar_right_end, 
+                                        torsional_stiffness=Rr_torsional_stiffness)
                 
-                self.Rr_stabar["torsion_bar"] = Rr_stabar.bar
-                self.Rr_stabar["arm_left"] = Rr_stabar.left_arm
-                self.Rr_stabar["arm_right"] = Rr_stabar.right_arm
-                self.Rr_stabar["droplink_left"] = Rr_stabar.left_droplink
-                self.Rr_stabar["droplink_right"] = Rr_stabar.right_droplink
+                self.Rr_stabar_links["torsion_bar"] = self.Rr_stabar.bar
+                self.Rr_stabar_links["arm_left"] = self.Rr_stabar.left_arm
+                self.Rr_stabar_links["arm_right"] = self.Rr_stabar.right_arm
+                self.Rr_stabar_links["droplink_left"] = self.Rr_stabar.left_droplink
+                self.Rr_stabar_links["droplink_right"] = self.Rr_stabar.right_droplink
 
-                Rr_left_droplink_end.add_listener(Rr_stabar)
-                Rr_right_droplink_end.add_listener(Rr_stabar)
+                Rr_left_droplink_end.add_listener(self.Rr_stabar)
+                Rr_right_droplink_end.add_listener(self.Rr_stabar)
 
                 self.RL_nodes[FL_ppr_params["connection"]["Value"]].add_child(node=Rr_left_droplink_end)
                 self.RR_nodes[FL_ppr_params["connection"]["Value"]].add_child(node=Rr_right_droplink_end)
+            
+            else:
+                self.Rr_stabar = None
 
         else:
             raise Exception('Vehicle definition yaml must contain "RL QuarterCar"')
