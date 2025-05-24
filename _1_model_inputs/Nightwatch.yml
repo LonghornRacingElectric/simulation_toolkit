@@ -1,0 +1,424 @@
+Name:
+  Description: Name of vehicle
+  Unit: N/A
+  Value: Nightwatch
+
+Version:
+  Description: Internal version number of vehicle
+  Unit: N/A
+  Value: 2.1.0
+  Changes: Reformatted for new kin model
+
+# TODO: implement this in SuspensionData and jounce calculation
+Coordinates:
+  Description: Coordinate system for calculations
+  Longitudinal: x
+  Lateral: y
+  Vertical: z
+
+Environment:
+  Gravity:
+    Description: Acceleration due to gravity
+    Type: float
+    Unit: m/s^2
+    Value: 9.81
+
+  Temperature:
+    Description: Ambient air temperature
+    Unit: K
+    Value: 298
+
+  Pressure:
+    Description: Ambient pressure
+    Unit: Pa
+    Value: 101325
+
+
+Mass Properties:
+  Driver:
+    Description: Mass of the driver
+    Unit: kg
+    Value: 70
+
+  Fr Unsprung:
+    Description: Mass of front wheel assemblies + half the front suspension linkages
+    Unit: kg
+    Value: 16.328
+
+  Rr Unsprung:
+    Description: Mass of rear wheel assemblies + half the rear suspension linkages
+    Unit: kg
+    Value: 18.611
+  
+  Sprung:
+    Description: Sprung mass = Total mass - driver mass - unsprung mass
+    Unit: kg
+    Value: 170
+  
+  Sprung Inertia:
+    Description: Sprung mass inertia tensor
+    Unit: kg*m^2
+    Value: [[119.8, 0, 0], 
+            [0, 33.4, 0], 
+            [0, 0, 108.2]]
+
+  CGBX:
+    Description: CG bias forward
+    Unit: (-)
+    Value: 0.50
+  
+  CGBY:
+    Description: CG bias leftward
+    Unit: (-)
+    Value: 0.50
+  
+  CGZ:
+    Description: CG height from ground plane
+    Unit: m
+    Value: 0.28448
+  
+  Part Masses:
+    Lumped:
+      Active: True
+      CG:
+        Description: Lumped CG Location
+        Unit: m
+        Value: [0, 0, 0]
+      Inertia:
+        Description: Lumped inertia tensor
+        Unit: kg*m^2
+        Value: [[119.8,   0,      0    ],
+                [0,       33.4,   0    ],
+                [0,       0,      108.2]]
+    Individual:
+      Active: False
+      Part1:
+        Connection: "sprung mass"
+        Mass: 1
+        Inertia: 1
+      Part2:
+        Connection: "sprung mass"
+        Mass: 1
+        Inertia: 1
+      Part3:
+        Connection: "sprung mass"
+        Mass: 1
+        Inertia: 1
+
+# Assuming vehicle symmetry about x-z to keep this shorter
+FL QuarterCar:
+  tire:
+    tir_path:
+      Type: string
+      Unit: N/A
+      Value: ./_1_model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir
+    contact_patch:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [0, 0.609600, 0]
+    outer_diameter:
+      Type: float
+      Unit: m
+      Value: 0.4064
+    width:
+      Type: float
+      Unit: m
+      Value: 0.1778
+    inner_diameter:
+      Type: float
+      Unit: m
+      Value: 0.254
+    static_toe:
+      Type: float
+      Unit: deg
+      Value: 0
+    static_camber:
+      Type: float
+      Unit: deg (positive leans toward car)
+      Value: 1
+
+  lower_wishbone:
+    fore_inboard:
+      Type: Tuple[float, float float]
+      Unit: in
+      Value: [0.087376, 0.215900, 0.090000]
+    aft_inboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-0.095250, 0.215900, 0.090000]
+    outboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [0, 0.556499, 0.124998]
+    
+  upper_wishbone:
+    fore_inboard:
+      Type: Tuple[float, float float]
+      Unit: in
+      Value: [0.086868, 0.215900, 0.200000]
+    aft_inboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-0.095250, 0.215900, 0.200000]
+    outboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-0.006347, 0.523240, 0.287020]
+  
+  tie_rod:
+    inboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [0.041128, 0.215900, 0.117856]
+    outboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [0.056000, 0.532333, 0.164821]
+  
+  steering_ratio:
+    Type: float
+    Unit: m/rev (rack travel per handwheel revolution)
+    Value: 0.0889
+    
+  stabar:
+    connection:
+      Type: Object
+      Unit: N/A
+      Value: 
+    arm_end:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value:
+    droplink_end:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value:
+    bar_end:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value:
+    torsional_stiffness:
+      Type: float
+      Unit: Nm/rad
+      Value:
+  
+  push_pull_rod:
+    connection:
+      Type: Object
+      Unit: N/A
+      Value: upper_outboard
+    outboard_rod:
+      inboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-0.04415429, 0.39924560, 0.40746267]
+      outboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-0.01368377, 0.49897726, 0.30564884]
+    spring:
+      inboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-0.09276858, 0.24012839, 0.56990187]
+      outboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-0.04415429, 0.39924560, 0.40746267]
+      free_length:
+        Type: float
+        Unit: in
+        Value: 5
+      rate:
+        Type: float
+        Unit: lb/in
+        Value: 350
+    inboard_rod:
+      inboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value:
+      outboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value:
+
+    bellcrank:
+      pivot: 
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value:
+      pivot_direction:
+        Type: Tuple[float, float, float]
+        Unit: N/A (unit vec)
+        Value:
+      nodes:
+
+RL QuarterCar:
+  tire:
+    tir_path:
+      Type: string
+      Unit: N/A
+      Value: ./_1_model_inputs/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir
+    contact_patch:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.5494, 0.609600, 0]
+    outer_diameter:
+      Type: float
+      Unit: m
+      Value: 0.4064
+    width:
+      Type: float
+      Unit: m
+      Value: 0.1778
+    inner_diameter:
+      Type: float
+      Unit: m
+      Value: 0.254
+    static_toe:
+      Type: float
+      Unit: deg
+      Value: 0
+    static_camber:
+      Type: float
+      Unit: deg
+      Value: 0
+
+  lower_wishbone:
+    fore_inboard:
+      Type: Tuple[float, float float]
+      Unit: in
+      Value: [-1.298905, 0.282999, 0.090000]
+    aft_inboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.490977, 0.282999, 0.090000]
+    outboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.554983, 0.579999, 0.113030]
+    
+  upper_wishbone:
+    fore_inboard:
+      Type: Tuple[float, float float]
+      Unit: in
+      Value: [-1.298905, 0.282999, 0.217500]
+    aft_inboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.490977, 0.282999, 0.217500]
+    outboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.574797, 0.554998, 0.289560]
+  
+  tie_rod:
+    inboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.428059, 0.282999, 0.177800]
+    outboard:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.462710, 0.587375, 0.240741]
+    
+  stabar:
+    connection:
+      Type: Object
+      Unit: N/A
+      Value: upper_outboard
+    arm_end:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.295910, 0.309264, 0.353681]
+    droplink_end:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.325579, 0.309297, 0.224467]
+    bar_end:
+      Type: Tuple[float, float, float]
+      Unit: in
+      Value: [-1.249618, 0.309264, 0.343043]
+    torsional_stiffness:
+      Type: float
+      Unit: Nm/rad
+      Value: 100
+  
+  push_pull_rod:
+    connection:
+      Type: Object
+      Unit: N/A
+      Value: lower_outboard
+    outboard_rod:
+      inboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-1.47864722, 0.40618605, 0.29100344]
+      outboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-1.54445540, 0.55586601, 0.13907432]
+    spring:
+      inboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-1.42763653, 0.29016283, 0.40877008]
+      outboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: [-1.47864722, 0.40618605, 0.29100344]
+      free_length:
+        Type: float
+        Unit: in
+        Value: 5
+      rate:
+        Type: float
+        Unit: lb/in
+        Value: 350
+    inboard_rod:
+      inboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: 
+      outboard_node:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: 
+
+    bellcrank:
+      pivot:
+        Type: Tuple[float, float, float]
+        Unit: in
+        Value: 
+      pivot_direction:
+        Type: Tuple[float, float, float]
+        Unit: N/A (unit vec)
+        Value: 
+      nodes:
+        node_1:
+        node_2:
+        node_3:
+
+
+### BRAKES ###
+Brake Properties:
+  EffR:
+    Description: Planar distance from hub center to cetroid of brake caliper [FL, FR, RL, RR]
+    Unit: m
+    Value: [0.072644, 0.072644, 0.072644, 0.072644]
+
+  MCSA:
+    Description: Surface area of master cylinder pistons [FR, RR]
+    Unit: m^2
+    Value: [0.00015393517, 0.00015393517]
+  
+  CSA:
+    Description: Surface area of caliper pistons [FL, FR, RL, RR]
+    Unit: m^2
+    Value: [0.00181586733, 0.00181586733, 0.00181586733, 0.00181586733]
+  
+  BMu:
+    Description: Average friction coefficient of brake pads [FL, FR, RL, RR]
+    Unit: (-)
+    Value: [0.50, 0.50, 0.50, 0.50]

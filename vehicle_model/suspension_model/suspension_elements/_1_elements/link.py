@@ -1,6 +1,6 @@
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
-from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
-from typing import Sequence, Union, cast
+from _4_custom_libraries.misc_math import unit_vec, rotation_matrix
+from typing import Sequence, Union
 import numpy as np
 import warnings
 

@@ -28,18 +28,18 @@ remove_dep:
 	-$(PYTHON) -c "import os; [os.remove(f) for f in os.listdir('.') if f.startswith('.coverage')]"
 
 clean:
-	$(PYTHON) -c "import shutil; shutil.rmtree('./4_unit_tests/python_test_results', ignore_errors=True)"
-	$(PYTHON) -c "import os; os.makedirs('./4_unit_tests/python_test_results', exist_ok=True)"
+	$(PYTHON) -c "import shutil; shutil.rmtree('./_3_unit_tests/python_test_results', ignore_errors=True)"
+	$(PYTHON) -c "import os; os.makedirs('./_3_unit_tests/python_test_results', exist_ok=True)"
 
 unit_tests:
-	-$(PYTHON) -m pytest ./4_unit_tests/python_tests --cov=src --cov-branch --cov=./4_unit_tests/python_tests --cov-report=html:./4_unit_tests/python_test_results/coverage_html \
-	--html=./4_unit_tests/python_test_results/test_results.html --self-contained-html --css=./4_unit_tests/dark_mode.css $(ARGS)
+	-$(PYTHON) -m pytest ./_3_unit_tests/python_tests --cov=src --cov-branch --cov=./_3_unit_tests/python_tests --cov-report=html:./_3_unit_tests/python_test_results/coverage_html \
+	--html=./_3_unit_tests/python_test_results/test_results.html --self-contained-html --css=./_3_unit_tests/dark_mode.css $(ARGS)
 
 report:
-	$(PYTHON) -c "import webbrowser, os; webbrowser.open_new_tab(os.path.abspath('4_unit_tests/python_test_results/test_results.html'))"
-	$(PYTHON) -c "import webbrowser, os; webbrowser.open_new_tab(os.path.abspath('4_unit_tests/python_test_results/coverage_html/index.html'))"
+	$(PYTHON) -c "import webbrowser, os; webbrowser.open_new_tab(os.path.abspath('_3_unit_tests/python_test_results/test_results.html'))"
+	$(PYTHON) -c "import webbrowser, os; webbrowser.open_new_tab(os.path.abspath('_3_unit_tests/python_test_results/coverage_html/index.html'))"
 
 test: clean unit_tests remove_dep report
 
 sim:
-	python3 kernel.py $(SIM)
+	python3 kernel.py $(SIM) $(MODEL_PATH)

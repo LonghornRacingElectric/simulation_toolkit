@@ -29,25 +29,25 @@ If this runs without error, skip past this section. If you receive an error, ins
 3. Go to Windows search and access "Edit the system environment variables".
 
     <center>
-        <img src="./_ico/edit_env_var.png" width="50%">
+        <img src="./_5_ico/edit_env_var.png" width="50%">
     </center>
 
 4. Select "Environment Variables"
 
     <center>
-        <img src="./_ico/env_var.png" width="75%">
+        <img src="./_5_ico/env_var.png" width="75%">
     </center>
 
 5. Edit Path
 
     <center>
-        <img src="./_ico/edit_path.png" width="75%">
+        <img src="./_5_ico/edit_path.png" width="75%">
     </center>
 
 6. Add the following path
 
     <center>
-        <img src="./_ico/path.png" width="75%">
+        <img src="./_5_ico/path.png" width="75%">
     </center>
 
 ##### MacOS

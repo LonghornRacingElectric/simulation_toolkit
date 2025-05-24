@@ -1,8 +1,7 @@
-from vehicle_model.assets.updateable import Updateable
+from _4_custom_libraries.misc_math import rotation_matrix
+from _4_custom_libraries.updateable import Updateable
 
-from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
-
-from typing import Sequence, Tuple, Union, List, cast
+from typing import Sequence, Tuple, Union, MutableSequence, cast
 from copy import deepcopy
 import numpy as np
 
@@ -20,11 +19,11 @@ class Node:
         Position of Node
     """
     def __init__(self, position: Union[np.ndarray, Sequence[float]]) -> None:
-        self.listeners: List[Updateable] = []
-        self.child_nodes: List[Node] = []
+        self.listeners: MutableSequence[Updateable] = []
+        self.child_nodes: MutableSequence[Node] = []
 
-        self.position: list = deepcopy(list(position))
-        self.initial_position: list = deepcopy(list(position))
+        self.position: MutableSequence[float] = deepcopy(list(position))
+        self.initial_position: MutableSequence[float] = deepcopy(list(position))
 
         # Track previous translation
         self.translation: Union[None, Sequence[float]] = None

@@ -1,20 +1,15 @@
-from vehicle_model.suspension_model.suspension_elements._4_elements.push_pull_rod import PushPullRod
 from vehicle_model.suspension_model.suspension_elements._5_elements.quarter_car import QuarterCar
-from vehicle_model.suspension_model.suspension_elements._2_elements.bellcrank import Bellcrank
-from vehicle_model.suspension_model.suspension_elements._2_elements.wishbone import Wishbone
 from vehicle_model.suspension_model.suspension_elements._2_elements.stabar import Stabar
-from vehicle_model.suspension_model.suspension_elements._2_elements.spring import Spring
 from vehicle_model.suspension_model.suspension_elements._2_elements.tire import Tire
 from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
 from vehicle_model.suspension_model.suspension_data import SuspensionData
-from vehicle_model.assets.misc_math import rotation_matrix
+from _4_custom_libraries.misc_math import rotation_matrix
 
-from typing import Sequence, Tuple, Union
+from typing import Tuple, Union, cast
 from dataclasses import dataclass
-import pyvista as pv
-import numpy as np
 from copy import deepcopy
+import numpy as np
 
 
 @dataclass
@@ -25,6 +20,7 @@ class Suspension:
     Designed to model kinematics and force-based properties
 
     ###### Note, all conventions comply with SAE-J670 Z-up
+    ###### Standard order of displacement: heave (T) -> yaw (R) -> pitch (R) -> roll (R)
 
     Parameters
     ----------
@@ -38,6 +34,8 @@ class Suspension:
         self.FR_quarter_car = self.sus_data.FR_quarter_car
         self.RL_quarter_car = self.sus_data.RL_quarter_car
         self.RR_quarter_car = self.sus_data.RR_quarter_car
+
+        self.state_cache: dict[str, "Suspension"]
 
         self.state: dict[str, float] = {"FL_gamma": self.FL_gamma,
                                         "FR_gamma": self.FR_gamma,
@@ -104,126 +102,15 @@ class Suspension:
         self.RR_nodes = self.sus_data.RR_nodes
         self.RR_links = self.sus_data.RR_links
 
+        self.Fr_stabar_links = self.sus_data.Fr_stabar_links
+        self.Rr_stabar_links = self.sus_data.Rr_stabar_links
+
         self.tires = [self.sus_data.FL_quarter_car.tire,
                       self.sus_data.FR_quarter_car.tire,
                       self.sus_data.RL_quarter_car.tire,
                       self.sus_data.RR_quarter_car.tire]
 
         self.tire_nodes = [x.contact_patch for x in self.tires]
-
-        plotter = pv.Plotter()
-        plotter.show_axes() # type: ignore
-
-        # self.FL_jounce(jounce=2 * 0.0254)
-        # self.FR_jounce(jounce=-2 * 0.0254)
-        # self.RL_jounce(jounce=2 * 0.0254)
-        # self.RR_jounce(jounce=-2 * 0.0254)
-
-        # self.roll(roll=10, n_steps=10)
-
-        # Transform everything
-        
-        # for key, node in self.FL_nodes.items():
-        #     self.FL_nodes[key] = self._sprung_to_global(node=node)
-        
-        # for key, link in self.FL_links.items():
-        #     trans_inboard = self._sprung_to_global(node=link.inboard_node)
-        #     trans_outboard = self._sprung_to_global(node=link.outboard_node)
-
-        #     self.FL_links[key] = Link(inboard_node=trans_inboard, outboard_node=trans_outboard)
-
-        # for key, node in self.FR_nodes.items():
-        #     self.FR_nodes[key] = self._sprung_to_global(node=node)
-
-        # for key, link in self.FR_links.items():
-        #     trans_inboard = self._sprung_to_global(node=link.inboard_node)
-        #     trans_outboard = self._sprung_to_global(node=link.outboard_node)
-            
-        #     self.FR_links[key] = Link(inboard_node=trans_inboard, outboard_node=trans_outboard)
-
-        # for key, node in self.RL_nodes.items():
-        #     self.RL_nodes[key] = self._sprung_to_global(node=node)
-
-        # for key, link in self.RL_links.items():
-        #     trans_inboard = self._sprung_to_global(node=link.inboard_node)
-        #     trans_outboard = self._sprung_to_global(node=link.outboard_node)
-            
-        #     self.RL_links[key] = Link(inboard_node=trans_inboard, outboard_node=trans_outboard)
-
-        # for key, node in self.RR_nodes.items():
-        #     self.RR_nodes[key] = self._sprung_to_global(node=node)
-
-        # for key, link in self.RR_links.items():
-        #     trans_inboard = self._sprung_to_global(node=link.inboard_node)
-        #     trans_outboard = self._sprung_to_global(node=link.outboard_node)
-            
-        #     self.RR_links[key] = Link(inboard_node=trans_inboard, outboard_node=trans_outboard)
-
-        # for i, node in enumerate(self.tire_nodes):
-        #     self.tire_nodes[i] = self._sprung_to_global(node=node)
-
-        # # Plot shit
-
-        # for _, node in self.FL_nodes.items():
-        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-        #     plotter.add_mesh(sphere, color='red')
-
-        # for _, link in self.FL_links.items():
-        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-        #     plotter.add_mesh(cylinder, color='gray')
-        
-        # for _, node in self.FR_nodes.items():
-        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-        #     plotter.add_mesh(sphere, color='red')
-
-        # for _, link in self.FR_links.items():
-        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-        #     plotter.add_mesh(cylinder, color='gray')
-
-        # for _, node in self.RL_nodes.items():
-        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-        #     plotter.add_mesh(sphere, color='red')
-
-        # for _, link in self.RL_links.items():
-        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-        #     plotter.add_mesh(cylinder, color='gray')
-        
-        # for _, node in self.RR_nodes.items():
-        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-        #     plotter.add_mesh(sphere, color='red')
-
-        # for _, link in self.RR_links.items():
-        #     cylinder = pv.Cylinder(center=link.center, direction=link.direction, radius = 0.625 / 2 * 0.0254, height=link.length)
-        #     plotter.add_mesh(cylinder, color='gray')
-
-        # for node in self.tire_nodes:
-        #     sphere = pv.Sphere(radius=1 / 2 * 0.0254, center=node.position)
-        #     plotter.add_mesh(sphere, color='red')
-
-        # for tire in self.tires:
-        #     tube = pv.CylinderStructured(radius=[tire.outer_diameter / 2, tire.inner_diameter / 2], height=tire.width, 
-        #                                  center=self._sprung_to_global(node=Node(position=tire.center)).position, direction=self._sprung_to_global(Node(position=tire.direction), align_axes=False).position)
-        #     plotter.add_mesh(tube, color='black', opacity=0.5)
-
-        # ground = pv.Plane(center=[-61 / 2 * 0.0254, 0, 0], direction=[0, 0, 1], i_size=(61 / 2 + 8) * 0.0254 * 2, j_size=(48 / 2 + 3.5) * 0.0254 * 2)
-        # plotter.add_mesh(ground)
-
-        # Fr_RC = pv.Sphere(radius=0.5 * 0.0254, center=self.Fr_RC)
-        # Rr_RC = pv.Sphere(radius=0.5 * 0.0254, center=self.Rr_RC)
-        # plotter.add_mesh(Fr_RC)
-        # plotter.add_mesh(Rr_RC)
-
-        # ic_1 = pv.Sphere(radius=1e8 * 0.0254, center=self.FL_SVIC)
-        # ic_2 = pv.Sphere(radius=1e8 * 0.0254, center=self.FR_SVIC)
-        # ic_3 = pv.Sphere(radius=1e8 * 0.0254, center=self.RL_SVIC)
-        # ic_4 = pv.Sphere(radius=1e8 * 0.0254, center=self.RR_SVIC)
-
-        # plotter.add_mesh(ic_1)
-        # plotter.add_mesh(ic_2)
-        # plotter.add_mesh(ic_3)
-        # plotter.add_mesh(ic_4)
-
-        # plotter.show(auto_close=False)
 
     def steer(self, hwa: float) -> None:
         """
@@ -272,7 +159,7 @@ class Suspension:
         
         self._update_state()
     
-    def pitch(self, pitch: Union[None, float], n_steps: int) -> None:
+    def pitch(self, pitch: Union[None, float], n_steps: int = 1, update_state: bool = True) -> None:
         """
         ## Pitch
 
@@ -284,13 +171,43 @@ class Suspension:
             Vehicle pitch in degrees
         n_steps : int
             Number of increments to reach desired pitch
+        update_state : bool
+            Whether to update all variables for the new state
         
         Returns
         -------
         None
         """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
+        for i in range(n_steps):
+            FL_cp = self.FL_quarter_car.tire.contact_patch
+            FR_cp = self.FR_quarter_car.tire.contact_patch
+            RL_cp = self.RL_quarter_car.tire.contact_patch
+            RR_cp = self.RR_quarter_car.tire.contact_patch
+
+            left_pitch = 180 / np.pi * np.arctan(FL_cp[2] - RL_cp[2]) / (FL_cp[0] - RL_cp[0])
+            right_pitch = 180 / np.pi * np.arctan(FR_cp[2] - RR_cp[2]) / (FR_cp[0] - RR_cp[0])
+            
+            FL_cp = self._sprung_to_global(node=FL_cp)
+            FR_cp = self._sprung_to_global(node=FR_cp)
+            RL_cp = self._sprung_to_global(node=RL_cp)
+            RR_cp = self._sprung_to_global(node=RR_cp)
+            
+            left_PC = self.left_PC
+            right_PC = self.right_PC
+
+            FL_jounce = -1 * (left_PC[0] - FL_cp.position[0]) * np.tan((pitch - left_pitch) / (n_steps - i) * np.pi / 180)
+            FR_jounce = -1 * (right_PC[0] - FR_cp.position[0]) * np.tan((pitch - right_pitch) / (n_steps - i) * np.pi / 180)
+
+            RL_jounce = -1 * (left_PC[0] - RL_cp.position[0]) * np.tan((pitch - left_pitch) / (n_steps - i) * np.pi / 180)
+            RR_jounce = -1 * (right_PC[0] - RR_cp.position[0]) * np.tan((pitch - right_pitch) / (n_steps - i) * np.pi / 180)
+
+            self.FL_quarter_car._jounce_persistent(jounce=FL_jounce)
+            self.FR_quarter_car._jounce_persistent(jounce=FR_jounce)
+            self.RL_quarter_car._jounce_persistent(jounce=RL_jounce)
+            self.RR_quarter_car._jounce_persistent(jounce=RR_jounce)
+        
+        if update_state:
+            self._update_state()
         
     def roll(self, roll: Union[None, float], n_steps: int = 1, update_state: bool = True) -> None:
         """
@@ -341,17 +258,6 @@ class Suspension:
         
         if update_state:
             self._update_state()
-
-        # FL_cp = self.FL_quarter_car.tire.contact_patch
-        # FR_cp = self.FR_quarter_car.tire.contact_patch
-        # RL_cp = self.RL_quarter_car.tire.contact_patch
-        # RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        # Fr_roll = np.arctan(abs(FL_cp[2] - FR_cp[2]) / abs(FL_cp[1] - FR_cp[1]))
-        # Rr_roll = np.arctan(abs(RL_cp[2] - RR_cp[2]) / abs(RL_cp[1] - RR_cp[1]))
-
-        # print(Fr_roll * 180 / np.pi)
-        # print(Rr_roll * 180 / np.pi)
 
     def FL_jounce(self, jounce: float) -> None:
         """
@@ -425,1088 +331,6 @@ class Suspension:
         self.RR_quarter_car.jounce(jounce=jounce)
         self._update_state()
 
-    @property
-    def FL_delta(self) -> float:
-        """
-        ## Front-Left Steered Angle
-
-        Steered angle of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Steered angle of the front-left tire in degrees
-        """
-        return self.FL_quarter_car.tire.delta
-
-    @property
-    def FR_delta(self) -> float:
-        """
-        ## Front-Right Steered Angle
-
-        Steered angle of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Steered angle of the front-right tire in degrees
-        """
-        return self.FR_quarter_car.tire.delta
-
-    @property
-    def RL_delta(self) -> float:
-        """
-        ## Rear-Left Steered Angle
-
-        Steered angle of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Steered angle of the rear-left tire in degrees
-        """
-        return self.RL_quarter_car.tire.delta
-
-    @property
-    def RR_delta(self) -> float:
-        """
-        ## Rear-Right Steered Angle
-
-        Steered angle of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Steered angle of the rear-right tire in degrees
-        """
-        return self.RR_quarter_car.tire.delta
-
-    @property
-    def FL_gamma(self) -> float:
-        """
-        ## Front-Left Inclination Angle
-
-        Inclination angle of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Inclination angle of front left tire in degrees
-        """
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._gamma_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, tire=self.FL_quarter_car.tire)
-
-    @property
-    def FR_gamma(self) -> float:
-        """
-        ## Front-Right Inclination Angle
-
-        Inclination angle of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Inclination angle of front right tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._gamma_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, tire=self.FR_quarter_car.tire)
-
-    @property
-    def RL_gamma(self) -> float:
-        """
-        ## Rear-Left Inclination Angle
-
-        Inclination angle of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Inclination angle of rear left tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._gamma_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, tire=self.RL_quarter_car.tire)
-
-    @property
-    def RR_gamma(self) -> float:
-        """
-        ## Rear-Right Inclination Angle
-
-        Inclination angle of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Inclination angle of rear right tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-
-        return self._gamma_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, tire=self.RR_quarter_car.tire)
-
-    @property
-    def FL_caster(self) -> float:
-        """
-        ## Front-Left Caster
-
-        Caster of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Caster of the front-left tire in degrees
-        """
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._caster_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
-
-    @property
-    def FR_caster(self) -> float:
-        """
-        ## Front-Right Caster
-
-        Caster of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Caster of the front-right tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._caster_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
-
-    @property
-    def RL_caster(self) -> float:
-        """
-        ## Rear-Left Caster
-
-        Caster of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Caster of the rear-left tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._caster_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
-    
-    @property
-    def RR_caster(self) -> float:
-        """
-        ## Rear-Right Caster
-
-        Caster of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Caster of the rear-right tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-
-        return self._caster_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
-
-    @property
-    def FL_kpi(self) -> float:
-        """
-        ## Front-Left KPI
-
-        Kingpin inclination of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Kingpin inclination of the front-left tire in degrees
-        """
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._kpi_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
-
-    @property
-    def FR_kpi(self) -> float:
-        """
-        ## Front-Right KPI
-
-        Kingpin inclination of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Kingpin inclination of the front-right tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._kpi_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
-
-    @property
-    def RL_kpi(self) -> float:
-        """
-        ## Rear-Left KPI
-
-        Kingpin inclination of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Kingpin inclination of the rear-left tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._kpi_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
-    
-    @property
-    def RR_kpi(self) -> float:
-        """
-        ## Rear-Right KPI
-
-        Kingpin inclination of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Kingpin inclination of the rear-right tire in degrees
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-
-        return self._kpi_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
-
-    @property
-    def FL_scrub(self) -> float:
-        """
-        ## Front-Left Scrub
-
-        Scrub radius of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Scrub radius of the front-left tire
-        """
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._scrub_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
-
-    @property
-    def FR_scrub(self) -> float:
-        """
-        ## Front-Right Scrub
-
-        Scrub radius of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Scrub radius of the front-right tire
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._scrub_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
-
-    @property
-    def RL_scrub(self) -> float:
-        """
-        ## Rear-Left Scrub
-
-        Scrub radius of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Scrub radius of the rear-left tire
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._scrub_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
-    
-    @property
-    def RR_scrub(self) -> float:
-        """
-        ## Rear-Right Scrub
-
-        Scrub radius of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Scrub radius of the rear-right tire
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-
-        return self._scrub_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
-    
-    @property
-    def FL_mech_trail(self) -> float:
-        """
-        ## Front-Left Mech Trail
-
-        Mechanical trail of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Mechanical trail of the front-left tire
-        """
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._mech_trail_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
-
-    @property
-    def FR_mech_trail(self) -> float:
-        """
-        ## Front-Right Mech Trail
-
-        Mechanical trail of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Mechanical trail of the front-right tire
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._mech_trail_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
-
-    @property
-    def RL_mech_trail(self) -> float:
-        """
-        ## Rear-Left Mech Trail
-
-        Mechanical trail of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Mechanical trail of the rear-left tire
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RR_cp = self.RR_quarter_car.tire.contact_patch
-
-        return self._mech_trail_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
-    
-    @property
-    def RR_mech_trail(self) -> float:
-        """
-        ## Rear-Right Mech Trail
-
-        Mechanical trail of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Mechanical trail of the rear-right tire
-        """
-        FL_cp = self.FL_quarter_car.tire.contact_patch
-        FR_cp = self.FR_quarter_car.tire.contact_patch
-        RL_cp = self.RL_quarter_car.tire.contact_patch
-
-        return self._mech_trail_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
-    
-    @property
-    def FL_FVIC(self) -> Sequence[float]:
-        """
-        ## Front-Left FVIC
-
-        Front-view instant center of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Front-view instant center of the front-left tire
-        """
-        upper_wishbone = self.FL_quarter_car.upper_wishbone
-        lower_wishbone = self.FL_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        x_coord = self.FL_quarter_car.tire.contact_patch[0]
-
-        A = np.array([[b1, c1],
-                      [b2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
-        
-        y, z = np.linalg.solve(a=A, b=B).T[0]
-
-        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
-
-        return global_FVIC.position
-
-    @property
-    def FR_FVIC(self) -> Sequence[float]:
-        """
-        ## Front-Right FVIC
-
-        Front-view instant center of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Front-view instant center of the front-right tire
-        """
-        upper_wishbone = self.FR_quarter_car.upper_wishbone
-        lower_wishbone = self.FR_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        x_coord = self.FR_quarter_car.tire.contact_patch[0]
-
-        A = np.array([[b1, c1],
-                      [b2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
-        
-        y, z = np.linalg.solve(a=A, b=B).T[0]
-
-        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
-
-        return global_FVIC.position
-    
-    @property
-    def RL_FVIC(self) -> Sequence[float]:
-        """
-        ## Rear-Left FVIC
-
-        Front-view instant center of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Front-view instant center of the rear-left tire
-        """
-        upper_wishbone = self.RL_quarter_car.upper_wishbone
-        lower_wishbone = self.RL_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        x_coord = self.RL_quarter_car.tire.contact_patch[0]
-
-        A = np.array([[b1, c1],
-                      [b2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
-        
-        y, z = np.linalg.solve(a=A, b=B).T[0]
-
-        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
-
-        return global_FVIC.position
-
-    @property
-    def RR_FVIC(self) -> Sequence[float]:
-        """
-        ## Rear-Right FVIC
-
-        Front-view instant center of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Front-view instant center of the rear-right tire
-        """
-        upper_wishbone = self.RR_quarter_car.upper_wishbone
-        lower_wishbone = self.RR_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        x_coord = self.RR_quarter_car.tire.contact_patch[0]
-
-        A = np.array([[b1, c1],
-                      [b2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
-        
-        y, z = np.linalg.solve(a=A, b=B).T[0]
-
-        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
-
-        return global_FVIC.position
-    
-    @property
-    def FL_SVIC(self) -> Sequence[float]:
-        """
-        ## Front-Left SVIC
-
-        Side-view instant center of the front-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Side-view instant center of the front-left tire
-        """
-        upper_wishbone = self.FL_quarter_car.upper_wishbone
-        lower_wishbone = self.FL_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        y_coord = self.FL_quarter_car.tire.contact_patch[1]
-
-        A = np.array([[a1, c1],
-                      [a2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
-        
-        try:
-            x, z = np.linalg.solve(a=A, b=B).T[0]
-
-        except np.linalg.LinAlgError:
-            tire_center = np.array(self.FL_quarter_car.tire.center)
-            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
-            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
-            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
-
-        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
-
-        return global_SVIC.position
-
-    @property
-    def FR_SVIC(self) -> Sequence[float]:
-        """
-        ## Front-Right SVIC
-
-        Side-view instant center of the front-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Side-view instant center of the front-right tire
-        """
-        upper_wishbone = self.FR_quarter_car.upper_wishbone
-        lower_wishbone = self.FR_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        y_coord = self.FR_quarter_car.tire.contact_patch[1]
-
-        A = np.array([[a1, c1],
-                      [a2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
-        
-        try:
-            x, z = np.linalg.solve(a=A, b=B).T[0]
-
-        except np.linalg.LinAlgError:
-            tire_center = np.array(self.FR_quarter_car.tire.center)
-            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
-            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
-            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
-
-        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
-
-        return global_SVIC.position
-    
-    @property
-    def RL_SVIC(self) -> Sequence[float]:
-        """
-        ## Rear-Left SVIC
-
-        Side-view instant center of the rear-left tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Side-view instant center of the rear-left tire
-        """
-        upper_wishbone = self.RL_quarter_car.upper_wishbone
-        lower_wishbone = self.RL_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        y_coord = self.RL_quarter_car.tire.contact_patch[1]
-
-        A = np.array([[a1, c1],
-                      [a2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
-        
-        try:
-            x, z = np.linalg.solve(a=A, b=B).T[0]
-            
-        except np.linalg.LinAlgError:
-            tire_center = np.array(self.RL_quarter_car.tire.center)
-            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
-            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
-            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
-
-        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
-
-        return global_SVIC.position
-
-    @property
-    def RR_SVIC(self) -> Sequence[float]:
-        """
-        ## Rear-Right SVIC
-
-        Side-view instant center of the rear-right tire
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Side-view instant center of the rear-right tire
-        """
-        upper_wishbone = self.RR_quarter_car.upper_wishbone
-        lower_wishbone = self.RR_quarter_car.lower_wishbone
-
-        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
-        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
-        y_coord = self.RR_quarter_car.tire.contact_patch[1]
-
-        A = np.array([[a1, c1],
-                      [a2, c2]])
-        
-        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
-                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
-        
-        try:
-            x, z = np.linalg.solve(a=A, b=B).T[0]
-
-        except np.linalg.LinAlgError:
-            tire_center = np.array(self.RR_quarter_car.tire.center)
-            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
-            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
-            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
-
-        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
-
-        return global_SVIC.position
-    
-    @property
-    def Fr_RC(self) -> Sequence[float]:
-        """
-        ## Front RC
-
-        Roll center of the front axle
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Calculates position vector of front roll center
-        """
-        FL_cp = self._sprung_to_global(self.FL_quarter_car.tire.contact_patch)
-        FR_cp = self._sprung_to_global(self.FR_quarter_car.tire.contact_patch)
-
-        left_link = Link(inboard_node=Node(position=self.FL_FVIC), outboard_node=FL_cp)
-        right_link = Link(inboard_node=Node(position=self.FR_FVIC), outboard_node=FR_cp)
-
-        rc_node = left_link.yz_intersection(link=right_link)
-
-        return rc_node.position
-
-    @property
-    def Rr_RC(self) -> Sequence[float]:
-        """
-        ## Rear RC
-
-        Roll center of the rear axle
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Sequence[float]
-            Calculates position vector of rear roll center
-        """
-        RL_cp = self._sprung_to_global(self.RL_quarter_car.tire.contact_patch)
-        RR_cp = self._sprung_to_global(self.RR_quarter_car.tire.contact_patch)
-
-        left_link = Link(inboard_node=Node(position=self.RL_FVIC), outboard_node=RL_cp)
-        right_link = Link(inboard_node=Node(position=self.RR_FVIC), outboard_node=RR_cp)
-
-        rc_node = left_link.yz_intersection(link=right_link)
-
-        return rc_node.position
-
-    @property
-    def FL_spring_MR(self) -> float:
-        """
-        ## Front-Left Spring MR
-
-        Motion ratio of the front-left spring, defined disp(wheel)/disp(spring)
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            motion ratio of the front-left spring
-        """
-
-        # Apply small displacement
-        self.FL_quarter_car._jounce_persistent(jounce=-0.001)
-        spring_length_1 = self.FL_quarter_car.push_pull_rod.spring.length
-
-        # Must displace by 0.002 to reach 0.001 relative to the original state
-        self.FL_quarter_car._jounce_persistent(jounce=0.002)
-        spring_length_2 = self.FL_quarter_car.push_pull_rod.spring.length
-
-        # Return corner to original state (-0.001)
-        self.FL_quarter_car._jounce_persistent(jounce=-0.001)
-
-        return abs((0.002) / (spring_length_1 - spring_length_2))
-
-    @property
-    def FR_spring_MR(self) -> float:
-        """
-        ## Front-Right Spring MR
-
-        Motion ratio of the front-right spring, defined disp(wheel)/disp(spring)
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Motion ratio of the front-right spring
-        """
-
-        # Apply small displacement
-        self.FR_quarter_car._jounce_persistent(jounce=-0.001)
-        spring_length_1 = self.FR_quarter_car.push_pull_rod.spring.length
-
-        # Must displace by 0.002 to reach 0.001 relative to the original state
-        self.FR_quarter_car._jounce_persistent(jounce=0.002)
-        spring_length_2 = self.FR_quarter_car.push_pull_rod.spring.length
-
-        # Return corner to original state (-0.001)
-        self.FR_quarter_car._jounce_persistent(jounce=-0.001)
-
-        return abs((0.002) / (spring_length_1 - spring_length_2))
-    
-    @property
-    def RL_spring_MR(self) -> float:
-        """
-        ## Rear-Left Spring MR
-
-        Motion ratio of the rear-left spring, defined disp(wheel)/disp(spring)
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Motion ratio of the rear-left spring
-        """
-
-        # Apply small displacement
-        self.RL_quarter_car._jounce_persistent(jounce=-0.001)
-        spring_length_1 = self.RL_quarter_car.push_pull_rod.spring.length
-
-        # Must displace by 0.002 to reach 0.001 relative to the original state
-        self.RL_quarter_car._jounce_persistent(jounce=0.002)
-        spring_length_2 = self.RL_quarter_car.push_pull_rod.spring.length
-
-        # Return corner to original state (-0.001)
-        self.RL_quarter_car._jounce_persistent(jounce=-0.001)
-
-        return abs((0.002) / (spring_length_1 - spring_length_2))
-    
-    @property
-    def RR_spring_MR(self) -> float:
-        """
-        ## Rear-Right Spring MR
-
-        Motion ratio of the rear-right spring, defined disp(wheel)/disp(stabar arm)
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        float
-            Motion ratio of the rear-right spring
-        """
-
-        # Apply small displacement
-        self.RR_quarter_car._jounce_persistent(jounce=-0.001)
-        spring_length_1 = self.RR_quarter_car.push_pull_rod.spring.length
-
-        # Must displace by 0.002 to reach 0.001 relative to the original state
-        self.RR_quarter_car._jounce_persistent(jounce=0.002)
-        spring_length_2 = self.RR_quarter_car.push_pull_rod.spring.length
-
-        # Return corner to original state (-0.001)
-        self.RR_quarter_car._jounce_persistent(jounce=-0.001)
-
-        return abs((0.002) / (spring_length_1 - spring_length_2))
-    
-    @property
-    def Fr_stabar_MR(self) -> Tuple[float, float]:
-        """
-        ## Front Stabar MR
-
-        Motion ratios of the front anti-roll bar, defined [roll/ang(stabar arm), disp(wheel)/disp(stabar arm)]
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Tuple[float, float]
-            Motion ratios of the front anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
-        """
-        self_copy = deepcopy(self)
-
-        Fr_stabar = self_copy.sus_data.Fr_stabar
-
-        if not Fr_stabar:
-            return (0, 0)
-
-        # Apply small rotation
-        self_copy.roll(roll=-0.01, update_state=False)
-        stabar_rot_1 = Fr_stabar.rotation * 180 / np.pi
-
-        # Must rotate by 0.02 to reach 0.01 relative to the original state
-        self_copy.roll(roll=0.02, update_state=False)
-        stabar_rot_2 = Fr_stabar.rotation * 180 / np.pi
-
-        angle_mr = abs((0.02) / (stabar_rot_2 - stabar_rot_1))
-
-        # Apply small displacement
-        self_copy.FL_quarter_car._jounce_persistent(jounce=-0.001)
-        stabar_arm_pos_1 = Fr_stabar.left_arm.outboard_node.position[2]
-
-        # Must displace by 0.002 to reach 0.001 relative to the original state
-        self_copy.FL_quarter_car._jounce_persistent(jounce=0.002)
-        stabar_arm_pos_2 = Fr_stabar.left_arm.outboard_node.position[2]
-
-        trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
-
-        return (angle_mr, trans_mr)
-
-    @property
-    def Rr_stabar_MR(self) -> Tuple[float, float]:
-        """
-        ## Rear Stabar MR
-
-        Motion ratios of the rear anti-roll bar, defined [roll/ang(stabar arm), disp(wheel)/disp(stabar arm)]
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        Tuple[float, float]
-            Motion ratios of the rear anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
-        """
-        self_copy = deepcopy(self)
-        
-        Rr_stabar = self_copy.sus_data.Rr_stabar
-
-        if not Rr_stabar:
-            return (0, 0)
-
-        # Apply small rotation
-        self_copy.roll(roll=-0.01, update_state=False)
-        stabar_rot_1 = Rr_stabar.rotation * 180 / np.pi
-
-        # Must rotate by 0.02 to reach 0.01 relative to the original state
-        self_copy.roll(roll=0.02, update_state=False)
-        stabar_rot_2 = Rr_stabar.rotation * 180 / np.pi
-
-        angle_mr = abs((0.02) / (stabar_rot_2 - stabar_rot_1))
-
-        # Apply small displacement
-        self_copy.RL_quarter_car._jounce_persistent(jounce=-0.001)
-        stabar_arm_pos_1 = Rr_stabar.left_arm.outboard_node.position[2]
-
-        # Must displace by 0.002 to reach 0.001 relative to the original state
-        self_copy.RL_quarter_car._jounce_persistent(jounce=0.002)
-        stabar_arm_pos_2 = Rr_stabar.left_arm.outboard_node.position[2]
-
-        trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
-
-        return (angle_mr, trans_mr)
-    
     def _caster_calculation(self, CP_1: Node, CP_2: Node, CP_3: Node, quarter_car: QuarterCar):
         """
         ## Caster Calculation
@@ -1863,3 +687,1255 @@ class Suspension:
             node_trans = node_trans
 
         return Node(position=node_trans)
+
+    @property
+    def FL_delta(self) -> float:
+        """
+        ## Front-Left Steered Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Steered angle of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Steered angle of the front-left tire in degrees
+        """
+        return self.FL_quarter_car.tire.delta
+
+    @property
+    def FR_delta(self) -> float:
+        """
+        ## Front-Right Steered Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Steered angle of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Steered angle of the front-right tire in degrees
+        """
+        return self.FR_quarter_car.tire.delta
+
+    @property
+    def RL_delta(self) -> float:
+        """
+        ## Rear-Left Steered Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Steered angle of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Steered angle of the rear-left tire in degrees
+        """
+        return self.RL_quarter_car.tire.delta
+
+    @property
+    def RR_delta(self) -> float:
+        """
+        ## Rear-Right Steered Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Steered angle of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Steered angle of the rear-right tire in degrees
+        """
+        return self.RR_quarter_car.tire.delta
+
+    @property
+    def FL_gamma(self) -> float:
+        """
+        ## Front-Left Inclination Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Inclination angle of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Inclination angle of front left tire in degrees
+        """
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._gamma_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, tire=self.FL_quarter_car.tire)
+
+    @property
+    def FR_gamma(self) -> float:
+        """
+        ## Front-Right Inclination Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Inclination angle of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Inclination angle of front right tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._gamma_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, tire=self.FR_quarter_car.tire)
+
+    @property
+    def RL_gamma(self) -> float:
+        """
+        ## Rear-Left Inclination Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Inclination angle of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Inclination angle of rear left tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._gamma_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, tire=self.RL_quarter_car.tire)
+
+    @property
+    def RR_gamma(self) -> float:
+        """
+        ## Rear-Right Inclination Angle
+        ##### Axis System: [X_{T}, Y_{T}, Z_{T}]
+        ##### Coordinate System: [x_{T}, y_{T}, z_{T}]
+
+        Inclination angle of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Inclination angle of rear right tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+
+        return self._gamma_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, tire=self.RR_quarter_car.tire)
+
+    @property
+    def FL_caster(self) -> float:
+        """
+        ## Front-Left Caster
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Caster of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Caster of the front-left tire in degrees
+        """
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._caster_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
+
+    @property
+    def FR_caster(self) -> float:
+        """
+        ## Front-Right Caster
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Caster of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Caster of the front-right tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._caster_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
+
+    @property
+    def RL_caster(self) -> float:
+        """
+        ## Rear-Left Caster
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Caster of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Caster of the rear-left tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._caster_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
+    
+    @property
+    def RR_caster(self) -> float:
+        """
+        ## Rear-Right Caster
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Caster of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Caster of the rear-right tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+
+        return self._caster_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
+
+    @property
+    def FL_kpi(self) -> float:
+        """
+        ## Front-Left KPI
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Kingpin inclination of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Kingpin inclination of the front-left tire in degrees
+        """
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._kpi_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
+
+    @property
+    def FR_kpi(self) -> float:
+        """
+        ## Front-Right KPI
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Kingpin inclination of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Kingpin inclination of the front-right tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._kpi_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
+
+    @property
+    def RL_kpi(self) -> float:
+        """
+        ## Rear-Left KPI
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Kingpin inclination of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Kingpin inclination of the rear-left tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._kpi_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
+    
+    @property
+    def RR_kpi(self) -> float:
+        """
+        ## Rear-Right KPI
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Kingpin inclination of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Kingpin inclination of the rear-right tire in degrees
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+
+        return self._kpi_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
+
+    @property
+    def FL_scrub(self) -> float:
+        """
+        ## Front-Left Scrub
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Scrub radius of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Scrub radius of the front-left tire
+        """
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._scrub_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
+
+    @property
+    def FR_scrub(self) -> float:
+        """
+        ## Front-Right Scrub
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Scrub radius of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Scrub radius of the front-right tire
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._scrub_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
+
+    @property
+    def RL_scrub(self) -> float:
+        """
+        ## Rear-Left Scrub
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Scrub radius of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Scrub radius of the rear-left tire
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._scrub_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
+    
+    @property
+    def RR_scrub(self) -> float:
+        """
+        ## Rear-Right Scrub
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Scrub radius of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Scrub radius of the rear-right tire
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+
+        return self._scrub_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
+    
+    @property
+    def FL_mech_trail(self) -> float:
+        """
+        ## Front-Left Mech Trail
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Mechanical trail of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Mechanical trail of the front-left tire
+        """
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._mech_trail_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FL_quarter_car)
+
+    @property
+    def FR_mech_trail(self) -> float:
+        """
+        ## Front-Right Mech Trail
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Mechanical trail of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Mechanical trail of the front-right tire
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._mech_trail_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, quarter_car=self.FR_quarter_car)
+
+    @property
+    def RL_mech_trail(self) -> float:
+        """
+        ## Rear-Left Mech Trail
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Mechanical trail of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Mechanical trail of the rear-left tire
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RR_cp = self.RR_quarter_car.tire.contact_patch
+
+        return self._mech_trail_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, quarter_car=self.RL_quarter_car)
+    
+    @property
+    def RR_mech_trail(self) -> float:
+        """
+        ## Rear-Right Mech Trail
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Mechanical trail of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Mechanical trail of the rear-right tire
+        """
+        FL_cp = self.FL_quarter_car.tire.contact_patch
+        FR_cp = self.FR_quarter_car.tire.contact_patch
+        RL_cp = self.RL_quarter_car.tire.contact_patch
+
+        return self._mech_trail_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
+    
+    @property
+    def FL_FVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Front-Left FVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Front-view instant center location of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Front-view instant center location of the front-left tire
+        """
+        upper_wishbone = self.FL_quarter_car.upper_wishbone
+        lower_wishbone = self.FL_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        x_coord = self.FL_quarter_car.tire.contact_patch[0]
+
+        A = np.array([[b1, c1],
+                      [b2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
+        
+        y, z = np.linalg.solve(a=A, b=B).T[0]
+
+        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
+
+        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+
+    @property
+    def FR_FVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Front-Right FVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Front-view instant center of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Front-view instant center of the front-right tire
+        """
+        upper_wishbone = self.FR_quarter_car.upper_wishbone
+        lower_wishbone = self.FR_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        x_coord = self.FR_quarter_car.tire.contact_patch[0]
+
+        A = np.array([[b1, c1],
+                      [b2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
+        
+        y, z = np.linalg.solve(a=A, b=B).T[0]
+
+        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
+
+        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+    
+    @property
+    def RL_FVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Rear-Left FVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Front-view instant center of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Front-view instant center of the rear-left tire
+        """
+        upper_wishbone = self.RL_quarter_car.upper_wishbone
+        lower_wishbone = self.RL_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        x_coord = self.RL_quarter_car.tire.contact_patch[0]
+
+        A = np.array([[b1, c1],
+                      [b2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
+        
+        y, z = np.linalg.solve(a=A, b=B).T[0]
+
+        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
+
+        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+
+    @property
+    def RR_FVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Rear-Right FVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Front-view instant center of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Front-view instant center of the rear-right tire
+        """
+        upper_wishbone = self.RR_quarter_car.upper_wishbone
+        lower_wishbone = self.RR_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        x_coord = self.RR_quarter_car.tire.contact_patch[0]
+
+        A = np.array([[b1, c1],
+                      [b2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - a1 * x_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - a2 * x_coord]])
+        
+        y, z = np.linalg.solve(a=A, b=B).T[0]
+
+        global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
+
+        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+    
+    @property
+    def FL_SVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Front-Left SVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Side-view instant center of the front-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Side-view instant center of the front-left tire
+        """
+        upper_wishbone = self.FL_quarter_car.upper_wishbone
+        lower_wishbone = self.FL_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        y_coord = self.FL_quarter_car.tire.contact_patch[1]
+
+        A = np.array([[a1, c1],
+                      [a2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
+        
+        try:
+            x, z = np.linalg.solve(a=A, b=B).T[0]
+
+        except np.linalg.LinAlgError:
+            tire_center = np.array(self.FL_quarter_car.tire.center)
+            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
+            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
+            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
+
+        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
+
+        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+
+    @property
+    def FR_SVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Front-Right SVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Side-view instant center of the front-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Side-view instant center of the front-right tire
+        """
+        upper_wishbone = self.FR_quarter_car.upper_wishbone
+        lower_wishbone = self.FR_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        y_coord = self.FR_quarter_car.tire.contact_patch[1]
+
+        A = np.array([[a1, c1],
+                      [a2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
+        
+        try:
+            x, z = np.linalg.solve(a=A, b=B).T[0]
+
+        except np.linalg.LinAlgError:
+            tire_center = np.array(self.FR_quarter_car.tire.center)
+            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
+            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
+            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
+
+        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
+
+        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+    
+    @property
+    def RL_SVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Rear-Left SVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Side-view instant center of the rear-left tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Side-view instant center of the rear-left tire
+        """
+        upper_wishbone = self.RL_quarter_car.upper_wishbone
+        lower_wishbone = self.RL_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        y_coord = self.RL_quarter_car.tire.contact_patch[1]
+
+        A = np.array([[a1, c1],
+                      [a2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
+        
+        try:
+            x, z = np.linalg.solve(a=A, b=B).T[0]
+            
+        except np.linalg.LinAlgError:
+            tire_center = np.array(self.RL_quarter_car.tire.center)
+            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
+            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
+            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
+
+        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
+
+        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+
+    @property
+    def RR_SVIC(self) -> Tuple[float, float, float]:
+        """
+        ## Rear-Right SVIC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Side-view instant center of the rear-right tire
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Side-view instant center of the rear-right tire
+        """
+        upper_wishbone = self.RR_quarter_car.upper_wishbone
+        lower_wishbone = self.RR_quarter_car.lower_wishbone
+
+        a1, b1, c1, x0_1, y0_1, z0_1 = upper_wishbone.plane
+        a2, b2, c2, x0_2, y0_2, z0_2 = lower_wishbone.plane
+        y_coord = self.RR_quarter_car.tire.contact_patch[1]
+
+        A = np.array([[a1, c1],
+                      [a2, c2]])
+        
+        B = np.array([[(a1 * x0_1 + b1 * y0_1 + c1 * z0_1) - b1 * y_coord],
+                      [(a2 * x0_2 + b2 * y0_2 + c2 * z0_2) - b2 * y_coord]])
+        
+        try:
+            x, z = np.linalg.solve(a=A, b=B).T[0]
+
+        except np.linalg.LinAlgError:
+            tire_center = np.array(self.RR_quarter_car.tire.center)
+            SVIC_dir = np.array([c1, 0, -1 * a1]) / np.linalg.norm([c1, 0, -1 * a1])
+            SVIC_dir *= -1 if SVIC_dir[0] < 0 else 1
+            x, z = (tire_center + 1e9 * SVIC_dir)[[0, 2]]
+
+        global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
+
+        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+    
+    @property
+    def Fr_RC(self) -> Tuple[float, float, float]:
+        """
+        ## Front RC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Roll center of the front axle
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Calculates position vector of front roll center
+        """
+        FL_cp = self._sprung_to_global(self.FL_quarter_car.tire.contact_patch)
+        FR_cp = self._sprung_to_global(self.FR_quarter_car.tire.contact_patch)
+
+        left_link = Link(inboard_node=Node(position=self.FL_FVIC), outboard_node=FL_cp)
+        right_link = Link(inboard_node=Node(position=self.FR_FVIC), outboard_node=FR_cp)
+
+        rc_node = left_link.yz_intersection(link=right_link)
+
+        return (rc_node.position[0], rc_node.position[1], rc_node.position[2])
+
+    @property
+    def Rr_RC(self) -> Tuple[float, float, float]:
+        """
+        ## Rear RC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Roll center of the rear axle
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Calculates position vector of rear roll center
+        """
+        RL_cp = self._sprung_to_global(self.RL_quarter_car.tire.contact_patch)
+        RR_cp = self._sprung_to_global(self.RR_quarter_car.tire.contact_patch)
+
+        left_link = Link(inboard_node=Node(position=self.RL_FVIC), outboard_node=RL_cp)
+        right_link = Link(inboard_node=Node(position=self.RR_FVIC), outboard_node=RR_cp)
+
+        rc_node = left_link.yz_intersection(link=right_link)
+
+        return (rc_node.position[0], rc_node.position[1], rc_node.position[2])
+    
+    @property
+    def left_PC(self) -> Tuple[float, float, float]:
+        """
+        ## Left PC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Left kinematic pitch center
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Calculates position vector of left kinematic pitch center
+        """
+        FL_cp = self._sprung_to_global(self.FL_quarter_car.tire.contact_patch)
+        RL_cp = self._sprung_to_global(self.RL_quarter_car.tire.contact_patch)
+
+        front_link = Link(inboard_node=Node(position=self.FL_SVIC), outboard_node=FL_cp)
+        rear_link = Link(inboard_node=Node(position=self.RL_SVIC), outboard_node=RL_cp)
+
+        # pc_node = front_link.xz_intersection(link=rear_link)
+    
+        # return pc_node.position
+    
+        avg_cp = (self.FL_quarter_car.tire.contact_patch + \
+                  self.FR_quarter_car.tire.contact_patch + \
+                  self.RL_quarter_car.tire.contact_patch + \
+                  self.RR_quarter_car.tire.contact_patch) / 4
+        
+        return (avg_cp.position[0], avg_cp.position[1], avg_cp.position[2])
+
+    @property
+    def right_PC(self) -> Tuple[float, float, float]:
+        """
+        ## Right PC
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+
+        Right kinematic pitch center
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Calculates position vector of right kinematic pitch center
+        """
+        FR_cp = self._sprung_to_global(self.FR_quarter_car.tire.contact_patch)
+        RR_cp = self._sprung_to_global(self.RR_quarter_car.tire.contact_patch)
+
+        front_link = Link(inboard_node=Node(position=self.FR_SVIC), outboard_node=FR_cp)
+        rear_link = Link(inboard_node=Node(position=self.RR_SVIC), outboard_node=RR_cp)
+
+        # pc_node = front_link.xz_intersection(link=rear_link)
+
+        # return pc_node.position
+
+        avg_cp = (self.FL_quarter_car.tire.contact_patch + \
+                  self.FR_quarter_car.tire.contact_patch + \
+                  self.RL_quarter_car.tire.contact_patch + \
+                  self.RR_quarter_car.tire.contact_patch) / 4
+        
+        return (avg_cp.position[0], avg_cp.position[1], avg_cp.position[2])
+
+    @property
+    def FL_spring_MR(self) -> float:
+        """
+        ## Front-Left Spring MR
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Motion ratio of the front-left spring, defined disp(wheel)/disp(spring)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            motion ratio of the front-left spring
+        """
+
+        # Apply small displacement
+        self.FL_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.FL_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.FL_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.FL_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.FL_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+
+    @property
+    def FR_spring_MR(self) -> float:
+        """
+        ## Front-Right Spring MR
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Motion ratio of the front-right spring, defined disp(wheel)/disp(spring)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Motion ratio of the front-right spring
+        """
+
+        # Apply small displacement
+        self.FR_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.FR_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.FR_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.FR_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.FR_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+    
+    @property
+    def RL_spring_MR(self) -> float:
+        """
+        ## Rear-Left Spring MR
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Motion ratio of the rear-left spring, defined disp(wheel)/disp(spring)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Motion ratio of the rear-left spring
+        """
+
+        # Apply small displacement
+        self.RL_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.RL_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.RL_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.RL_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.RL_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+    
+    @property
+    def RR_spring_MR(self) -> float:
+        """
+        ## Rear-Right Spring MR
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Motion ratio of the rear-right spring, defined disp(wheel)/disp(stabar arm)
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            Motion ratio of the rear-right spring
+        """
+
+        # Apply small displacement
+        self.RR_quarter_car._jounce_persistent(jounce=-0.001)
+        spring_length_1 = self.RR_quarter_car.push_pull_rod.spring.length
+
+        # Must displace by 0.002 to reach 0.001 relative to the original state
+        self.RR_quarter_car._jounce_persistent(jounce=0.002)
+        spring_length_2 = self.RR_quarter_car.push_pull_rod.spring.length
+
+        # Return corner to original state (-0.001)
+        self.RR_quarter_car._jounce_persistent(jounce=-0.001)
+
+        return abs((0.002) / (spring_length_1 - spring_length_2))
+    
+    @property
+    def Fr_stabar_MR(self) -> Tuple[float, float]:
+        """
+        ## Front Stabar MR
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Motion ratios of the front anti-roll bar, defined [roll/ang(stabar arm), disp(wheel)/disp(stabar arm)]
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float]
+            Motion ratios of the front anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
+        """
+        # Make copies
+        if self.sus_data.Fr_stabar:
+            self_copy_1 = deepcopy(self)
+            self_copy_2 = deepcopy(self)
+
+            Fr_stabar_1 = cast(Stabar, self_copy_1.sus_data.Fr_stabar)
+            Fr_stabar_2 = cast(Stabar, self_copy_2.sus_data.Fr_stabar)
+
+            # Apply small rotation
+            self_copy_1.roll(roll=-0.001, update_state=False)
+            stabar_rot_1 = Fr_stabar_1.rotation * 180 / np.pi
+
+            self_copy_2.roll(roll=0.001, update_state=False)
+            stabar_rot_2 = Fr_stabar_2.rotation * 180 / np.pi
+
+            angle_mr = abs((0.002) / (stabar_rot_2 - stabar_rot_1))
+
+            # Make new copies for jounce
+            self_copy_1 = deepcopy(self)
+            self_copy_2 = deepcopy(self)
+
+            Fr_stabar_1 = cast(Stabar, self_copy_1.sus_data.Fr_stabar)
+            Fr_stabar_2 = cast(Stabar, self_copy_2.sus_data.Fr_stabar)
+
+            # Apply small displacement
+            self_copy_1.RL_quarter_car._jounce_persistent(jounce=-0.001)
+            stabar_arm_pos_1 = Fr_stabar_1.left_arm.outboard_node.position[2]
+
+            # Must displace by 0.002 to reach 0.001 relative to the original state
+            self_copy_2.RL_quarter_car._jounce_persistent(jounce=0.001)
+            stabar_arm_pos_2 = Fr_stabar_2.left_arm.outboard_node.position[2]
+
+            trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
+
+            return (angle_mr, trans_mr)
+        
+        else:
+            return (0, 0)
+
+    @property
+    def Rr_stabar_MR(self) -> Tuple[float, float]:
+        """
+        ## Rear Stabar MR
+        ##### Axis System: [X_{V}, Y_{V}, Z_{V}]
+        ##### Coordinate System: [x_{V}, y_{V}, z_{V}]
+
+        Motion ratios of the rear anti-roll bar, defined [roll/ang(stabar arm), disp(wheel)/disp(stabar arm)]
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float]
+            Motion ratios of the rear anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
+        """
+        # Make copies
+        if self.sus_data.Rr_stabar:
+            self_copy_1 = deepcopy(self)
+            self_copy_2 = deepcopy(self)
+
+            Rr_stabar_1 = cast(Stabar, self_copy_1.sus_data.Rr_stabar)
+            Rr_stabar_2 = cast(Stabar, self_copy_2.sus_data.Rr_stabar)
+
+            # Apply small rotation
+            self_copy_1.roll(roll=-0.001, update_state=False)
+            stabar_rot_1 = Rr_stabar_1.rotation * 180 / np.pi
+
+            self_copy_2.roll(roll=0.001, update_state=False)
+            stabar_rot_2 = Rr_stabar_2.rotation * 180 / np.pi
+
+            angle_mr = abs((0.002) / (stabar_rot_2 - stabar_rot_1))
+
+            # Make new copies for jounce
+            self_copy_1 = deepcopy(self)
+            self_copy_2 = deepcopy(self)
+
+            Rr_stabar_1 = cast(Stabar, self_copy_1.sus_data.Rr_stabar)
+            Rr_stabar_2 = cast(Stabar, self_copy_2.sus_data.Rr_stabar)
+
+            # Apply small displacement
+            self_copy_1.RL_quarter_car._jounce_persistent(jounce=-0.001)
+            stabar_arm_pos_1 = Rr_stabar_1.left_arm.outboard_node.position[2]
+
+            # Must displace by 0.002 to reach 0.001 relative to the original state
+            self_copy_2.RL_quarter_car._jounce_persistent(jounce=0.001)
+            stabar_arm_pos_2 = Rr_stabar_2.left_arm.outboard_node.position[2]
+
+            trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
+
+            return (angle_mr, trans_mr)
+        
+        else:
+            return (0, 0)

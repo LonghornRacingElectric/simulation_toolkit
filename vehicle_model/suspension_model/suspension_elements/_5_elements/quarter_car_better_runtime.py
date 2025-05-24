@@ -2,11 +2,11 @@ from vehicle_model.suspension_model.suspension_elements._4_elements.push_pull_ro
 from vehicle_model.suspension_model.suspension_elements._2_elements.wishbone import Wishbone
 from vehicle_model.suspension_model.suspension_elements._2_elements.tire import Tire
 from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
-from vehicle_model.assets.misc_math import unit_vec, rotation_matrix
+from _4_custom_libraries.misc_math import rotation_matrix
 
 # from scipy.interpolate import CubicSpline
-from typing import Sequence, Tuple, Union
 from scipy.optimize import fsolve # type: ignore
+from typing import Sequence
 import numpy as np
 
 

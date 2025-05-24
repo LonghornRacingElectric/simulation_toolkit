@@ -1,6 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
-from typing import Union
 import warnings
 
 

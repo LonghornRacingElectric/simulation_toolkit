@@ -1,6 +1,5 @@
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
-from vehicle_model.assets.misc_math import rotation_matrix
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple
 import numpy as np
 
 

@@ -1,6 +1,6 @@
 from vehicle_model.suspension_model.suspension_elements._1_elements.link import Link
 from vehicle_model.suspension_model.suspension_elements._1_elements.node import Node
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple
 import numpy as np
 
 class Damper(Link):
