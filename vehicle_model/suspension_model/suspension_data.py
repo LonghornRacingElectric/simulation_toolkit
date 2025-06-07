@@ -16,7 +16,7 @@ class SuspensionData:
     """
     ## Suspension Assembler
 
-    Assembles suspension from from vehicle definition yaml
+    Assembles suspension from vehicle definition yaml
 
     Parameters
     ----------
@@ -54,6 +54,13 @@ class SuspensionData:
 
         self.Fr_stabar: Union[Stabar, None]
         self.Rr_stabar: Union[Stabar, None]
+
+        self.CG_node: Node
+
+        self.total_mass = raw_params["Mass Properties"]["Driver"]["Value"] + \
+                          raw_params["Mass Properties"]["Fr Unsprung"]["Value"] + \
+                          raw_params["Mass Properties"]["Rr Unsprung"]["Value"] + \
+                          raw_params["Mass Properties"]["Sprung"]["Value"]
 
         if "FL QuarterCar" in raw_params.keys():
             
@@ -202,11 +209,14 @@ class SuspensionData:
                 self.FL_nodes["push_pull_rod_outboard_outboard"] = FL_ppr_outboard_outboard
                 self.FL_nodes["push_pull_rod_spring_inboard"] = FL_ppr_spring_inboard
 
+                static_weight = self.total_mass * raw_params["Mass Properties"]["CGBX"]["Value"] * raw_params["Mass Properties"]["CGBY"]["Value"] * raw_params["Environment"]["Gravity"]["Value"]
+
                 self.FL_quarter_car = QuarterCar(tire=self.FL_tire,
                                                  lower_wishbone=FL_lower_wb,
                                                  upper_wishbone=FL_upper_wb,
                                                  tie_rod=FL_tie,
-                                                 push_pull_rod=FL_ppr)
+                                                 push_pull_rod=FL_ppr,
+                                                 static_weight=static_weight)
 
             else:
                 raise Exception('Vehicle definition yaml must contain "push_pull_rod" under "FL QuarterCar"')
@@ -333,11 +343,14 @@ class SuspensionData:
             self.FR_nodes["push_pull_rod_outboard_outboard"] = FR_ppr_outboard_outboard
             self.FR_nodes["push_pull_rod_spring_inboard"] = FR_ppr_spring_inboard
 
+            static_weight = self.total_mass * raw_params["Mass Properties"]["CGBX"]["Value"] * (1 - raw_params["Mass Properties"]["CGBY"]["Value"]) * raw_params["Environment"]["Gravity"]["Value"]
+
             self.FR_quarter_car = QuarterCar(tire=self.FR_tire,
                                              lower_wishbone=FR_lower_wb,
                                              upper_wishbone=FR_upper_wb,
                                              tie_rod=FR_tie,
-                                             push_pull_rod=FR_ppr)
+                                             push_pull_rod=FR_ppr,
+                                             static_weight=static_weight)
             
             if raw_params["FL QuarterCar"]["stabar"]["connection"]["Value"]:
                 Fr_stabar_params = raw_params["FL QuarterCar"]["stabar"]
@@ -379,6 +392,9 @@ class SuspensionData:
             
             else:
                 self.Fr_stabar = None
+        
+        else:
+            raise Exception('Vehicle definition yaml must contain "FL QuarterCar"')
             
         if "RL QuarterCar" in raw_params.keys():
             
@@ -521,11 +537,14 @@ class SuspensionData:
                 self.RL_nodes["push_pull_rod_outboard_outboard"] = RL_ppr_outboard_outboard
                 self.RL_nodes["push_pull_rod_spring_inboard"] = RL_ppr_spring_inboard
 
+                static_weight = self.total_mass * (1 - raw_params["Mass Properties"]["CGBX"]["Value"]) * raw_params["Mass Properties"]["CGBY"]["Value"] * raw_params["Environment"]["Gravity"]["Value"]
+
                 self.RL_quarter_car = QuarterCar(tire=self.RL_tire,
                                                  lower_wishbone=RL_lower_wb,
                                                  upper_wishbone=RL_upper_wb,
                                                  tie_rod=RL_tie,
-                                                 push_pull_rod=RL_ppr)
+                                                 push_pull_rod=RL_ppr,
+                                                 static_weight=static_weight)
 
             else:
                 raise Exception('Vehicle definition yaml must contain "push_pull_rod" under "RL QuarterCar"')
@@ -652,11 +671,14 @@ class SuspensionData:
             self.RR_nodes["push_pull_rod_outboard_outboard"] = RR_ppr_outboard_outboard
             self.RR_nodes["push_pull_rod_spring_inboard"] = RR_ppr_spring_inboard
 
+            static_weight = self.total_mass * (1 - raw_params["Mass Properties"]["CGBX"]["Value"]) * (1 - raw_params["Mass Properties"]["CGBY"]["Value"]) * raw_params["Environment"]["Gravity"]["Value"]
+
             self.RR_quarter_car = QuarterCar(tire=self.RR_tire,
                                              lower_wishbone=RR_lower_wb,
                                              upper_wishbone=RR_upper_wb,
                                              tie_rod=RR_tie,
-                                             push_pull_rod=RR_ppr)
+                                             push_pull_rod=RR_ppr,
+                                             static_weight=static_weight)
             
             if raw_params["RL QuarterCar"]["stabar"]["connection"]["Value"]:
                 Rr_stabar_params = raw_params["RL QuarterCar"]["stabar"]
@@ -701,3 +723,14 @@ class SuspensionData:
 
         else:
             raise Exception('Vehicle definition yaml must contain "RL QuarterCar"')
+    
+        # Remove validation here and implement a schema for the inpuy yaml
+        if "Mass Properties" in raw_params.keys():
+            cg_x = (self.FL_tire.contact_patch[0] - self.RL_tire.contact_patch[0]) * raw_params["Mass Properties"]["CGBX"]["Value"] + self.RL_tire.contact_patch[0]
+            cg_y = (self.FL_tire.contact_patch[1] - self.FR_tire.contact_patch[1]) * raw_params["Mass Properties"]["CGBY"]["Value"] + self.FR_tire.contact_patch[1]
+            cg_z = raw_params["Mass Properties"]["CGZ"]["Value"]
+
+            self.CG_node = Node(position=[cg_x, cg_y, cg_z])
+        else:
+            raise Exception('Vehicle definition yaml must contain "Mass Properties"')
+        

@@ -1,3 +1,22 @@
+####################
+### FMU Settings ###
+####################
+FMU Settings:
+  Generate: False
+  Evaluate: False
+  Refinement: 10
+  Hwa Sweep: 90 # deg
+  Heave Sweep: 1.6 # in
+  Pitch Sweep: 1.5 # deg
+  Roll Sweep: 1.5 # deg
+
+####################
+### Fit Settings ###
+####################
+Fit Settings:
+  Generate Linear: True
+  Generate Cubic: True
+
 ##################
 ### Bump Plots ###
 ##################

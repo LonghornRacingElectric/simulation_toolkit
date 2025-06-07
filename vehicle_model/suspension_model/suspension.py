@@ -37,7 +37,10 @@ class Suspension:
 
         self.state_cache: dict[str, "Suspension"]
 
-        self.state: dict[str, float] = {"FL_gamma": self.FL_gamma,
+        self.state: dict[str, float] = {"veh_CG_x": self.veh_CG[0],
+                                        "veh_CG_y": self.veh_CG[1],
+                                        "veh_CG_z": self.veh_CG[2],
+                                        "FL_gamma": self.FL_gamma,
                                         "FR_gamma": self.FR_gamma,
                                         "RL_gamma": self.RL_gamma,
                                         "RR_gamma": self.RR_gamma,
@@ -86,8 +89,8 @@ class Suspension:
                                         "RL_spring_MR": self.RL_spring_MR,
                                         "RR_spring_MR": self.RR_spring_MR,
                                         "Fr_stabar_MR_rot": self.Fr_stabar_MR[0],
-                                        "Rr_stabar_MR_rot": self.Rr_stabar_MR[0],
                                         "Fr_stabar_MR_trans": self.Fr_stabar_MR[1],
+                                        "Rr_stabar_MR_rot": self.Rr_stabar_MR[0],
                                         "Rr_stabar_MR_trans": self.Rr_stabar_MR[1],}
 
         self.FL_nodes = self.sus_data.FL_nodes
@@ -111,6 +114,9 @@ class Suspension:
                       self.sus_data.RR_quarter_car.tire]
 
         self.tire_nodes = [x.contact_patch for x in self.tires]
+
+        self.CG_node = self.sus_data.CG_node
+        self.total_mass = self.sus_data.total_mass
 
     def steer(self, hwa: float) -> None:
         """
@@ -195,11 +201,11 @@ class Suspension:
             left_PC = self.left_PC
             right_PC = self.right_PC
 
-            FL_jounce = -1 * (left_PC[0] - FL_cp.position[0]) * np.tan((pitch - left_pitch) / (n_steps - i) * np.pi / 180)
-            FR_jounce = -1 * (right_PC[0] - FR_cp.position[0]) * np.tan((pitch - right_pitch) / (n_steps - i) * np.pi / 180)
+            FL_jounce = -1 * (left_PC[0] - FL_cp[0]) * np.tan((pitch - left_pitch) / (n_steps - i) * np.pi / 180)
+            FR_jounce = -1 * (right_PC[0] - FR_cp[0]) * np.tan((pitch - right_pitch) / (n_steps - i) * np.pi / 180)
 
-            RL_jounce = -1 * (left_PC[0] - RL_cp.position[0]) * np.tan((pitch - left_pitch) / (n_steps - i) * np.pi / 180)
-            RR_jounce = -1 * (right_PC[0] - RR_cp.position[0]) * np.tan((pitch - right_pitch) / (n_steps - i) * np.pi / 180)
+            RL_jounce = -1 * (left_PC[0] - RL_cp[0]) * np.tan((pitch - left_pitch) / (n_steps - i) * np.pi / 180)
+            RR_jounce = -1 * (right_PC[0] - RR_cp[0]) * np.tan((pitch - right_pitch) / (n_steps - i) * np.pi / 180)
 
             self.FL_quarter_car._jounce_persistent(jounce=FL_jounce)
             self.FR_quarter_car._jounce_persistent(jounce=FR_jounce)
@@ -245,11 +251,11 @@ class Suspension:
             Fr_RC = self.Fr_RC
             Rr_RC = self.Rr_RC
 
-            FL_jounce = (Fr_RC[1] - FL_cp.position[1]) * np.tan((roll - Fr_roll) / (n_steps - i) * np.pi / 180)
-            FR_jounce = (Fr_RC[1] - FR_cp.position[1]) * np.tan((roll - Fr_roll) / (n_steps - i) * np.pi / 180)
+            FL_jounce = (Fr_RC[1] - FL_cp[1]) * np.tan((roll - Fr_roll) / (n_steps - i) * np.pi / 180)
+            FR_jounce = (Fr_RC[1] - FR_cp[1]) * np.tan((roll - Fr_roll) / (n_steps - i) * np.pi / 180)
 
-            RL_jounce = (Rr_RC[1] - RL_cp.position[1]) * np.tan((roll - Rr_roll) / (n_steps - i) * np.pi / 180)
-            RR_jounce = (Rr_RC[1] - RR_cp.position[1]) * np.tan((roll - Rr_roll) / (n_steps - i) * np.pi / 180)
+            RL_jounce = (Rr_RC[1] - RL_cp[1]) * np.tan((roll - Rr_roll) / (n_steps - i) * np.pi / 180)
+            RR_jounce = (Rr_RC[1] - RR_cp[1]) * np.tan((roll - Rr_roll) / (n_steps - i) * np.pi / 180)
 
             self.FL_quarter_car._jounce_persistent(jounce=FL_jounce)
             self.FR_quarter_car._jounce_persistent(jounce=FR_jounce)
@@ -597,6 +603,9 @@ class Suspension:
         -------
         None
         """
+        self.state["veh_CG_x"] = self.veh_CG[0]
+        self.state["veh_CG_y"] = self.veh_CG[1]
+        self.state["veh_CG_z"] = self.veh_CG[2]
         self.state["FL_gamma"] = self.FL_gamma
         self.state["FR_gamma"] = self.FR_gamma
         self.state["RL_gamma"] = self.RL_gamma
@@ -645,10 +654,12 @@ class Suspension:
         self.state["FR_spring_MR"] = self.FR_spring_MR
         self.state["RL_spring_MR"] = self.RL_spring_MR
         self.state["RR_spring_MR"] = self.RR_spring_MR
-        self.state["Fr_stabar_MR_rot"] = self.Fr_stabar_MR[0]
-        self.state["Rr_stabar_MR_rot"] = self.Rr_stabar_MR[0]
-        self.state["Fr_stabar_MR_trans"] = self.Fr_stabar_MR[1]
-        self.state["Rr_stabar_MR_trans"] = self.Rr_stabar_MR[1]
+        if self.Fr_stabar_MR:
+            self.state["Fr_stabar_MR_rot"] = self.Fr_stabar_MR[0]
+            self.state["Fr_stabar_MR_trans"] = self.Fr_stabar_MR[1]
+        if self.Rr_stabar_MR:
+            self.state["Rr_stabar_MR_rot"] = self.Rr_stabar_MR[0]
+            self.state["Rr_stabar_MR_trans"] = self.Rr_stabar_MR[1]
 
     def _sprung_to_global(self, node: Node, align_axes: bool = True) -> Node:
         FL_cp = np.array(self.FL_quarter_car.tire.contact_patch.position)
@@ -687,7 +698,7 @@ class Suspension:
             node_trans = node_trans
 
         return Node(position=node_trans)
-
+    
     @property
     def FL_delta(self) -> float:
         """
@@ -1249,6 +1260,29 @@ class Suspension:
         return self._mech_trail_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RL_cp, quarter_car=self.RR_quarter_car)
     
     @property
+    def veh_CG(self) -> Tuple[float, float, float]:
+        """
+        ## Vehicle CG
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Vehicle CG position
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Vehicle CG position
+        """
+        
+        global_veh_CG = self._sprung_to_global(node=self.sus_data.CG_node)
+        
+        return (global_veh_CG[0], global_veh_CG[1], global_veh_CG[2])
+
+    @property
     def FL_FVIC(self) -> Tuple[float, float, float]:
         """
         ## Front-Left FVIC
@@ -1283,7 +1317,7 @@ class Suspension:
 
         global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
 
-        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+        return (global_FVIC[0], global_FVIC[1], global_FVIC[2])
 
     @property
     def FR_FVIC(self) -> Tuple[float, float, float]:
@@ -1320,7 +1354,7 @@ class Suspension:
 
         global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
 
-        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+        return (global_FVIC[0], global_FVIC[1], global_FVIC[2])
     
     @property
     def RL_FVIC(self) -> Tuple[float, float, float]:
@@ -1357,7 +1391,7 @@ class Suspension:
 
         global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
 
-        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+        return (global_FVIC[0], global_FVIC[1], global_FVIC[2])
 
     @property
     def RR_FVIC(self) -> Tuple[float, float, float]:
@@ -1394,7 +1428,7 @@ class Suspension:
 
         global_FVIC = self._sprung_to_global(node=Node(position=[x_coord, y, z]))
 
-        return (global_FVIC.position[0], global_FVIC.position[1], global_FVIC.position[2])
+        return (global_FVIC[0], global_FVIC[1], global_FVIC[2])
     
     @property
     def FL_SVIC(self) -> Tuple[float, float, float]:
@@ -1438,7 +1472,7 @@ class Suspension:
 
         global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
 
-        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+        return (global_SVIC[0], global_SVIC[1], global_SVIC[2])
 
     @property
     def FR_SVIC(self) -> Tuple[float, float, float]:
@@ -1482,7 +1516,7 @@ class Suspension:
 
         global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
 
-        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+        return (global_SVIC[0], global_SVIC[1], global_SVIC[2])
     
     @property
     def RL_SVIC(self) -> Tuple[float, float, float]:
@@ -1526,7 +1560,7 @@ class Suspension:
 
         global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
 
-        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+        return (global_SVIC[0], global_SVIC[1], global_SVIC[2])
 
     @property
     def RR_SVIC(self) -> Tuple[float, float, float]:
@@ -1570,7 +1604,7 @@ class Suspension:
 
         global_SVIC = self._sprung_to_global(node=Node(position=[x, y_coord, z]))
 
-        return (global_SVIC.position[0], global_SVIC.position[1], global_SVIC.position[2])
+        return (global_SVIC[0], global_SVIC[1], global_SVIC[2])
     
     @property
     def Fr_RC(self) -> Tuple[float, float, float]:
@@ -1598,7 +1632,7 @@ class Suspension:
 
         rc_node = left_link.yz_intersection(link=right_link)
 
-        return (rc_node.position[0], rc_node.position[1], rc_node.position[2])
+        return (rc_node[0], rc_node[1], rc_node[2])
 
     @property
     def Rr_RC(self) -> Tuple[float, float, float]:
@@ -1626,7 +1660,7 @@ class Suspension:
 
         rc_node = left_link.yz_intersection(link=right_link)
 
-        return (rc_node.position[0], rc_node.position[1], rc_node.position[2])
+        return (rc_node[0], rc_node[1], rc_node[2])
     
     @property
     def left_PC(self) -> Tuple[float, float, float]:
@@ -1661,7 +1695,7 @@ class Suspension:
                   self.RL_quarter_car.tire.contact_patch + \
                   self.RR_quarter_car.tire.contact_patch) / 4
         
-        return (avg_cp.position[0], avg_cp.position[1], avg_cp.position[2])
+        return (avg_cp[0], avg_cp[1], avg_cp[2])
 
     @property
     def right_PC(self) -> Tuple[float, float, float]:
@@ -1696,7 +1730,7 @@ class Suspension:
                   self.RL_quarter_car.tire.contact_patch + \
                   self.RR_quarter_car.tire.contact_patch) / 4
         
-        return (avg_cp.position[0], avg_cp.position[1], avg_cp.position[2])
+        return (avg_cp[0], avg_cp[1], avg_cp[2])
 
     @property
     def FL_spring_MR(self) -> float:
@@ -1728,8 +1762,11 @@ class Suspension:
         # Return corner to original state (-0.001)
         self.FL_quarter_car._jounce_persistent(jounce=-0.001)
 
-        return abs((0.002) / (spring_length_1 - spring_length_2))
-
+        try:
+            return abs((0.002) / (spring_length_1 - spring_length_2))
+        except:
+            return 1.25
+        
     @property
     def FR_spring_MR(self) -> float:
         """
@@ -1760,8 +1797,11 @@ class Suspension:
         # Return corner to original state (-0.001)
         self.FR_quarter_car._jounce_persistent(jounce=-0.001)
 
-        return abs((0.002) / (spring_length_1 - spring_length_2))
-    
+        try:
+            return abs((0.002) / (spring_length_1 - spring_length_2))
+        except:
+            return 1.25
+        
     @property
     def RL_spring_MR(self) -> float:
         """
@@ -1792,8 +1832,11 @@ class Suspension:
         # Return corner to original state (-0.001)
         self.RL_quarter_car._jounce_persistent(jounce=-0.001)
 
-        return abs((0.002) / (spring_length_1 - spring_length_2))
-    
+        try:
+            return abs((0.002) / (spring_length_1 - spring_length_2))
+        except:
+            return 1.4
+        
     @property
     def RR_spring_MR(self) -> float:
         """
@@ -1824,7 +1867,11 @@ class Suspension:
         # Return corner to original state (-0.001)
         self.RR_quarter_car._jounce_persistent(jounce=-0.001)
 
-        return abs((0.002) / (spring_length_1 - spring_length_2))
+        try:
+            return abs((0.002) / (spring_length_1 - spring_length_2))
+        except:
+            return 1.4
+        
     
     @property
     def Fr_stabar_MR(self) -> Tuple[float, float]:
@@ -1844,8 +1891,9 @@ class Suspension:
         Tuple[float, float]
             Motion ratios of the front anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
         """
-        # Make copies
+        
         if self.sus_data.Fr_stabar:
+            # Make copies
             self_copy_1 = deepcopy(self)
             self_copy_2 = deepcopy(self)
 
@@ -1870,16 +1918,16 @@ class Suspension:
 
             # Apply small displacement
             self_copy_1.RL_quarter_car._jounce_persistent(jounce=-0.001)
-            stabar_arm_pos_1 = Fr_stabar_1.left_arm.outboard_node.position[2]
+            stabar_arm_pos_1 = Fr_stabar_1.left_arm.outboard_node[2]
 
             # Must displace by 0.002 to reach 0.001 relative to the original state
             self_copy_2.RL_quarter_car._jounce_persistent(jounce=0.001)
-            stabar_arm_pos_2 = Fr_stabar_2.left_arm.outboard_node.position[2]
+            stabar_arm_pos_2 = Fr_stabar_2.left_arm.outboard_node[2]
 
             trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
 
             return (angle_mr, trans_mr)
-        
+
         else:
             return (0, 0)
 
@@ -1901,8 +1949,8 @@ class Suspension:
         Tuple[float, float]
             Motion ratios of the rear anti-roll bar, in the form [roll/ang, disp(wheel)/disp(stabar arm)]
         """
-        # Make copies
         if self.sus_data.Rr_stabar:
+            # Make copies
             self_copy_1 = deepcopy(self)
             self_copy_2 = deepcopy(self)
 
@@ -1916,8 +1964,10 @@ class Suspension:
             self_copy_2.roll(roll=0.001, update_state=False)
             stabar_rot_2 = Rr_stabar_2.rotation * 180 / np.pi
 
-            angle_mr = abs((0.002) / (stabar_rot_2 - stabar_rot_1))
-
+            try:
+                angle_mr = abs((0.002) / (stabar_rot_2 - stabar_rot_1))
+            except:
+                angle_mr = 0.4
             # Make new copies for jounce
             self_copy_1 = deepcopy(self)
             self_copy_2 = deepcopy(self)
@@ -1927,15 +1977,18 @@ class Suspension:
 
             # Apply small displacement
             self_copy_1.RL_quarter_car._jounce_persistent(jounce=-0.001)
-            stabar_arm_pos_1 = Rr_stabar_1.left_arm.outboard_node.position[2]
+            stabar_arm_pos_1 = Rr_stabar_1.left_arm.outboard_node[2]
 
             # Must displace by 0.002 to reach 0.001 relative to the original state
             self_copy_2.RL_quarter_car._jounce_persistent(jounce=0.001)
-            stabar_arm_pos_2 = Rr_stabar_2.left_arm.outboard_node.position[2]
+            stabar_arm_pos_2 = Rr_stabar_2.left_arm.outboard_node[2]
 
-            trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
-
+            try:
+                trans_mr = abs((0.002) / (stabar_arm_pos_2 - stabar_arm_pos_1))
+            except:
+                trans_mr = 11
+                
             return (angle_mr, trans_mr)
-        
+
         else:
             return (0, 0)

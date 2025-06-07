@@ -28,6 +28,8 @@ class VisualModel:
         self.show_links = self.config["Links"]["Show"]
         self.show_nodes = self.config["Nodes"]["Show"]
         self.show_tires = self.config["Tires"]["Show"]
+        self.show_vehicle_CG = self.config["Vehicle CG"]["Show"]
+        self.CG_node_radius = self.config["Vehicle CG"]["Radius"]
         self.node_radius = self.config["Nodes"]["Radius"]
         self.link_radius = self.config["Links"]["Radius"]
 
@@ -116,6 +118,9 @@ class VisualModel:
             for i, node in enumerate(self.sus.tire_nodes):
                 self.sus.tire_nodes[i] = self.sus._sprung_to_global(node=node)
 
+        if self.show_vehicle_CG:
+            self.sus.CG_node = self.sus._sprung_to_global(node=self.sus.CG_node)
+
         if self.show_links:
             for key, link in self.sus.FL_links.items():
                 trans_inboard = self.sus._sprung_to_global(node=link.inboard_node)
@@ -184,6 +189,10 @@ class VisualModel:
                                             center=self.sus._sprung_to_global(node=Node(position=tire.center)).position,
                                             direction=self.sus._sprung_to_global(Node(position=tire.direction), align_axes=False).position)
                 self.plotter.add_mesh(tube, color='black', opacity=0.5)
+        
+        if self.show_vehicle_CG:
+            sphere = pv.Sphere(radius=self.CG_node_radius, center=self.sus.CG_node.position)
+            self.plotter.add_mesh(sphere, color='black')
         
         if self.show_bars:
             for _, link in self.sus.Fr_stabar_links.items():

@@ -10,8 +10,11 @@ import sys
 # Initialization
 avail_sims = ["kin", "visual", "ymd_cr", "ymd_cv"]
 
-sim_selected = sys.argv[1].lower()
-model_path = sys.argv[2]
+try:
+    sim_selected = sys.argv[1].lower()
+    model_path = sys.argv[2]
+except:
+    raise Exception("Please specify SIM arg: make sim SIM={} MODEL_PATH={}")
 
 # Validation
 if sim_selected not in avail_sims:

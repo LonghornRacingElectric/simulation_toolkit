@@ -4,8 +4,8 @@
 
 Physical Parameters:
   Velocity: 15
-  HandwheelAngle Sweep: 90
-  SideslipAngle Sweep: 15
+  HandwheelAngle Sweep: 15
+  SideslipAngle Sweep: 8
 
 Simulation Parameters:
-  Refinement: 15
+  Refinement: 5

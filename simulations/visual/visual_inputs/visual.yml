@@ -16,6 +16,9 @@ Nodes:
   Radius: 0.015875
 Tires:
   Show: True
+Vehicle CG:
+  Show: True
+  Radius: 0.03
 Sliders:
   Spacing: 0.05
   Vertical Position: 0.925

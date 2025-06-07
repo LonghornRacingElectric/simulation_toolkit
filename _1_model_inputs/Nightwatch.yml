@@ -231,8 +231,8 @@ FL QuarterCar:
         Value: 5
       rate:
         Type: float
-        Unit: lb/in
-        Value: 350
+        Unit: N/m
+        Value: 61294.39225 # 350 lbs per in
     inboard_rod:
       inboard_node:
         Type: Tuple[float, float, float]
@@ -374,8 +374,8 @@ RL QuarterCar:
         Value: 5
       rate:
         Type: float
-        Unit: lb/in
-        Value: 350
+        Unit: N/m
+        Value: 61294.39225 # 350 lbs per in
     inboard_rod:
       inboard_node:
         Type: Tuple[float, float, float]

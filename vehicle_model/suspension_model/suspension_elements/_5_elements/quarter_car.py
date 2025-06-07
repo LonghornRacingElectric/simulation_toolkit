@@ -33,6 +33,9 @@ class QuarterCar:
         
     push_pull_rod : PushPullRod
         PushPullRod object representing push or pull rod
+
+    static_weight : float
+        Static weight of the respective Quarter Car
     """
     def __init__(
             self,
@@ -40,13 +43,15 @@ class QuarterCar:
             lower_wishbone: Wishbone,
             upper_wishbone: Wishbone,
             tie_rod: Link,
-            push_pull_rod: PushPullRod):
+            push_pull_rod: PushPullRod,
+            static_weight: float = 0.0):
         
         self.tire = tire
         self.lower_wishbone = lower_wishbone
         self.upper_wishbone = upper_wishbone
         self.tie_rod = tie_rod
         self.push_pull_rod = push_pull_rod
+        self.static_weight = static_weight
 
         # Define fixed geometry with Links
         self.LCA_to_UCA = Link(inboard_node=lower_wishbone.fore_link.outboard_node, outboard_node=upper_wishbone.fore_link.outboard_node)

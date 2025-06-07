@@ -33,6 +33,9 @@ class Tire:
 
         self.center_node = Node(position=np.array(contact_patch.position) + z_rot @ x_rot @ center_vec)
         self.front_node = Node(position=np.array(contact_patch.position) + z_rot @ x_rot @ front_vec)
+    
+    def tire_eval(self, FZ: float, alpha: float, kappa: float, gamma: float) -> list[float]:
+        return self.tire.tire_eval(FZ=FZ, alpha=alpha, kappa=kappa, gamma=gamma)
         
     @property
     def delta(self) -> float:
