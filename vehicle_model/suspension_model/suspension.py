@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from copy import deepcopy
 import numpy as np
 
+import matplotlib.pyplot as plt
 
 @dataclass
 class Suspension:
@@ -40,6 +41,22 @@ class Suspension:
         self.state: dict[str, float] = {"veh_CG_x": self.veh_CG[0],
                                         "veh_CG_y": self.veh_CG[1],
                                         "veh_CG_z": self.veh_CG[2],
+                                        "FL_cp_x": self.FL_cp[0],
+                                        "FL_cp_y": self.FL_cp[1],
+                                        "FL_cp_z": self.FL_cp[2],
+                                        "FR_cp_x": self.FR_cp[0],
+                                        "FR_cp_y": self.FR_cp[1],
+                                        "FR_cp_z": self.FR_cp[2],
+                                        "RL_cp_x": self.RL_cp[0],
+                                        "RL_cp_y": self.RL_cp[1],
+                                        "RL_cp_z": self.RL_cp[2],
+                                        "RR_cp_x": self.RR_cp[0],
+                                        "RR_cp_y": self.RR_cp[1],
+                                        "RR_cp_z": self.RR_cp[2],
+                                        "FL_wheel_jounce": self.FL_wheel_jounce,
+                                        "FR_wheel_jounce": self.FR_wheel_jounce,
+                                        "RL_wheel_jounce": self.RL_wheel_jounce,
+                                        "RR_wheel_jounce": self.RR_wheel_jounce,
                                         "FL_gamma": self.FL_gamma,
                                         "FR_gamma": self.FR_gamma,
                                         "RL_gamma": self.RL_gamma,
@@ -118,7 +135,29 @@ class Suspension:
         self.CG_node = self.sus_data.CG_node
         self.total_mass = self.sus_data.total_mass
 
-    def steer(self, hwa: float) -> None:
+    def reset(self) -> None:
+        """
+        ## Reset
+
+        Resets state of suspension
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.heave(heave=None)
+        self.FL_quarter_car.wheel_jounce = 0
+        self.FR_quarter_car.wheel_jounce = 0
+        self.RL_quarter_car.wheel_jounce = 0
+        self.RR_quarter_car.wheel_jounce = 0
+
+        self._update_state()
+        
+    def steer(self, hwa: float, update_state: bool = True) -> None:
         """
         ## Steer
 
@@ -128,6 +167,8 @@ class Suspension:
         ----------
         hwa : float
             Handwheel angle in degrees
+        update_state : bool
+            Whether to update all variables for the new state
 
         Returns
         -------
@@ -135,9 +176,11 @@ class Suspension:
         """
         self.FL_quarter_car.steer(rack_displacement = hwa / 360 * self.sus_data.steering_ratio)
         self.FR_quarter_car.steer(rack_displacement = hwa / 360 * self.sus_data.steering_ratio)
-        self._update_state()
+
+        if update_state:
+            self._update_state()
     
-    def heave(self, heave: Union[None, float]) -> None:
+    def heave(self, heave: Union[None, float], update_state: bool = True) -> None:
         """
         ## Heave
 
@@ -147,6 +190,8 @@ class Suspension:
         ----------
         heave : float
             Vertical travel of contact patch in meters
+        update_state : bool
+            Whether to update all variables for the new state
         
         Returns
         -------
@@ -163,7 +208,8 @@ class Suspension:
             self.RL_quarter_car._jounce_persistent(jounce=heave)
             self.RR_quarter_car._jounce_persistent(jounce=heave)
         
-        self._update_state()
+        if update_state:
+            self._update_state()
     
     def pitch(self, pitch: Union[None, float], n_steps: int = 1, update_state: bool = True) -> None:
         """
@@ -234,14 +280,15 @@ class Suspension:
         -------
         None
         """
+        
         for i in range(n_steps):
             FL_cp = self.FL_quarter_car.tire.contact_patch
             FR_cp = self.FR_quarter_car.tire.contact_patch
             RL_cp = self.RL_quarter_car.tire.contact_patch
             RR_cp = self.RR_quarter_car.tire.contact_patch
 
-            Fr_roll = -180 / np.pi * np.arctan(FL_cp[2] - FR_cp[2]) / (FL_cp[1] - FR_cp[1])
-            Rr_roll = -180 / np.pi * np.arctan(RL_cp[2] - RR_cp[2]) / (RL_cp[1] - RR_cp[1])
+            Fr_roll = -180 / np.pi * np.arctan((FL_cp[2] - FR_cp[2]) / (FL_cp[1] - FR_cp[1]))
+            Rr_roll = -180 / np.pi * np.arctan((RL_cp[2] - RR_cp[2]) / (RL_cp[1] - RR_cp[1]))
 
             FL_cp = self._sprung_to_global(node=FL_cp)
             FR_cp = self._sprung_to_global(node=FR_cp)
@@ -456,7 +503,7 @@ class Suspension:
         Returns
         -------
         float
-            Scrub radius of given tire in degrees
+            Scrub radius of given tire in meters
         """
         # Define ground plane
         cp_1 = np.array(CP_1.position)
@@ -580,9 +627,12 @@ class Suspension:
         normal_2 = np.cross((tire_pt_2 - tire_pt_1), (tire_pt_3 - tire_pt_1))
 
         angle = np.arccos(np.linalg.norm(np.dot(normal_1, normal_2)) / (np.linalg.norm(normal_1) * np.linalg.norm(normal_2)))
-        gamma_magnitude = (angle - np.pi / 2)
+        gamma_magnitude = abs(abs(angle) - np.pi/2)
 
-        if (np.sign(tire.direction[1]) == np.sign(tire.direction[2])):
+        global_tire_center = self._sprung_to_global(node=tire.center_node)
+        global_tire_cp = self._sprung_to_global(node=tire.contact_patch)
+
+        if (global_tire_center[1] > global_tire_cp[1]):
             gamma_dir = -1
         else:
             gamma_dir = 1
@@ -606,6 +656,22 @@ class Suspension:
         self.state["veh_CG_x"] = self.veh_CG[0]
         self.state["veh_CG_y"] = self.veh_CG[1]
         self.state["veh_CG_z"] = self.veh_CG[2]
+        self.state["FL_cp_x"] = self.FL_cp[0]
+        self.state["FL_cp_y"] = self.FL_cp[1]
+        self.state["FL_cp_z"] = self.FL_cp[2]
+        self.state["FR_cp_x"] = self.FR_cp[0]
+        self.state["FR_cp_y"] = self.FR_cp[1]
+        self.state["FR_cp_z"] = self.FR_cp[2]
+        self.state["RL_cp_x"] = self.RL_cp[0]
+        self.state["RL_cp_y"] = self.RL_cp[1]
+        self.state["RL_cp_z"] = self.RL_cp[2]
+        self.state["RR_cp_x"] = self.RR_cp[0]
+        self.state["RR_cp_y"] = self.RR_cp[1]
+        self.state["RR_cp_z"] = self.RR_cp[2]
+        self.state["FL_wheel_jounce"] = self.FL_wheel_jounce
+        self.state["FR_wheel_jounce"] = self.FR_wheel_jounce
+        self.state["RL_wheel_jounce"] = self.RL_wheel_jounce
+        self.state["RR_wheel_jounce"] = self.RR_wheel_jounce
         self.state["FL_gamma"] = self.FL_gamma
         self.state["FR_gamma"] = self.FR_gamma
         self.state["RL_gamma"] = self.RL_gamma
@@ -717,7 +783,7 @@ class Suspension:
         float
             Steered angle of the front-left tire in degrees
         """
-        return self.FL_quarter_car.tire.delta
+        return self.FL_quarter_car.tire.delta * 180 / np.pi
 
     @property
     def FR_delta(self) -> float:
@@ -737,7 +803,7 @@ class Suspension:
         float
             Steered angle of the front-right tire in degrees
         """
-        return self.FR_quarter_car.tire.delta
+        return self.FR_quarter_car.tire.delta * 180 / np.pi
 
     @property
     def RL_delta(self) -> float:
@@ -757,7 +823,7 @@ class Suspension:
         float
             Steered angle of the rear-left tire in degrees
         """
-        return self.RL_quarter_car.tire.delta
+        return self.RL_quarter_car.tire.delta * 180 / np.pi
 
     @property
     def RR_delta(self) -> float:
@@ -777,7 +843,7 @@ class Suspension:
         float
             Steered angle of the rear-right tire in degrees
         """
-        return self.RR_quarter_car.tire.delta
+        return self.RR_quarter_car.tire.delta * 180 / np.pi
 
     @property
     def FL_gamma(self) -> float:
@@ -801,6 +867,7 @@ class Suspension:
         RL_cp = self.RL_quarter_car.tire.contact_patch
         RR_cp = self.RR_quarter_car.tire.contact_patch
 
+        # The order of args matters. You should rotate CCW about Z to get from (CP_2 - CP_1) to (CP_3 - CP_1) 
         return self._gamma_calculation(CP_1=FR_cp, CP_2=RL_cp, CP_3=RR_cp, tire=self.FL_quarter_car.tire)
 
     @property
@@ -825,6 +892,7 @@ class Suspension:
         RL_cp = self.RL_quarter_car.tire.contact_patch
         RR_cp = self.RR_quarter_car.tire.contact_patch
 
+        # The order of args matters. You should rotate CCW about Z to get from (CP_2 - CP_1) to (CP_3 - CP_1)
         return self._gamma_calculation(CP_1=FL_cp, CP_2=RL_cp, CP_3=RR_cp, tire=self.FR_quarter_car.tire)
 
     @property
@@ -849,6 +917,7 @@ class Suspension:
         FR_cp = self.FR_quarter_car.tire.contact_patch
         RR_cp = self.RR_quarter_car.tire.contact_patch
 
+        # The order of args matters. You should rotate CCW about Z to get from (CP_2 - CP_1) to (CP_3 - CP_1)
         return self._gamma_calculation(CP_1=FL_cp, CP_2=FR_cp, CP_3=RR_cp, tire=self.RL_quarter_car.tire)
 
     @property
@@ -1281,6 +1350,182 @@ class Suspension:
         global_veh_CG = self._sprung_to_global(node=self.sus_data.CG_node)
         
         return (global_veh_CG[0], global_veh_CG[1], global_veh_CG[2])
+
+    @property
+    def FL_cp(self) -> Tuple[float, float, float]:
+        """
+        ## FL Contact Patch
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Front left contact patch coordinates
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Front left contact patch coordinates
+        """
+
+        global_FL_cp = self._sprung_to_global(node=self.FL_quarter_car.tire.contact_patch)
+        
+        return (global_FL_cp[0], global_FL_cp[1], global_FL_cp[2])
+
+    @property
+    def FR_cp(self) -> Tuple[float, float, float]:
+        """
+        ## FR Contact Patch
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Front right contact patch coordinates
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Front right contact patch coordinates
+        """
+
+        global_FR_cp = self._sprung_to_global(node=self.FR_quarter_car.tire.contact_patch)
+
+        return (global_FR_cp[0], global_FR_cp[1], global_FR_cp[2])
+
+    @property
+    def RL_cp(self) -> Tuple[float, float, float]:
+        """
+        ## RL Contact Patch
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Rear left contact patch coordinates
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Rear left contact patch coordinates
+        """
+
+        global_RL_cp = self._sprung_to_global(node=self.RL_quarter_car.tire.contact_patch)
+
+        return (global_RL_cp[0], global_RL_cp[1], global_RL_cp[2])
+
+    @property
+    def RR_cp(self) -> Tuple[float, float, float]:
+        """
+        ## RR Contact Patch
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Rear right contact patch coordinates
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Rear right contact patch coordinates
+        """
+
+        global_RR_cp = self._sprung_to_global(node=self.RR_quarter_car.tire.contact_patch)
+
+        return (global_RR_cp[0], global_RR_cp[1], global_RR_cp[2])
+
+    @property
+    def FL_wheel_jounce(self) -> float:
+        """
+        ## FL Jounce
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Jounce of the front left wheel in meters
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Jounce of the front left wheel in meters
+        """
+
+        return self.FL_quarter_car.wheel_jounce
+
+    @property
+    def FR_wheel_jounce(self) -> float:
+        """
+        ## FR Jounce
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Jounce of the front right wheel in meters
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Jounce of the front right wheel in meters
+        """
+
+        return self.FR_quarter_car.wheel_jounce
+
+    @property
+    def RL_wheel_jounce(self) -> float:
+        """
+        ## RL Jounce
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Jounce of the rear left wheel in meters
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Jounce of the rear left wheel in meters
+        """
+
+        return self.RL_quarter_car.wheel_jounce
+    
+    @property
+    def RR_wheel_jounce(self) -> float:
+        """
+        ## RR Jounce
+        ##### Axis System: [X_{E}, Y_{E}, Z_{E}]
+        ##### Coordinate System: [x_{E}, y_{E}, z_{E}]
+        
+        Jounce of the rear right wheel in meters
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Tuple[float, float, float]
+            Jounce of the rear right wheel in meters
+        """
+
+        return self.RR_quarter_car.wheel_jounce
 
     @property
     def FL_FVIC(self) -> Tuple[float, float, float]:

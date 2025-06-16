@@ -120,7 +120,7 @@ class QuarterCar:
         -------
         None
         """
-        self.wheel_jounce = self.tire.contact_patch.initial_position[2] + self.wheel_jounce + jounce
+        self.wheel_jounce = self.wheel_jounce + self.tire.contact_patch.initial_position[2] + jounce
         self._update_geometry()
     
     def _update_geometry(self) -> None:

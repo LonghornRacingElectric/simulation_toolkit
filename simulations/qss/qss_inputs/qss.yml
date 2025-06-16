@@ -1,0 +1,19 @@
+################################
+### Quasi-Steady-State Model ###
+################################
+
+Yaw Moment Settings:
+  Generate CV: True
+  Generate CR: False
+  Velocity Schedule:
+    # - 5
+    # - 10
+    # - 15
+    # - 20
+    - 25
+    # - 30
+  Radius Schedule:
+    - 1000
+  Handwheel Angle Sweep: 25
+  Sideslip Angle Sweep: 10
+  Refinement: 11

@@ -1,5 +1,6 @@
 from vehicle_model.suspension_model.suspension_data import SuspensionData
 from vehicle_model.suspension_model.suspension import Suspension
+from _4_custom_libraries.misc_math import rotation_matrix
 from _4_custom_libraries.cache import SISO_cache
 
 from typing import Callable, MutableSequence, Sequence, Set, Tuple
@@ -7,6 +8,8 @@ from scipy.interpolate import RegularGridInterpolator
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy.interpolate import CubicSpline
 from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
+from dataclasses import dataclass
 from datetime import datetime
 from PIL import Image
 
@@ -24,12 +27,12 @@ from copy import deepcopy
 
 class Kinematics:
     def __init__(self, model_path: str):
-        sus_data: SuspensionData = SuspensionData(path=model_path)
-        self.sus: Suspension = Suspension(sus_data=sus_data)
+        self.sus_data: SuspensionData = SuspensionData(path=model_path)
+        self.sus: Suspension = Suspension(sus_data=self.sus_data)
         self.sus_copy = deepcopy(self.sus)
 
-        roll_n_steps = 5
-        
+        roll_n_steps = 1
+
         with open("./simulations/kin/kin_inputs/kin.yml") as f:
             try:
                 self.plot_config: dict[str, dict[str, dict]] = yaml.safe_load(f)
@@ -42,38 +45,53 @@ class Kinematics:
         # Generate FMU
         if self.FMU_config["Generate"]:
             FMU_refinement = self.FMU_config["Refinement"]
+            
+            # Sweeps
             hwa_sweep = np.linspace(-self.FMU_config["Hwa Sweep"], self.FMU_config["Hwa Sweep"], FMU_refinement)
-            heave_sweep = np.linspace(-self.FMU_config["Heave Sweep"], self.FMU_config["Heave Sweep"], FMU_refinement)
+            heave_sweep = np.linspace(-self.FMU_config["Heave Sweep"], self.FMU_config["Heave Sweep"], FMU_refinement) * 0.0254
             pitch_sweep = np.linspace(-self.FMU_config["Pitch Sweep"], self.FMU_config["Pitch Sweep"], FMU_refinement)
             roll_sweep = np.linspace(-self.FMU_config["Roll Sweep"], self.FMU_config["Roll Sweep"], FMU_refinement)
 
-            total_evals = FMU_refinement**3
-            eval_num = 0
-            
             state_tracking: dict[str, MutableSequence] = {x: [] for x in self.sus_copy.state.keys()}
+            
+            eval_num = 0
+            total_evals = FMU_refinement**4
+
             for hwa in hwa_sweep:
                 for heave in heave_sweep:
                     for pitch in pitch_sweep:
                         for roll in roll_sweep:
                             eval_num += 1
                             print(f"FMU Generation Progress: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
-                            
-                            self.combined_input(hwa=hwa, heave=heave, pitch=pitch, roll=roll)
+
+                            self.sus_copy = deepcopy(self.sus)
+                            self.sus_copy.steer(hwa=hwa)
+                            self.sus_copy.heave(heave=heave)
+                            self.sus_copy.pitch(pitch=pitch)
+                            self.sus_copy.roll(roll=roll)
 
                             for key in self.sus_copy.state.keys():
                                 state_tracking[key].append(float(self.sus_copy.state[key]))
+                                
+                            
+                            self.sus_copy = deepcopy(self.sus)
 
             FMU_fits: dict[str, RegularGridInterpolator] = {}
-
+            
             for key in state_tracking.keys():
                 output_state = np.array(state_tracking[key]).reshape((FMU_refinement, FMU_refinement, FMU_refinement, FMU_refinement))
-                interp_func = RegularGridInterpolator((hwa_sweep, heave_sweep, pitch_sweep, roll_sweep), output_state)
+                
+                if self.FMU_config["Extrapolate"]:
+                    interp_func = RegularGridInterpolator((hwa_sweep, heave_sweep, pitch_sweep, roll_sweep), output_state,
+                                                          bounds_error=False, fill_value=None)
+                else:
+                    interp_func = RegularGridInterpolator((hwa_sweep, heave_sweep, pitch_sweep, roll_sweep), output_state)
                 
                 FMU_fits[key] = interp_func
             
             FMU_fits["keys"] = list(FMU_fits.keys())
-
-            with open("./simulations/kin/kin_outputs/FMU.pkl", 'wb') as f:
+            
+            with open("./simulations/kin/kin_outputs/kin_FMU.pkl", 'wb') as f:
                 pickle.dump(FMU_fits, f)
             
             print()
@@ -140,7 +158,7 @@ class Kinematics:
         eval_num = 0
 
         if self.FMU_config["Evaluate"]:
-            with open("./simulations/kin/kin_outputs/FMU.pkl", 'rb') as f:
+            with open("./simulations/kin/kin_outputs/kin_FMU.pkl", 'rb') as f:
                 FMU_fits = pickle.load(f)
 
         for _, value in self.plot_config.items():
@@ -201,8 +219,8 @@ class Kinematics:
                         Fr_FMU_vals = np.array([FMU_fits["Fr_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, jounce, 0, 0]))[0] for jounce in sweep])
                         Rr_FMU_vals = np.array([FMU_fits["Rr_" + value["y-axis"]["Outputs"]["RL"]](np.array([0, jounce, 0, 0]))[0] for jounce in sweep])
                         
-                        ax1.plot(jounce_sweep, Fr_FMU_vals * value["y-axis"]["Multipliers"]["FL"], label="FMU Output")
-                        ax2.plot(jounce_sweep, Rr_FMU_vals * value["y-axis"]["Multipliers"]["RL"], label="FMU Output")
+                        ax1.plot(jounce_sweep, Fr_FMU_vals * value["y-axis"]["Multipliers"]["FL"], linestyle='--')
+                        ax2.plot(jounce_sweep, Rr_FMU_vals * value["y-axis"]["Multipliers"]["RL"], linestyle='--')
 
                     slope_0, func_0 = self.nom_tangent(a=axle_vals[0], b=jounce_sweep)
                     slope_1, func_1 = self.nom_tangent(a=axle_vals[1], b=jounce_sweep)
@@ -218,8 +236,14 @@ class Kinematics:
                     if max(axle_vals[1]) - min(axle_vals[1]) < 1e-3:
                         ax2.set_ylim([-1e-3 + np.mean(axle_vals[1]), 1e-3 + np.mean(axle_vals[1])])
 
-                    ax1.legend(loc='upper right')
-                    ax2.legend(loc='upper right')
+                    ax1.legend(loc='lower center')
+                    ax2.legend(loc='lower center')
+
+                    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
+                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
+
+                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
 
                 elif value["x-axis"]["Label"].lower() == "roll":
                     roll_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
@@ -260,8 +284,8 @@ class Kinematics:
                         Fr_FMU_vals = np.array([FMU_fits["Fr_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, 0, 0, roll]))[0] for roll in sweep])
                         Rr_FMU_vals = np.array([FMU_fits["Rr_" + value["y-axis"]["Outputs"]["RL"]](np.array([0, 0, 0, roll]))[0] for roll in sweep])
                         
-                        ax1.plot(roll_sweep, Fr_FMU_vals * value["y-axis"]["Multipliers"]["FL"], label="FMU Output")
-                        ax2.plot(roll_sweep, Rr_FMU_vals * value["y-axis"]["Multipliers"]["RL"], label="FMU Output")
+                        ax1.plot(roll_sweep, Fr_FMU_vals * value["y-axis"]["Multipliers"]["FL"], linestyle='--')
+                        ax2.plot(roll_sweep, Rr_FMU_vals * value["y-axis"]["Multipliers"]["RL"], linestyle='--')
                     
                     slope_0, func_0 = self.nom_tangent(a=axle_vals[0], b=roll_sweep)
                     slope_1, func_1 = self.nom_tangent(a=axle_vals[1], b=roll_sweep)
@@ -277,8 +301,14 @@ class Kinematics:
                     if max(axle_vals[1]) - min(axle_vals[1]) < 1e-3:
                         ax2.set_ylim([-1e-3 + np.mean(axle_vals[1]), 1e-3 + np.mean(axle_vals[1])])
 
-                    ax1.legend(loc='upper right')
-                    ax2.legend(loc='upper right')
+                    ax1.legend(loc='lower center')
+                    ax2.legend(loc='lower center')
+
+                    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
+                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
+
+                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
                     
                 if value["Grid"]:
                     ax1.grid()
@@ -425,15 +455,21 @@ class Kinematics:
                     ax4.plot(jounce_sweep, corner_vals[3])
 
                     if self.FMU_config["Evaluate"]:
-                        FL_FMU_vals = np.array([FMU_fits["FL_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, jounce, 0, 0]))[0] for jounce in sweep])
-                        FR_FMU_vals = np.array([FMU_fits["FR_" + value["y-axis"]["Outputs"]["FR"]](np.array([0, jounce, 0, 0]))[0] for jounce in sweep])
-                        RL_FMU_vals = np.array([FMU_fits["RL_" + value["y-axis"]["Outputs"]["RL"]](np.array([0, jounce, 0, 0]))[0] for jounce in sweep])
-                        RR_FMU_vals = np.array([FMU_fits["RR_" + value["y-axis"]["Outputs"]["RR"]](np.array([0, jounce, 0, 0]))[0] for jounce in sweep])
+                        FL_FMU_vals = []
+                        FR_FMU_vals = []
+                        RL_FMU_vals = []
+                        RR_FMU_vals = []
 
-                        ax1.plot(jounce_sweep, FL_FMU_vals * value["y-axis"]["Multipliers"]["FL"], label="FMU Output")
-                        ax2.plot(jounce_sweep, FR_FMU_vals * value["y-axis"]["Multipliers"]["FR"], label="FMU Output")
-                        ax3.plot(jounce_sweep, RL_FMU_vals * value["y-axis"]["Multipliers"]["RL"], label="FMU Output")
-                        ax4.plot(jounce_sweep, RR_FMU_vals * value["y-axis"]["Multipliers"]["RR"], label="FMU Output")
+                        for jounce in sweep:
+                            FL_FMU_vals.append(FMU_fits["FL_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, jounce, 0, 0]))[0])
+                            FR_FMU_vals.append(FMU_fits["FR_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, jounce, 0, 0]))[0])
+                            RL_FMU_vals.append(FMU_fits["RL_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, jounce, 0, 0]))[0])
+                            RR_FMU_vals.append(FMU_fits["RR_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, jounce, 0, 0]))[0])
+
+                        ax1.plot(jounce_sweep, np.array(FL_FMU_vals) * value["y-axis"]["Multipliers"]["FL"], linestyle='--')
+                        ax2.plot(jounce_sweep, np.array(FR_FMU_vals) * value["y-axis"]["Multipliers"]["FR"], linestyle='--')
+                        ax3.plot(jounce_sweep, np.array(RL_FMU_vals) * value["y-axis"]["Multipliers"]["RL"], linestyle='--')
+                        ax4.plot(jounce_sweep, np.array(RR_FMU_vals) * value["y-axis"]["Multipliers"]["RR"], linestyle='--')
 
                     slope_0, func_0 = self.nom_tangent(a=corner_vals[0], b=jounce_sweep)
                     slope_1, func_1 = self.nom_tangent(a=corner_vals[1], b=jounce_sweep)
@@ -457,14 +493,19 @@ class Kinematics:
                     if max(corner_vals[3]) - min(corner_vals[3]) < 1e-3:
                         ax4.set_ylim([-1e-3 + np.mean(corner_vals[3]), 1e-3 + np.mean(corner_vals[3])])
 
-                    ax1.legend(loc='upper right')
-                    ax2.legend(loc='upper right')
-                    ax3.legend(loc='upper right')
-                    ax4.legend(loc='upper right')
+                    ax1.legend(loc='lower center')
+                    ax2.legend(loc='lower center')
+                    ax3.legend(loc='lower center')
+                    ax4.legend(loc='lower center')
+
+                    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
+                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
+
+                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
                 
                 elif value["x-axis"]["Label"].lower() == "roll":
                     roll_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
-
                     if value["x-axis"]["Unit"].lower() == "rad":
                         sweep = roll_sweep * 180 / np.pi
                     else:
@@ -504,15 +545,21 @@ class Kinematics:
                     ax4.plot(roll_sweep, corner_vals[3])
 
                     if self.FMU_config["Evaluate"]:
-                        FL_FMU_vals = np.array([FMU_fits["FL_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, 0, 0, roll]))[0] for roll in sweep])
-                        FR_FMU_vals = np.array([FMU_fits["FR_" + value["y-axis"]["Outputs"]["FR"]](np.array([0, 0, 0, roll]))[0] for roll in sweep])
-                        RL_FMU_vals = np.array([FMU_fits["RL_" + value["y-axis"]["Outputs"]["RL"]](np.array([0, 0, 0, roll]))[0] for roll in sweep])
-                        RR_FMU_vals = np.array([FMU_fits["RR_" + value["y-axis"]["Outputs"]["RR"]](np.array([0, 0, 0, roll]))[0] for roll in sweep])
-                        
-                        ax1.plot(roll_sweep, FL_FMU_vals * value["y-axis"]["Multipliers"]["FL"], label="FMU Output")
-                        ax2.plot(roll_sweep, FR_FMU_vals * value["y-axis"]["Multipliers"]["FR"], label="FMU Output")
-                        ax3.plot(roll_sweep, RL_FMU_vals * value["y-axis"]["Multipliers"]["RL"], label="FMU Output")
-                        ax4.plot(roll_sweep, RR_FMU_vals * value["y-axis"]["Multipliers"]["RR"], label="FMU Output")
+                        FL_FMU_vals = []
+                        FR_FMU_vals = []
+                        RL_FMU_vals = []
+                        RR_FMU_vals = []
+
+                        for roll in sweep:
+                            FL_FMU_vals.append(FMU_fits["FL_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, 0, 0, roll]))[0])
+                            FR_FMU_vals.append(FMU_fits["FR_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, 0, 0, roll]))[0])
+                            RL_FMU_vals.append(FMU_fits["RL_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, 0, 0, roll]))[0])
+                            RR_FMU_vals.append(FMU_fits["RR_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, 0, 0, roll]))[0])
+
+                        ax1.plot(roll_sweep, np.array(FL_FMU_vals) * value["y-axis"]["Multipliers"]["FL"], linestyle='--')
+                        ax2.plot(roll_sweep, np.array(FR_FMU_vals) * value["y-axis"]["Multipliers"]["FR"], linestyle='--')
+                        ax3.plot(roll_sweep, np.array(RL_FMU_vals) * value["y-axis"]["Multipliers"]["RL"], linestyle='--')
+                        ax4.plot(roll_sweep, np.array(RR_FMU_vals) * value["y-axis"]["Multipliers"]["RR"], linestyle='--')
 
                     slope_0, func_0 = self.nom_tangent(a=corner_vals[0], b=roll_sweep)
                     slope_1, func_1 = self.nom_tangent(a=corner_vals[1], b=roll_sweep)
@@ -536,10 +583,16 @@ class Kinematics:
                     if max(corner_vals[3]) - min(corner_vals[3]) < 1e-3:
                         ax4.set_ylim([-1e-3 + np.mean(corner_vals[3]), 1e-3 + np.mean(corner_vals[3])])
 
-                    ax1.legend(loc='upper right')
-                    ax2.legend(loc='upper right')
-                    ax3.legend(loc='upper right')
-                    ax4.legend(loc='upper right')
+                    ax1.legend(loc='lower center')
+                    ax2.legend(loc='lower center')
+                    ax3.legend(loc='lower center')
+                    ax4.legend(loc='lower center')
+
+                    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
+                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
+
+                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
                 
                 if value["Grid"]:
                     ax1.grid()
@@ -671,7 +724,7 @@ class Kinematics:
         """
         ### Nom Tangent
 
-        Line tangent to x-y traces in the nominal condition (jounce=0, roll=0)
+        Line tangent to x-y traces in the nominal condition (jounce=roll=0)
 
         Parameters
         ----------
@@ -692,20 +745,13 @@ class Kinematics:
 
     @SISO_cache
     def heave(self, heave):
-        self.sus.heave(heave=None)
+        self.sus = deepcopy(self.sus_copy)
         self.sus.heave(heave=heave)
     
     @SISO_cache
     def roll(self, roll, n_steps):
-        self.sus.heave(heave=None)
+        self.sus = deepcopy(self.sus_copy)
         self.sus.roll(roll=roll, n_steps=n_steps)
-
-    def combined_input(self, hwa: float, heave: float, pitch: float, roll: float):
-        self.sus_copy.heave(heave=None)
-        self.sus_copy.steer(hwa=hwa)
-        self.sus_copy.heave(heave=heave * 0.0254)
-        self.sus_copy.pitch(pitch=pitch)
-        self.sus_copy.roll(roll=roll)
 
     def get_git_username(self):
         try:

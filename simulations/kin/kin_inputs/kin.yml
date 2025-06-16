@@ -3,12 +3,13 @@
 ####################
 FMU Settings:
   Generate: False
-  Evaluate: False
-  Refinement: 10
-  Hwa Sweep: 90 # deg
-  Heave Sweep: 1.6 # in
-  Pitch Sweep: 1.5 # deg
-  Roll Sweep: 1.5 # deg
+  Evaluate: True
+  Extrapolate: True # be very careful with this
+  Refinement: 5
+  Hwa Sweep: 120 # deg
+  Heave Sweep: 5 # in
+  Pitch Sweep: 5 # deg
+  Roll Sweep: 5 # deg
 
 ####################
 ### Fit Settings ###
@@ -372,32 +373,32 @@ Plot13:
       RR: 1
   Grid: True
 
-Plot14:
-  Title: "Bump Stabar MR"
-  Corners:
-    FL: True
-    FR: False
-    RL: True
-    RR: False
-  x-axis:
-    Label: "Jounce"
-    Unit: "mm"
-    Values: [-40, 40]
-    Number Steps: 20
-  y-axis:
-    Label: "Stabar MR"
-    Unit: "mm/mm"
-    Outputs:
-      FL: "stabar_MR_trans"
-      FR: 
-      RL: "stabar_MR_trans"
-      RR: 
-    Multipliers:
-      FL: 1
-      FR: 
-      RL: 1
-      RR: 
-  Grid: True
+# Plot14:
+#   Title: "Bump Stabar MR"
+#   Corners:
+#     FL: True
+#     FR: False
+#     RL: True
+#     RR: False
+#   x-axis:
+#     Label: "Jounce"
+#     Unit: "mm"
+#     Values: [-40, 40]
+#     Number Steps: 20
+#   y-axis:
+#     Label: "Stabar MR"
+#     Unit: "mm/mm"
+#     Outputs:
+#       FL: "stabar_MR_trans"
+#       FR: 
+#       RL: "stabar_MR_trans"
+#       RR: 
+#     Multipliers:
+#       FL: 1
+#       FR: 
+#       RL: 1
+#       RR: 
+#   Grid: True
 
 ##################
 ### Roll Plots ###
@@ -752,31 +753,4 @@ Plot27:
       FR: 
       RL: 1
       RR: 
-  Grid: True
-
-Plot28:
-  Title: "Roll Spring MRs"
-  Corners:
-    FL: True
-    FR: True
-    RL: True
-    RR: True
-  x-axis:
-    Label: "Roll"
-    Unit: "deg"
-    Values: [-1.5, 1.5]
-    Number Steps: 20
-  y-axis:
-    Label: "Roll Spring MR"
-    Unit: "mm/mm"
-    Outputs:
-      FL: "spring_MR"
-      FR: "spring_MR"
-      RL: "spring_MR"
-      RR: "spring_MR"
-    Multipliers:
-      FL: 1
-      FR: 1
-      RL: 1
-      RR: 1
   Grid: True

@@ -52,6 +52,8 @@ class  interp3d:
         self.z = z
         self.v = v
 
+        self.v_mesh = np.array(self.v).reshape((len(self.x), len(self.y), len(self.z)))
+
     def __call__(self, x: float, y: float, z: float) -> float:
         try:
             points = (self.x, self.y, self.z)
@@ -71,10 +73,10 @@ class  interp3d:
             elif z < min(self.z):
                 z = min(self.z)
                 
-            interp_val = griddata((self.x, self.y, self.z), self.v, (x, y, z), method='linear')
+            interp_val = griddata((self.x, self.y, self.z), self.v_mesh, (x, y, z), method='linear')
             
             if str(interp_val) == "nan":
-                return griddata((self.x, self.y, self.z), self.v, (x, y, z), method='nearest')
+                return griddata((self.x, self.y, self.z), self.v_mesh, (x, y, z), method='nearest')
 
             return interp_val
 

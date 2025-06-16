@@ -100,10 +100,10 @@ class VisualModel:
         sus_data = SuspensionData(path=self.model_path)
         self.sus = Suspension(sus_data=sus_data)
         
-        self.sus.heave(heave=self.heave_val * 0.0254)
-        self.sus.pitch(pitch=self.pitch_val)
-        self.sus.roll(roll=self.roll_val)
-
+        self.sus.heave(heave=self.heave_val * 0.0254, update_state=False)
+        self.sus.pitch(pitch=self.pitch_val, update_state=False)
+        self.sus.roll(roll=self.roll_val, update_state=False)
+        
         # Transform literally everything :))
         
         if self.show_nodes:

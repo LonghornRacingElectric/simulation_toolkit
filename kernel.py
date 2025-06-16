@@ -1,18 +1,18 @@
-from simulations.ymd_cv.ymd_cv import YMDConstantVelocity
-from simulations.ymd_cr.ymd_cr import YMDConstantRadius
 from simulations.visual.visual import VisualModel
 from simulations.kin.kin import Kinematics
+from simulations.qss.qss import QSS
 
 import yaml
 import sys
 
 
 # Initialization
-avail_sims = ["kin", "visual", "ymd_cr", "ymd_cv"]
+avail_sims = ["kin", "visual", "qss"]
+input_dir = "./_1_model_inputs/"
 
 try:
     sim_selected = sys.argv[1].lower()
-    model_path = sys.argv[2]
+    model_path = input_dir + sys.argv[2]
 except:
     raise Exception("Please specify SIM arg: make sim SIM={} MODEL_PATH={}")
 
@@ -37,9 +37,6 @@ if sim_selected == "kin":
 elif sim_selected == "visual":
     print("Running simulation: visual model")
     visual = VisualModel(model_path=model_path)
-elif sim_selected == "ymd_cr":
-    print("Running simulation: yaw-moment model, constant radius")
-    visual = YMDConstantRadius(model_path=model_path)
-elif sim_selected == "ymd_cv":
-    print("Running simulation: yaw-moment model, constant velocity")
-    visual = YMDConstantVelocity(model_path=model_path)
+elif sim_selected == "qss":
+    print("Running simulation: quasi-steady-state metrics")
+    visual = QSS(model_path=model_path)

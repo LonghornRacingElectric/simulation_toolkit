@@ -62,7 +62,7 @@ class TestAxleAdvanced(TestCase):
     upper_wishbone_L = Wishbone(fore_link=upper_fore_link_L, aft_link=upper_aft_link_L)
     
     # Tire
-    tire_mf52_L = MF52(tire_name="test_tire", file_path="./_3_unit_tests/python_tests/_test_dependencies/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir")
+    tire_mf52_L = MF52(tire_name="test_tire", file_path="./_3_unit_tests/python_tests/_test_dependencies/unit_test_tire.tir")
     tire_L = Tire(tire=tire_mf52_L, contact_patch=contact_patch_L, outer_diameter=16*0.0254, width=7*0.0254, inner_diameter=10*0.0254)
 
     # Set relation between upper wishbone and pushrod
@@ -119,7 +119,7 @@ class TestAxleAdvanced(TestCase):
     upper_wishbone_R = Wishbone(fore_link=upper_fore_link_R, aft_link=upper_aft_link_R)
     
     # Tire
-    tire_mf52_R = MF52(tire_name="test_tire", file_path="./_3_unit_tests/python_tests/_test_dependencies/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir")
+    tire_mf52_R = MF52(tire_name="test_tire", file_path="./_3_unit_tests/python_tests/_test_dependencies/unit_test_tire.tir")
     tire_R = Tire(tire=tire_mf52_R, contact_patch=contact_patch_R, outer_diameter=16*0.0254, width=7*0.0254, inner_diameter=10*0.0254)
 
     # Set relation between upper wishbone and pushrod

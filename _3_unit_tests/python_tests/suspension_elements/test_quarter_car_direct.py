@@ -49,7 +49,7 @@ class TestQuarterCar(TestCase):
     upper_wishbone = Wishbone(fore_link=upper_fore_link, aft_link=upper_aft_link)
 
     # Tire
-    tire_mf52 = MF52(tire_name="test_tire", file_path="./_3_unit_tests/python_tests/_test_dependencies/Modified_Round_8_Hoosier_R25B_16x7p5_10_on_7in_12psi_PAC02_UM2.tir")
+    tire_mf52 = MF52(tire_name="test_tire", file_path="./_3_unit_tests/python_tests/_test_dependencies/unit_test_tire.tir")
     tire = Tire(tire=tire_mf52, contact_patch=contact_patch, outer_diameter=16*0.0254, width=7*0.0254, inner_diameter=10*0.0254)
 
     # Set relation between upper wishbone and pushrod
