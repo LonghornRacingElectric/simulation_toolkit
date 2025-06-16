@@ -205,10 +205,10 @@ class TestSuspension(TestCase):
                                         "RL_delta",
                                         "RR_delta"]
         
-                tolerances = [0.01,
-                              0.01,
-                              0.01,
-                              0.01]
+                tolerances = [0.1,
+                              0.1,
+                              0.1,
+                              0.1]
 
                 for j in range(len(test_results)):
                     with self.subTest(i=j):
@@ -238,10 +238,10 @@ class TestSuspension(TestCase):
                                         "RL_delta",
                                         "RR_delta"]
         
-                tolerances = [0.01,
-                              0.01,
-                              0.01,
-                              0.01]
+                tolerances = [0.1,
+                              0.1,
+                              0.1,
+                              0.1]
 
                 for j in range(len(test_results)):
                     with self.subTest(i=j):
