@@ -1,15 +1,12 @@
 from vehicle_model.suspension_model.suspension_data import SuspensionData
 from vehicle_model.suspension_model.suspension import Suspension
-from _4_custom_libraries.misc_math import rotation_matrix
+from _4_custom_libraries.simulation import Simulation
 from _4_custom_libraries.cache import SISO_cache
 
-from typing import Callable, MutableSequence, Sequence, Set, Tuple
+from typing import Callable, MutableSequence, Set, Tuple
 from scipy.interpolate import RegularGridInterpolator
-from matplotlib.backends.backend_pdf import PdfPages
 from scipy.interpolate import CubicSpline
-from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from dataclasses import dataclass
 from datetime import datetime
 from PIL import Image
 
@@ -17,7 +14,6 @@ import matplotlib.gridspec as gridspec
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
-import subprocess
 import tzlocal
 import pickle
 import yaml
@@ -25,7 +21,7 @@ import yaml
 from copy import deepcopy
 
 
-class Kinematics:
+class Kinematics(Simulation):
     def __init__(self, model_path: str):
         self.sus_data: SuspensionData = SuspensionData(path=model_path)
         self.sus: Suspension = Suspension(sus_data=self.sus_data)
@@ -718,7 +714,7 @@ class Kinematics:
 
             plots.append(fig)
 
-        self._generate_pdf(figs=plots)
+        self._generate_pdf(figs=plots, save_path="./simulations/kin/kin_outputs/kin_report.pdf")
 
     def nom_tangent(self, a: MutableSequence[float], b: MutableSequence[float]) -> Tuple[float, Callable]:
         """
@@ -752,29 +748,3 @@ class Kinematics:
     def roll(self, roll, n_steps):
         self.sus = deepcopy(self.sus_copy)
         self.sus.roll(roll=roll, n_steps=n_steps)
-
-    def get_git_username(self):
-        try:
-            name = subprocess.check_output(
-                ["git", "config", "user.email"], stderr=subprocess.DEVNULL
-            ).decode().strip()
-            return name if name else "Unknown"
-        except Exception:
-            return "Unknown"
-    
-    def get_git_name(self):
-        try:
-            name = subprocess.check_output(
-                ["git", "config", "user.name"], stderr=subprocess.DEVNULL
-            ).decode().strip()
-            return name if name else "Unknown"
-        except Exception:
-            return "Unknown"
-
-    def _generate_pdf(self, figs: Sequence[Figure]) -> Figure:
-        p = PdfPages("./simulations/kin/kin_outputs/kin_plots.pdf")
-
-        for page in figs:
-            page.savefig(p, format="pdf")
-
-        p.close()

@@ -2,7 +2,7 @@ from vehicle_model.suspension_model.suspension_data import SuspensionData
 from vehicle_model.suspension_model.suspension import Suspension
 from _4_custom_libraries.misc_math import rotation_matrix
 
-from typing import Union, Sequence, Tuple
+from typing import Union, Sequence, Tuple, MutableSequence
 from scipy.optimize import fsolve
 from scipy.integrate import quad
 
@@ -26,26 +26,45 @@ class YMDConstantVelocity:
         self.beta = beta
         self.refinement = refinement
         
-        self.states: dict[str, dict[str, list[Union[float, list[float]]]]] = {"consts": {"velX":   []},
-                                                                                 "hwa": {"angle":  [],
-                                                                                         "accX":   [],
-                                                                                         "accY":   [],
-                                                                                         "accYaw": [],
-                                                                                         "heave":  [],
-                                                                                         "theta":  [],
-                                                                                         "phi":    []},
-                                                                                "beta": {"angle":  [],
-                                                                                         "accX":   [],
-                                                                                         "accY":   [],
-                                                                                         "accYaw": [],
-                                                                                         "heave":  [],
-                                                                                         "theta":  [],
-                                                                                         "phi":    []}}
+        self.states: dict[str, dict[str, list[Union[float, list[float]]]]] = {"consts": {"velX":        []},
+                                                                                 "hwa": {"angle":       [],
+                                                                                         "hwa":         [],
+                                                                                         "beta":        [],
+                                                                                         "accX":        [],
+                                                                                         "accY":        [],
+                                                                                         "accYaw":      [],
+                                                                                         "heave":       [],
+                                                                                         "theta":       [],
+                                                                                         "phi":         [],
+                                                                                         "gamma":       [],
+                                                                                         "delta":       [],
+                                                                                         "alpha":       [],
+                                                                                         "turn_radius": [],
+                                                                                         "velX":        []},
+                                                                                "beta": {"angle":       [],
+                                                                                         "hwa":         [],
+                                                                                         "beta":        [],
+                                                                                         "accX":        [],
+                                                                                         "accY":        [],
+                                                                                         "accYaw":      [],
+                                                                                         "heave":       [],
+                                                                                         "theta":       [],
+                                                                                         "phi":         [],
+                                                                                         "gamma":       [],
+                                                                                         "delta":       [],
+                                                                                         "alpha":       [],
+                                                                                         "turn_radius": [],
+                                                                                         "velX":        []}}
 
         # Initialize simulation
         self.sus_data: SuspensionData = SuspensionData(path=model_path)
         self.sus: Suspension = Suspension(sus_data=self.sus_data)
         self.initialize_funcs()
+
+        self.turn_radius: float
+        self.gamma_vals: MutableSequence
+        self.delta_vals: MutableSequence
+        self.alpha_vals: MutableSequence
 
     def run(self) -> dict[str, dict[str, list[Union[float, list[float]]]]]:
         hwa_sweep = np.linspace(-self.hwa, self.hwa, self.refinement) # leave as deg
@@ -60,46 +79,75 @@ class YMDConstantVelocity:
 
                 # Solve system
                 accX, accY, accYaw, heave, theta, phi = fsolve(self.physical_model, x0=[0, 0, 0, 0, 0, 0], args=[hwa, beta, self.velX])
+                self.physical_model(x=[accX, accY, accYaw, heave, theta, phi], args=[hwa, beta, self.velX])
 
                 # Store results (hwa)
                 if hwa in self.states["hwa"]["angle"]:
                     hwa_index = self.states["hwa"]["angle"].index(hwa)
 
+                    self.states["hwa"]["hwa"][hwa_index].append(hwa)
+                    self.states["hwa"]["beta"][hwa_index].append(beta * 180 / np.pi)
                     self.states["hwa"]["accX"][hwa_index].append(accX)
                     self.states["hwa"]["accY"][hwa_index].append(accY)
                     self.states["hwa"]["accYaw"][hwa_index].append(accYaw)
                     self.states["hwa"]["heave"][hwa_index].append(heave)
                     self.states["hwa"]["theta"][hwa_index].append(theta)
                     self.states["hwa"]["phi"][hwa_index].append(phi)
+                    self.states["hwa"]["gamma"][hwa_index].append([x * 180 / np.pi for x in self.gamma_vals])
+                    self.states["hwa"]["delta"][hwa_index].append([x * 180 / np.pi for x in self.delta_vals])
+                    self.states["hwa"]["alpha"][hwa_index].append([x * 180 / np.pi for x in self.alpha_vals])
+                    self.states["hwa"]["turn_radius"][hwa_index].append(self.turn_radius)
+                    self.states["hwa"]["velX"][hwa_index].append(self.velX)
                 else:
                     self.states["hwa"]["angle"].append(hwa)
-
+                    
+                    self.states["hwa"]["hwa"].append([hwa])
+                    self.states["hwa"]["beta"].append([beta * 180 / np.pi])
                     self.states["hwa"]["accX"].append([accX])
                     self.states["hwa"]["accY"].append([accY])
                     self.states["hwa"]["accYaw"].append([accYaw])
                     self.states["hwa"]["heave"].append([heave])
                     self.states["hwa"]["theta"].append([theta])
                     self.states["hwa"]["phi"].append([phi])
+                    self.states["hwa"]["gamma"].append([[x * 180 / np.pi for x in self.gamma_vals]])
+                    self.states["hwa"]["delta"].append([[x * 180 / np.pi for x in self.delta_vals]])
+                    self.states["hwa"]["alpha"].append([[x * 180 / np.pi for x in self.alpha_vals]])
+                    self.states["hwa"]["turn_radius"].append([self.turn_radius])
+                    self.states["hwa"]["velX"].append([self.velX])
                 
                 # (beta)
-                if beta in self.states["beta"]["angle"]:
-                    beta_index = self.states["beta"]["angle"].index(beta)
+                if beta * 180 / np.pi in self.states["beta"]["angle"]:
+                    beta_index = self.states["beta"]["angle"].index(beta * 180 / np.pi)
 
+                    self.states["beta"]["hwa"][beta_index].append(hwa)
+                    self.states["beta"]["beta"][beta_index].append(beta * 180 / np.pi)
                     self.states["beta"]["accX"][beta_index].append(accX)
                     self.states["beta"]["accY"][beta_index].append(accY)
                     self.states["beta"]["accYaw"][beta_index].append(accYaw)
                     self.states["beta"]["heave"][beta_index].append(heave)
                     self.states["beta"]["theta"][beta_index].append(theta)
                     self.states["beta"]["phi"][beta_index].append(phi)
+                    self.states["beta"]["gamma"][beta_index].append([x * 180 / np.pi for x in self.gamma_vals])
+                    self.states["beta"]["delta"][beta_index].append([x * 180 / np.pi for x in self.delta_vals])
+                    self.states["beta"]["alpha"][beta_index].append([x * 180 / np.pi for x in self.alpha_vals])
+                    self.states["beta"]["turn_radius"][beta_index].append(self.turn_radius)
+                    self.states["beta"]["velX"][beta_index].append(self.velX)
                 else:
-                    self.states["beta"]["angle"].append(beta)
+                    self.states["beta"]["angle"].append(beta * 180 / np.pi)
 
+                    self.states["beta"]["hwa"].append([hwa])
+                    self.states["beta"]["beta"].append([beta * 180 / np.pi])
                     self.states["beta"]["accX"].append([accX])
                     self.states["beta"]["accY"].append([accY])
                     self.states["beta"]["accYaw"].append([accYaw])
                     self.states["beta"]["heave"].append([heave])
                     self.states["beta"]["theta"].append([theta])
                     self.states["beta"]["phi"].append([phi])
+                    self.states["beta"]["gamma"].append([[x * 180 / np.pi for x in self.gamma_vals]])
+                    self.states["beta"]["delta"].append([[x * 180 / np.pi for x in self.delta_vals]])
+                    self.states["beta"]["alpha"].append([[x * 180 / np.pi for x in self.alpha_vals]])
+                    self.states["beta"]["turn_radius"].append([self.turn_radius])
+                    self.states["beta"]["velX"].append([self.velX])
         
         self.states["consts"]["velX"].append(self.velX)
         
@@ -119,7 +167,7 @@ class YMDConstantVelocity:
         beta = args[1]
         velX = args[2]
         
-        turn_radius = velX**2 / accY
+        self.turn_radius = velX**2 / accY
         vehVel = velX * np.array([np.cos(beta), np.sin(beta), 0])
 
         # Adjust acceleration vectors and dependencies
@@ -168,11 +216,15 @@ class YMDConstantVelocity:
         RL_gamma = self.kin_FMU["RL_gamma"](np.array([hwa, heave, theta, phi]))[0] * np.pi / 180
         RR_gamma = self.kin_FMU["RR_gamma"](np.array([hwa, heave, theta, phi]))[0] * np.pi / 180
 
+        self.gamma_vals = [FL_gamma, FR_gamma, RL_gamma, RR_gamma]
+
         # Delta angles
         FL_delta = self.kin_FMU["FL_delta"](np.array([hwa, heave, theta, phi]))[0] * np.pi / 180
         FR_delta = self.kin_FMU["FR_delta"](np.array([hwa, heave, theta, phi]))[0] * np.pi / 180
         RL_delta = self.kin_FMU["RL_delta"](np.array([hwa, heave, theta, phi]))[0] * np.pi / 180
         RR_delta = self.kin_FMU["RR_delta"](np.array([hwa, heave, theta, phi]))[0] * np.pi / 180
+
+        self.delta_vals = [FL_delta, FR_delta, RL_delta, RR_delta]
 
         # Wheel velocities
         FL_velocity = vehVel + np.cross(np.array([0, 0, velYaw]), self.FL_Cp_wrt_cg)
@@ -185,6 +237,8 @@ class YMDConstantVelocity:
         FR_alpha = FR_delta - np.arctan2(FR_velocity[1], FR_velocity[0])
         RL_alpha = RL_delta - np.arctan2(RL_velocity[1], RL_velocity[0])
         RR_alpha = RR_delta - np.arctan2(RR_velocity[1], RR_velocity[0])
+
+        self.alpha_vals = [FL_alpha, FR_alpha, RL_alpha, RR_alpha]
 
         # Corner jounces
         FL_jounce = self.kin_FMU["FL_wheel_jounce"](np.array([hwa, heave, theta, phi]))[0]

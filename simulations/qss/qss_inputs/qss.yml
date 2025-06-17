@@ -8,12 +8,24 @@ Yaw Moment Settings:
   Velocity Schedule:
     # - 5
     # - 10
-    # - 15
-    # - 20
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    - 23
+    - 24
     - 25
-    # - 30
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
   Radius Schedule:
     - 1000
   Handwheel Angle Sweep: 25
   Sideslip Angle Sweep: 10
-  Refinement: 11
+  Refinement: 21
