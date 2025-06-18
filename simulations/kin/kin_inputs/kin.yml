@@ -2,10 +2,10 @@
 ### FMU Settings ###
 ####################
 FMU Settings:
-  Generate: False
+  Generate: True
   Evaluate: True
   Extrapolate: True # be very careful with this
-  Refinement: 5
+  Refinement: 11
   Hwa Sweep: 120 # deg
   Heave Sweep: 5 # in
   Pitch Sweep: 5 # deg

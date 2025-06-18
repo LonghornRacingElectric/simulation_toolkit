@@ -4,10 +4,11 @@
 
 Yaw Moment Settings:
   Generate CV: True
-  Generate CR: False
+  Generate CR: True
   Velocity Schedule:
-    # - 5
-    # - 10
+    - 12
+    - 13
+    - 14
     - 15
     - 16
     - 17
@@ -25,7 +26,7 @@ Yaw Moment Settings:
     - 29
     - 30
   Radius Schedule:
-    - 1000
+    - 500
   Handwheel Angle Sweep: 25
   Sideslip Angle Sweep: 10
   Refinement: 21
