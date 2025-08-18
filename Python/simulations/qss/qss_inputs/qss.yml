@@ -1,0 +1,126 @@
+################################
+### Quasi-Steady-State Model ###
+################################
+
+Yaw Moment Settings:
+  Generate CV: True
+  Generate CR: True
+  Velocity Schedule:
+    # V1:
+    #   Value: 12
+    #   Dataset:
+    # V2:
+    #   Value: 12.5
+    #   Dataset:
+    # V3:
+    #   Value: 13
+    #   Dataset:
+    # V4:
+    #   Value: 13.5
+    #   Dataset:
+    # V5:
+    #   Value: 14
+    #   Dataset:
+    # V6:
+    #   Value: 14.5
+    #   Dataset:
+    # V7:
+    #   Value: 15
+    #   Dataset:
+    # V8:
+    #   Value: 15.5
+    #   Dataset:
+    # V9:
+    #   Value: 16
+    #   Dataset:
+    # V10:
+    #   Value: 16.5
+    #   Dataset:
+    # V11:
+    #   Value: 17
+    #   Dataset:
+    # V12:
+    #   Value: 17.5
+    #   Dataset:
+    # V13:
+    #   Value: 18
+    #   Dataset:
+    # V14:
+    #   Value: 18.5
+    #   Dataset:
+    # V15:
+    #   Value: 19
+    #   Dataset:
+    # V16:
+    #   Value: 19.5
+    #   Dataset:
+    # V17:
+    #   Value: 20
+    #   Dataset:
+    # V18:
+    #   Value: 20.5
+    #   Dataset:
+    # V19:
+    #   Value: 21
+    #   Dataset:
+    # V20:
+    #   Value: 21.5
+    #   Dataset:
+    # V21:
+    #   Value: 22
+    #   Dataset:
+    # V22:
+    #   Value: 22.5
+    #   Dataset:
+    # V23:
+    #   Value: 23
+    #   Dataset:
+    # V24:
+    #   Value: 23.5
+    #   Dataset:
+    # V25:
+    #   Value: 24
+    #   Dataset:
+    # V26:
+    #   Value: 24.5
+    #   Dataset:
+    # V27:
+    #   Value: 25
+    #   Dataset:
+    # V28:
+    #   Value: 25.5
+    #   Dataset:
+    # V29:
+    #   Value: 26
+    #   Dataset:
+    # V30:
+    #   Value: 26.5
+    #   Dataset:
+    # V31:
+    #   Value: 27
+    #   Dataset:
+    # V32:
+    #   Value: 27.5
+    #   Dataset:
+    # V33:
+    #   Value: 28
+    #   Dataset:
+    # V34:
+    #   Value: 28.5
+    #   Dataset:
+    # V35:
+    #   Value: 29
+    #   Dataset:
+    # V36:
+    #   Value: 29.5
+    #   Dataset: 
+    V37:
+      Value: 30
+      Dataset: "./simulations/qss/qss_inputs/correlation_datasets/YMD_30m_s.csv"
+  Radius Schedule:
+    R1:
+      Value: 100
+      Dataset: 
+  Handwheel Angle Sweep: 25
+  Sideslip Angle Sweep: 10
+  Refinement: 21

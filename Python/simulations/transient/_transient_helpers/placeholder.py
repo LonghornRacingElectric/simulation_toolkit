@@ -1,0 +1,61 @@
+"""
+10-DOF lateral state vector x (18 states):
+1)   p_sprung_x (linear momentum of sprung mass: x)
+2)   p_sprung_y (linear momentum of sprung mass: y)
+3)   p_sprung_z (linear momentum of sprung mass: z)
+4)   h_sprung_x (angular momentum of sprung mass: roll)
+5)   h_sprung_y (angular momentum of sprung mass: pitch)
+6)   h_sprung_z (angular momentum of sprung mass: yaw)
+7)  z_susp_FL (suspension compression: FL)
+8)  z_susp_FR (suspension compression: FR)
+9)  z_susp_RL (suspension compression: RL)
+10)  z_susp_RR (suspension compression: RR)
+11)  p_unsprung_FL (vertical momentum of unsprung mass: FL)
+12)  p_unsprung_FR (vertical momentum of unsprung mass: FR)
+13)  p_unsprung_RL (vertical momentum of unsprung mass: RL)
+14)  p_unsprung_RR (vertical momentum of unsprung mass: RR)
+15)  z_tire_FL (tire compression: FL)
+16)  z_tire_FR (tire compression: FR)
+17)  z_tire_RL (tire compression: RL)
+18)  z_tire_RR (tire compression: RR)
+
+---
+
+10-DOF longitudinal state vector x (10 states):
+1)   p_sprung_x (linear momentum of sprung mass: x)
+2)   p_sprung_y (linear momentum of sprung mass: y)
+3)   p_sprung_z (linear momentum of sprung mass: z)
+4)   h_sprung_x (angular momentum of sprung mass: roll)
+5)   h_sprung_y (angular momentum of sprung mass: pitch)
+6)   h_sprung_z (angular momentum of sprung mass: yaw)
+7)  h_wheel_FL (angular momentum of wheel: FL)
+8)  h_wheel_FR (angular momentum of wheel: FR)
+9)  h_wheel_RL (angular momentum of wheel: RL)
+10)  h_wheel_RR (angular momentum of wheel: RR)
+
+---
+
+14-DOF state vector x (22 states):
+1)   p_sprung_x (linear momentum of sprung mass: x)
+2)   p_sprung_y (linear momentum of sprung mass: y)
+3)   p_sprung_z (linear momentum of sprung mass: z)
+4)   h_sprung_x (angular momentum of sprung mass: roll)
+5)   h_sprung_y (angular momentum of sprung mass: pitch)
+6)   h_sprung_z (angular momentum of sprung mass: yaw)
+7)  z_susp_FL (suspension compression: FL)
+8)  z_susp_FR (suspension compression: FR)
+9)  z_susp_RL (suspension compression: RL)
+10)  z_susp_RR (suspension compression: RR)
+11)  p_unsprung_FL (vertical momentum of unsprung mass: FL)
+12)  p_unsprung_FR (vertical momentum of unsprung mass: FR)
+13)  p_unsprung_RL (vertical momentum of unsprung mass: RL)
+14)  p_unsprung_RR (vertical momentum of unsprung mass: RR)
+15)  z_tire_FL (tire compression: FL)
+16)  z_tire_FR (tire compression: FR)
+17)  z_tire_RL (tire compression: RL)
+18)  z_tire_RR (tire compression: RR)
+19)  h_wheel_FL (angular momentum of wheel: FL)
+20)  h_wheel_FR (angular momentum of wheel: FR)
+21)  h_wheel_RL (angular momentum of wheel: RL)
+22)  h_wheel_RR (angular momentum of wheel: RR)
+"""
