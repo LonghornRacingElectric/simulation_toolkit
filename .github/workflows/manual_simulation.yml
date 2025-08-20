@@ -4,15 +4,21 @@ on:
   workflow_dispatch:
     inputs:
       sim:
-        description: 'Type of simulation to run (kin, qss, transient)'
-        default: 'kin'
+        description: 'Type of simulation to run'
         required: true
-        type: string
+        default: 'kin'
+        type: choice
+        options:
+          - kin
+          - qss
       model_path:
         description: 'Name of definition yaml'
-        default: 'Nightwatch.yml'
         required: true
-        type: string
+        default: 'Nightwatch.yml'
+        type: choice
+        options:
+          - Nightwatch.yml
+          - NextGen.yml
 
 jobs:
   build-and-run:
