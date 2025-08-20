@@ -25,10 +25,10 @@ class Simulation:
         self.sus = Suspension(sus_data=self.sus_data)
         self.sus_copy = deepcopy(self.sus)
 
-        if not ("kin_FMU.pkl" in os.listdir("./simulations/kin/kin_outputs/")):
+        if not ("kin_FMU.pkl" in os.listdir("./src/simulations/kin/kin_outputs/")):
             raise Exception("Please run SIM=kin with FMU generation enabled")
         
-        with open("./simulations/kin/kin_outputs/kin_FMU.pkl", 'rb') as f:
+        with open("./src/simulations/kin/kin_outputs/kin_FMU.pkl", 'rb') as f:
             self.kin_FMU = pickle.load(f)
         
         self.initialize_funcs()

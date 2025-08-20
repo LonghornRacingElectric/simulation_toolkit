@@ -24,7 +24,7 @@ class QSS(Simulation):
     def __init__(self, model_path: str):
         super().__init__(model_path=model_path)
 
-        with open("./simulations/qss/qss_inputs/qss.yml") as f:
+        with open("./src/simulations/qss/qss_inputs/qss.yml") as f:
             try:
                 self.qss_config: dict[str, dict[str, dict]] = yaml.safe_load(f)
                 self.ymd_config: dict[str, dict] = self.qss_config.pop("Yaw Moment Settings")
@@ -138,7 +138,7 @@ class QSS(Simulation):
         title_fig = plt.figure(figsize=(14, 8.5), dpi=300)
             
         # Logo bullshit (this was all trial and error)
-        logo_path = "_5_ico/lhrEnobackground.png"
+        logo_path = "./src/_4_ico/lhrEnobackground.png"
         img = Image.open(logo_path) # Read image
         img_resized = img.resize((int(img.width * 0.35), int(img.height * 0.35)), Image.Resampling.LANCZOS) # Resize image
         img_np = mpimg.pil_to_array(img_resized) # Convert to array
@@ -233,11 +233,11 @@ class QSS(Simulation):
         for cr_states, cr_metrics, cr_path in zip(cr_state_results, cr_ymd_metrics, cr_data_paths):
             plots.append(self.plot_cr_ymd(cr_states=cr_states, cr_metrics=cr_metrics, dataset_path=None))
 
-        self._generate_pdf(figs=plots, save_path="./simulations/qss/qss_outputs/qss_report.pdf")
+        self._generate_pdf(figs=plots, save_path="./src/simulations/qss/qss_outputs/qss_report.pdf")
 
-        file_dir = "./simulations/qss/qss_outputs/ymd_animation"
+        file_dir = "./src/simulations/qss/qss_outputs/ymd_animation"
         fps = 30
-        output_path = "./simulations/qss/qss_outputs/ymd_cv.gif"
+        output_path = "./src/simulations/qss/qss_outputs/ymd_cv.gif"
 
         # Collect sorted file list
         images = sorted([f for f in os.listdir(file_dir) if f.endswith(".png")])

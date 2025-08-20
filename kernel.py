@@ -41,6 +41,6 @@ elif sim_selected == "visual":
 elif sim_selected == "qss":
     print("Running simulation: quasi-steady-state metrics")
     # Generate animation
-    shutil.rmtree("./simulations/qss/qss_outputs/ymd_animation")
-    os.mkdir("./simulations/qss/qss_outputs/ymd_animation")
+    shutil.rmtree("./src/simulations/qss/qss_outputs/ymd_animation")
+    os.mkdir("./src/simulations/qss/qss_outputs/ymd_animation")
     visual = QSS(model_path=model_path)

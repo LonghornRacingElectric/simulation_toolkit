@@ -15,10 +15,10 @@ import os
 class YMDConstantRadius:
     def __init__(self, model_path: str, turn_radius: float, hwa: float, beta: float, refinement: int):
         # Read FMU
-        if not ("kin_FMU.pkl" in os.listdir("./simulations/kin/kin_outputs/")):
+        if not ("kin_FMU.pkl" in os.listdir("./src/simulations/kin/kin_outputs/")):
             raise Exception("Please run SIM=kin with FMU generation enabled")
         
-        with open("./simulations/kin/kin_outputs/kin_FMU.pkl", 'rb') as f:
+        with open("./src/simulations/kin/kin_outputs/kin_FMU.pkl", 'rb') as f:
             self.kin_FMU = pickle.load(f)
 
         # Simulation parameters
@@ -324,7 +324,7 @@ class YMDConstantRadius:
         ########### Aero Forces and Moments ###########
         ###############################################
 
-        aero = Aero("./_1_model_inputs/aero_map.csv")
+        aero = Aero("./src/_1_model_inputs/aero_map.csv")
 
         aero_loads = aero.eval(roll=phi, pitch=theta, yaw=beta * 180 / np.pi, vel=self.velX)
 
