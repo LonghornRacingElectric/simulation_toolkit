@@ -814,7 +814,7 @@ class QSS(Simulation):
         extent = ymd_ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
         expanded_extent = extent.expanded(1.25, 1.25) 
         
-        fig.savefig(f"./simulations/qss/qss_outputs/ymd_animation/ymd_cv_{str(velX).replace(".", "p")}.png", bbox_inches=expanded_extent, dpi=300)
+        fig.savefig(f"./src/simulations/qss/qss_outputs/ymd_animation/ymd_cv_{str(velX).replace(".", "p")}.png", bbox_inches=expanded_extent, dpi=300)
 
         if dataset_path:
             df = pd.read_csv(dataset_path)
