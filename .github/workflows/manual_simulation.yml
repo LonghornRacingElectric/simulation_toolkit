@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run simulation workflow
         run: make sim SIM="${{ github.event.inputs.sim }}" MODEL_PATH="${{ github.event.inputs.model_path }}" COMPARISON_PATH="${{ github.event.inputs.comparison_path }}"
@@ -44,3 +44,6 @@ jobs:
         with:
           name: simulation-results
           path: ./src/simulations/${{ github.event.inputs.sim }}/${{ github.event.inputs.sim }}_outputs/
+        with:
+          name: simulation-report
+          path: ./src/simulations/${{ github.event.inputs.sim }}/${{ github.event.inputs.sim }}_outputs/${{ github.event.inputs.sim }}_report.pdf
