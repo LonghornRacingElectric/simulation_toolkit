@@ -1,0 +1,26 @@
+name: Manual simulation workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      sim:
+        description: 'Type of simulation to run (kin, qss, transient)'
+        default: 'kin'
+        required: true
+        type: string
+      model_path:
+        description: 'Name of definition yaml'
+        default: 'Nightwatch.yml'
+        required: true
+        type: string
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run simulation workflow
+        run: make sim SIM="${{ github.event.inputs.sim }}" MODEL_path="${{ github.event.inputs.model_path }}"

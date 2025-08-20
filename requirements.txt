@@ -1,0 +1,22 @@
+# Computation
+pyvista
+imageio
+PyQt5
+scipy
+pandas
+pyyaml
+imageio-ffmpeg
+
+# Testing
+pytest
+pytest-cov
+pytest-html
+pytest-subtests
+mypy
+types-PyYAML
+
+# Traceability
+tzlocal
+
+# Custom
+git+https://github.com/LonghornRacingElectric/tire_analysis@LHR_tire_toolkit_package
