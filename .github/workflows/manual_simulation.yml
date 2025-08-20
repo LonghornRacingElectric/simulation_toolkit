@@ -26,7 +26,7 @@ jobs:
         run: make sim SIM="${{ github.event.inputs.sim }}" MODEL_PATH="${{ github.event.inputs.model_path }}"
       
       - name: Upload simulation results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: simulation-results
           path: ./src/simulations/${{ github.event.inputs.sim }}/${{ github.event.inputs.sim }}_outputs/
