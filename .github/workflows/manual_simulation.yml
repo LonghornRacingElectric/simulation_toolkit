@@ -44,6 +44,9 @@ jobs:
         with:
           name: simulation-results
           path: ./src/simulations/${{ github.event.inputs.sim }}/${{ github.event.inputs.sim }}_outputs/
+      
+      - name: Upload report
+        uses: actions/upload-artifact@v4
         with:
           name: simulation-report
           path: ./src/simulations/${{ github.event.inputs.sim }}/${{ github.event.inputs.sim }}_outputs/${{ github.event.inputs.sim }}_report.pdf
