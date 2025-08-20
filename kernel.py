@@ -14,6 +14,10 @@ input_dir = "./src/_1_model_inputs/"
 try:
     sim_selected = sys.argv[1].lower()
     model_path = input_dir + sys.argv[2]
+
+    if sim_selected == "kin":
+        comparison_paths = [input_dir + path for path in sys.argv[3:]]
+
 except:
     raise Exception("Please specify SIM arg: make sim SIM={} MODEL_PATH={}")
 
@@ -34,7 +38,7 @@ print(f"\nSelected Model: {model_properties["Name"]["Value"]}")
 # Select simulation
 if sim_selected == "kin":
     print("Running simulation: kinematics")
-    kin = Kinematics(model_path=model_path)
+    kin = Kinematics(model_path=model_path, comparison_paths=comparison_paths)
 elif sim_selected == "visual":
     print("Running simulation: visual model")
     visual = VisualModel(model_path=model_path)

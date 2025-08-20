@@ -1,4 +1,4 @@
-name: Manual simulation workflow
+name: Run Simulation
 
 on:
   workflow_dispatch:
@@ -18,7 +18,15 @@ on:
         type: choice
         options:
           - Nightwatch.yml
-          - NextGen.yml
+          - Scratchpad.yml
+      comparison_path:
+        description: 'Name of comparison yaml'
+        required: true
+        default: 'Scratchpad.yml'
+        type: choice
+        options:
+          - Nightwatch.yml
+          - Scratchpad.yml
 
 jobs:
   build-and-run:
@@ -29,7 +37,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run simulation workflow
-        run: make sim SIM="${{ github.event.inputs.sim }}" MODEL_PATH="${{ github.event.inputs.model_path }}"
+        run: make sim SIM="${{ github.event.inputs.sim }}" MODEL_PATH="${{ github.event.inputs.model_path }}" COMPARISON_PATH="${{ github.event.inputs.comparison_path }}"
       
       - name: Upload simulation results
         uses: actions/upload-artifact@v4

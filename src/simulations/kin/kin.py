@@ -1,9 +1,9 @@
 from src.vehicle_model.suspension_model.suspension_data import SuspensionData
 from src.vehicle_model.suspension_model.suspension import Suspension
 from src._3_custom_libraries.simulation import Simulation
-from src._3_custom_libraries.cache import SISO_cache
+from src._3_custom_libraries.cache import SISO_global_cache, SISO_local_cache
 
-from typing import Callable, MutableSequence, Set, Tuple
+from typing import Callable, Sequence, MutableSequence, Set, Tuple
 from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import CubicSpline
 from matplotlib.lines import Line2D
@@ -22,10 +22,14 @@ from copy import deepcopy
 
 
 class Kinematics(Simulation):
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str, comparison_paths: Sequence[str]):
         self.sus_data: SuspensionData = SuspensionData(path=model_path)
         self.sus: Suspension = Suspension(sus_data=self.sus_data)
         self.sus_copy = deepcopy(self.sus)
+
+        self.comparison_data: MutableSequence[SuspensionData] = [SuspensionData(path=path) for path in comparison_paths]
+        self.comparison_sus: MutableSequence[Suspension] = [Suspension(sus_data=sus_data) for sus_data in self.comparison_data]
+        self.comparison_sus_copy = [deepcopy(comparison_sus) for comparison_sus in self.comparison_sus]
 
         roll_n_steps = 1
 
@@ -130,7 +134,7 @@ class Kinematics(Simulation):
             title_fig = plt.figure(figsize=(11, 8.5), dpi=300)
             
             # Logo bullshit (this was all trial and error)
-            logo_path = "_5_ico/lhrEnobackground.png"
+            logo_path = "src/_4_ico/lhrEnobackground.png"
             img = Image.open(logo_path) # Read image
             img_resized = img.resize((int(img.width * 0.35), int(img.height * 0.35)), Image.Resampling.LANCZOS) # Resize image
             img_np = mpimg.pil_to_array(img_resized) # Convert to array
@@ -161,6 +165,7 @@ class Kinematics(Simulation):
             num_plots = [x[1] for x in value["Corners"].items()].count(True)
             if num_plots == 2:
                 axle_vals = [[], []]
+                comparison_axle_vals = []
                 if self.fit_config["Generate Linear"] or self.fit_config["Generate Cubic"]:
                     fig = plt.figure(figsize=(14, 8.5), dpi=300)
                     gs = gridspec.GridSpec(1, 3, width_ratios=[1, 1, 0.75])
@@ -196,6 +201,19 @@ class Kinematics(Simulation):
                         axle_vals[0].append(self.sus.state["Fr_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
                         axle_vals[1].append(self.sus.state["Rr_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
                     
+                    for i in range(len(self.comparison_sus)):
+                        comparison_axle_vals.append([[], []])
+
+                        for jounce_val in sweep:
+                            eval_num += 1
+                            print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
+                            
+                            self.public_comparison_sus_copy = self.comparison_sus_copy[i]
+                            comparison_sus = self.comparison_heave(jounce_val)
+
+                            comparison_axle_vals[i][0].append(comparison_sus.state["Fr_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
+                            comparison_axle_vals[i][1].append(comparison_sus.state["Rr_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
+
                     ax1.set_title(f"Fr {value["Title"]}", fontsize=14)
                     ax2.set_title(f"Rr {value["Title"]}", fontsize=14)
                     
@@ -210,6 +228,10 @@ class Kinematics(Simulation):
 
                     ax1.plot(jounce_sweep, axle_vals[0])
                     ax2.plot(jounce_sweep, axle_vals[1])
+
+                    for Fr, Rr in comparison_axle_vals:
+                        ax1.plot(jounce_sweep, Fr)
+                        ax2.plot(jounce_sweep, Rr)
 
                     if self.FMU_config["Evaluate"]:
                         Fr_FMU_vals = np.array([FMU_fits["Fr_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, jounce, 0, 0]))[0] for jounce in sweep])
@@ -236,10 +258,11 @@ class Kinematics(Simulation):
                     ax2.legend(loc='lower center')
 
                     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
-                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
-
-                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
+                    custom_labels = [self.sus_data.vehicle_name, *[sus.vehicle_name for sus in self.comparison_data], 'FMU']
+                    custom_lines = [Line2D([0], [0], color=colors[i], lw=1.5) for i in range(len(custom_labels) - 1)]
+                    custom_lines += [Line2D([0], [0], color=colors[len(custom_labels) - 1], lw=1.5, linestyle='--')]
+                    
+                    fig.legend(custom_lines, custom_labels, loc='upper right')
 
                 elif value["x-axis"]["Label"].lower() == "roll":
                     roll_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
@@ -261,6 +284,19 @@ class Kinematics(Simulation):
                         axle_vals[0].append(self.sus.state["Fr_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
                         axle_vals[1].append(self.sus.state["Rr_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
                     
+                    for i in range(len(self.comparison_sus)):
+                        comparison_axle_vals.append([[], []])
+
+                        for roll_val in sweep:
+                            eval_num += 1
+                            print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
+                            
+                            self.public_comparison_sus_copy = self.comparison_sus_copy[i]
+                            comparison_sus = self.comparison_roll(roll_val)
+
+                            comparison_axle_vals[i][0].append(comparison_sus.state["Fr_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
+                            comparison_axle_vals[i][1].append(comparison_sus.state["Rr_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
+
                     ax1.set_title(f"Fr {value["Title"]}", fontsize=14)
                     ax2.set_title(f"Rr {value["Title"]}", fontsize=14)
 
@@ -275,6 +311,10 @@ class Kinematics(Simulation):
                     
                     ax1.plot(roll_sweep, axle_vals[0])
                     ax2.plot(roll_sweep, axle_vals[1])
+
+                    for Fr, Rr in comparison_axle_vals:
+                        ax1.plot(roll_sweep, Fr)
+                        ax2.plot(roll_sweep, Rr)
 
                     if self.FMU_config["Evaluate"]:
                         Fr_FMU_vals = np.array([FMU_fits["Fr_" + value["y-axis"]["Outputs"]["FL"]](np.array([0, 0, 0, roll]))[0] for roll in sweep])
@@ -301,10 +341,11 @@ class Kinematics(Simulation):
                     ax2.legend(loc='lower center')
 
                     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
-                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
+                    custom_labels = [self.sus_data.vehicle_name, *[sus.vehicle_name for sus in self.comparison_data], 'FMU']
+                    custom_lines = [Line2D([0], [0], color=colors[i], lw=1.5) for i in range(len(custom_labels) - 1)]
+                    custom_lines += [Line2D([0], [0], color=colors[len(custom_labels) - 1], lw=1.5, linestyle='--')]
 
-                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
+                    fig.legend(custom_lines, custom_labels, loc='upper right')
                     
                 if value["Grid"]:
                     ax1.grid()
@@ -386,6 +427,7 @@ class Kinematics(Simulation):
                         
             if num_plots == 4:
                 corner_vals = [[], [], [], []]
+                comparison_corner_vals = []
                 if self.fit_config["Generate Linear"] or self.fit_config["Generate Cubic"]:
                     fig = plt.figure(figsize=(14, 8.5), dpi=300)
                     gs = gridspec.GridSpec(2, 3, width_ratios=[1, 1, 0.75])
@@ -427,6 +469,21 @@ class Kinematics(Simulation):
                         corner_vals[2].append(self.sus.state["RL_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
                         corner_vals[3].append(self.sus.state["RR_" + value["y-axis"]["Outputs"]["RR"]] * value["y-axis"]["Multipliers"]["RR"])
                     
+                    for i in range(len(self.comparison_sus)):
+                        comparison_corner_vals.append([[], [], [], []])
+
+                        for jounce_val in sweep:
+                            eval_num += 1
+                            print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
+                            
+                            self.public_comparison_sus_copy = self.comparison_sus_copy[i]
+                            comparison_sus = self.comparison_heave(jounce_val)
+
+                            comparison_corner_vals[i][0].append(comparison_sus.state["FL_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
+                            comparison_corner_vals[i][1].append(comparison_sus.state["FR_" + value["y-axis"]["Outputs"]["FR"]] * value["y-axis"]["Multipliers"]["FR"])
+                            comparison_corner_vals[i][2].append(comparison_sus.state["RL_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
+                            comparison_corner_vals[i][3].append(comparison_sus.state["RR_" + value["y-axis"]["Outputs"]["RR"]] * value["y-axis"]["Multipliers"]["RR"])
+                        
                     ax1.set_title(f"FL {value["Title"]}", fontsize=14)
                     ax2.set_title(f"FR {value["Title"]}", fontsize=14)
                     ax3.set_title(f"RL {value["Title"]}", fontsize=14)
@@ -449,6 +506,12 @@ class Kinematics(Simulation):
                     ax2.plot(jounce_sweep, corner_vals[1])
                     ax3.plot(jounce_sweep, corner_vals[2])
                     ax4.plot(jounce_sweep, corner_vals[3])
+
+                    for FL, FR, RL, RR in comparison_corner_vals:
+                        ax1.plot(jounce_sweep, FL)
+                        ax2.plot(jounce_sweep, FR)
+                        ax3.plot(jounce_sweep, RL)
+                        ax4.plot(jounce_sweep, RR)
 
                     if self.FMU_config["Evaluate"]:
                         FL_FMU_vals = []
@@ -495,10 +558,11 @@ class Kinematics(Simulation):
                     ax4.legend(loc='lower center')
 
                     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
-                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
+                    custom_labels = [self.sus_data.vehicle_name, *[sus.vehicle_name for sus in self.comparison_data], 'FMU']
+                    custom_lines = [Line2D([0], [0], color=colors[i], lw=1.5) for i in range(len(custom_labels) - 1)]
+                    custom_lines += [Line2D([0], [0], color=colors[len(custom_labels) - 1], lw=1.5, linestyle='--')]
 
-                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
+                    fig.legend(custom_lines, custom_labels, loc='upper right')
                 
                 elif value["x-axis"]["Label"].lower() == "roll":
                     roll_sweep = np.linspace(*value["x-axis"]["Values"], value["x-axis"]["Number Steps"])
@@ -517,6 +581,21 @@ class Kinematics(Simulation):
                         corner_vals[2].append(self.sus.state["RL_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
                         corner_vals[3].append(self.sus.state["RR_" + value["y-axis"]["Outputs"]["RR"]] * value["y-axis"]["Multipliers"]["RR"])
                     
+                    for i in range(len(self.comparison_sus)):
+                        comparison_corner_vals.append([[], [], [], []])
+
+                        for roll_val in sweep:
+                            eval_num += 1
+                            print(f"Percent Completion: {round(eval_num / total_evals * 100, 2)}%\t", end="\r")
+                            
+                            self.public_comparison_sus_copy = self.comparison_sus_copy[i]
+                            comparison_sus = self.comparison_roll(roll_val)
+
+                            comparison_corner_vals[i][0].append(comparison_sus.state["FL_" + value["y-axis"]["Outputs"]["FL"]] * value["y-axis"]["Multipliers"]["FL"])
+                            comparison_corner_vals[i][1].append(comparison_sus.state["FR_" + value["y-axis"]["Outputs"]["FR"]] * value["y-axis"]["Multipliers"]["FR"])
+                            comparison_corner_vals[i][2].append(comparison_sus.state["RL_" + value["y-axis"]["Outputs"]["RL"]] * value["y-axis"]["Multipliers"]["RL"])
+                            comparison_corner_vals[i][3].append(comparison_sus.state["RR_" + value["y-axis"]["Outputs"]["RR"]] * value["y-axis"]["Multipliers"]["RR"])
+                        
                     ax1.set_title(f"FL {value["Title"]}")
                     ax2.set_title(f"FR {value["Title"]}")
                     ax3.set_title(f"RL {value["Title"]}")
@@ -539,6 +618,12 @@ class Kinematics(Simulation):
                     ax2.plot(roll_sweep, corner_vals[1])
                     ax3.plot(roll_sweep, corner_vals[2])
                     ax4.plot(roll_sweep, corner_vals[3])
+
+                    for FL, FR, RL, RR in comparison_corner_vals:
+                        ax1.plot(roll_sweep, FL)
+                        ax2.plot(roll_sweep, FR)
+                        ax3.plot(roll_sweep, RL)
+                        ax4.plot(roll_sweep, RR)
 
                     if self.FMU_config["Evaluate"]:
                         FL_FMU_vals = []
@@ -585,10 +670,11 @@ class Kinematics(Simulation):
                     ax4.legend(loc='lower center')
 
                     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-                    custom_lines = [Line2D([0], [0], color=colors[0], lw=1.5),
-                                    Line2D([0], [0], color=colors[1], lw=1.5, linestyle='--')]
+                    custom_labels = [self.sus_data.vehicle_name, *[sus.vehicle_name for sus in self.comparison_data], 'FMU']
+                    custom_lines = [Line2D([0], [0], color=colors[i], lw=1.5) for i in range(len(custom_labels) - 1)]
+                    custom_lines += [Line2D([0], [0], color=colors[len(custom_labels) - 1], lw=1.5, linestyle='--')]
 
-                    fig.legend(custom_lines, ['Full Model', 'FMU'], loc='upper right')
+                    fig.legend(custom_lines, custom_labels, loc='upper right')
                 
                 if value["Grid"]:
                     ax1.grid()
@@ -739,12 +825,30 @@ class Kinematics(Simulation):
 
         return (float(kin_deriv(0)), lambda x: float(kin_deriv(0)) * np.array(x) + float(kin_curve(0)))
 
-    @SISO_cache
-    def heave(self, heave):
+    @SISO_global_cache
+    def heave(self, heave: float):
         self.sus = deepcopy(self.sus_copy)
         self.sus.heave(heave=heave)
-    
-    @SISO_cache
+
+        return self
+
+    @SISO_global_cache
     def roll(self, roll, n_steps):
         self.sus = deepcopy(self.sus_copy)
         self.sus.roll(roll=roll, n_steps=n_steps)
+
+        return self
+    
+    @SISO_local_cache
+    def comparison_heave(self, heave: float):
+        self.public_comparison_sus = deepcopy(self.public_comparison_sus_copy)
+        self.public_comparison_sus.heave(heave=heave)
+
+        return self.public_comparison_sus
+
+    @SISO_local_cache
+    def comparison_roll(self, roll: float):
+        self.public_comparison_sus = deepcopy(self.public_comparison_sus_copy)
+        self.public_comparison_sus.roll(roll=roll)
+
+        return self.public_comparison_sus

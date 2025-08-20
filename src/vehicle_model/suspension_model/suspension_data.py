@@ -59,6 +59,8 @@ class SuspensionData:
 
         self.CG_node: Node
         
+        self.vehicle_name = raw_params["Name"]["Value"]
+        
         self.sprung_mass = raw_params["Mass Properties"]["Driver"]["Value"] + \
                            raw_params["Mass Properties"]["Sprung"]["Value"]
 

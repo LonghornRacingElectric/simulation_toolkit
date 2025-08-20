@@ -63,7 +63,7 @@ sim:
 
 	docker run --name sim_env simulation-toolkit \
 		/bin/bash -c " \
-		$(PYTHON) kernel.py $(SIM) $(MODEL_PATH)"
+		$(PYTHON) kernel.py $(SIM) $(MODEL_PATH) $(COMPARISON_PATH)"
 	
 	rm -r ./src/simulations/$(SIM)/$(SIM)_outputs
 	docker cp sim_env:/home/vmod/src/simulations/$(SIM)/$(SIM)_outputs ./src/simulations/$(SIM)/
