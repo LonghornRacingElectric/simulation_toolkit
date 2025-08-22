@@ -29,25 +29,25 @@ If this runs without error, skip past this section. If you receive an error, ins
 3. Go to Windows search and access "Edit the system environment variables".
 
     <center>
-        <img src="./_5_ico/edit_env_var.png" width="50%">
+        <img src="./src/_4_ico/edit_env_var.png" width="50%">
     </center>
 
 4. Select "Environment Variables"
 
     <center>
-        <img src="./_5_ico/env_var.png" width="75%">
+        <img src="./src/_4_ico/env_var.png" width="75%">
     </center>
 
 5. Edit Path
 
     <center>
-        <img src="./_5_ico/edit_path.png" width="75%">
+        <img src="./src/_4_ico/edit_path.png" width="75%">
     </center>
 
 6. Add the following path
 
     <center>
-        <img src="./_5_ico/path.png" width="75%">
+        <img src="./src/_4_ico/path.png" width="75%">
     </center>
 
 ##### MacOS
@@ -77,14 +77,129 @@ If this runs without error, skip past this section. If you receive an error, ins
     sudo pacman -Su make
     ```
 
+### Dependencies (docker):
+
+Docker isn't required to run workflows locally, but it is highly recommended. Docker containers give a unified runtime environment, making debugging easier with fewer runtime issues.
+
+##### Windows
+1. Click the following link, and select the proper download for your machine
+
+    [docker download](https://www.docker.com/products/docker-desktop/)
+
+2. Run the downloaded .exe, following the installation prompts. Make sure to leave the default install paths.
+
+3. Go to Windows search and open the new Docker Desktop application.
+   
+4. Check if docker installed successfully by running the following command (in git bash)
+  
+   ```shell
+   docker run hello-world
+   ```
+
+##### MacOS
+1. Install make by running the following command in terminal:
+
+    ```shell
+    brew install --cask docker
+    ```
+2. Check if docker installed successfully by running the following command
+  
+   ```shell
+   docker run hello-world
+   ```
+
+##### Linux (Debian-based distros)
+1. Run the following commands in terminal
+
+    ```shell
+    sudo apt-get update
+    
+    sudo apt-get install \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+
+    sudo mkdir -p /etc/apt/keyrings
+
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+        sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+      https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    sudo apt-get update
+    
+    sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+    sudo usermod -aG docker $USER
+
+    newgrp docker
+    ```
+    
+2. Check if docker installed successfully by running the following command
+  
+   ```shell
+   docker run hello-world
+   ```
+
+##### Linux (Arch)
+1. Run the following commands in terminal
+
+    ```shell
+    sudo pacman -Syu docker
+
+    sudo systemctl enable docker.service
+
+    sudo systemctl start docker.service
+
+    sudo usermod -aG docker $USER
+
+    newgrp docker
+    ```
+2. Check if docker installed successfully by running the following command
+  
+   ```shell
+   docker run hello-world
+   ```
+    
 Assuming you already have [Python](https://www.python.org/downloads/) installed, this covers all requirements for the project.
 
 ___
 
 
-### Initializing the Project
+### Running a Workflow
 
-1. **(OPTIONAL)** Create and activate a virtual environment in "./simulation_toolkit" to contain the necessary Python libraries.
+There are two methods for running workflows locally. You can run through docker containers (recommended) OR you can call python directly.
+
+#### Method 1: Running via Docker
+1. Open the Docker application
+
+2. Run the following command in terminal
+
+   ```shell
+   make test
+   ```
+
+   This runs the full testing workflow to ensure docker runs properly
+
+3. Run the desired simulation workflow. Options are shown below:
+
+   ```shell
+   make sim SIM=kin MODEL_PATH=Nightwatch.yml
+
+   make sim SIM=kin MODEL_PATH=Nightwatch.yml COMPARISON_PATH=Scratchpad.yml
+
+   make sim SIM=qss MODEL_PATH=Nightwatch.yml
+   ```
+
+4. Locate the workflow outputs under ./outputs
+
+#### Method 1: Running via Python Directly
+1. Create and activate a virtual environment in "./simulation_toolkit" to contain the necessary Python libraries.
     
     - MacOS or Linux
     ```shell
@@ -108,12 +223,24 @@ ___
 
     This installs the necessary Python libraries and remote files for project functionality.
 
-___
+4. Run the desired simulation workflow. Options are shown below:
 
-### Setting up Configuration File
+    - MacOS or Linux
+    ```shell
+    python3 -m kin Nightwatch.yml
 
-```mermaid
+    python3 -m kin Nightwatch.yml Scratchpad.yml
 
+    python3 -m qss Nightwatch.yml
+    ```
 
+    - Windows:
+    ```shell
+    python -m kin Nightwatch.yml
 
-```
+    python -m kin Nightwatch.yml Scratchpad.yml
+
+    python -m qss Nightwatch.yml
+    ```
+    
+5. Locate the workflow outputs under ./src/simulations/{your simulation name}/{your simulation name}_outputs
