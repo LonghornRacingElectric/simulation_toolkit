@@ -198,7 +198,7 @@ There are two methods for running workflows locally. You can run through docker 
 
 4. Locate the workflow outputs under ./outputs
 
-#### Method 1: Running via Python Directly
+#### Method 2: Running via Python Directly
 1. Create and activate a virtual environment in "./simulation_toolkit" to contain the necessary Python libraries.
     
     - MacOS or Linux
