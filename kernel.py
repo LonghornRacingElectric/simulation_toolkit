@@ -3,9 +3,12 @@ from src.simulations.kin.kin import Kinematics
 from src.simulations.qss.qss import QSS
 
 import shutil
+import time
 import yaml
 import sys
 import os
+
+start_time = time.time()
 
 # Initialization
 avail_sims = ["kin", "visual", "qss"]
@@ -48,3 +51,7 @@ elif sim_selected == "qss":
     shutil.rmtree("./src/simulations/qss/qss_outputs/ymd_animation")
     os.mkdir("./src/simulations/qss/qss_outputs/ymd_animation")
     visual = QSS(model_path=model_path)
+
+end_time = time.time()
+
+print(f"Workflow duration: {end_time - start_time} sec")

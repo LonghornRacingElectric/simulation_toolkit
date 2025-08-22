@@ -3,7 +3,7 @@
 ####################
 FMU Settings:
   Generate: False
-  Evaluate: True
+  Evaluate: False
   Extrapolate: True # be very careful with this
   Refinement: 11
   Hwa Sweep: 120 # deg

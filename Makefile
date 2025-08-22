@@ -71,6 +71,8 @@ sim:
 	docker cp sim_env:/home/vmod/src/simulations/$(SIM)/$(SIM)_outputs ./src/simulations/$(SIM)/
 	docker rm sim_env
 
+	cp -r ./src/simulations/$(SIM)/$(SIM)_outputs ./outputs/
+
 build:
 	docker build -t simulation-toolkit .
 	docker run --name sim_env simulation-toolkit

@@ -55,7 +55,7 @@ class Kinematics(Simulation):
             state_tracking: dict[str, MutableSequence] = {x: [] for x in self.sus_copy.state.keys()}
             
             eval_num = 0
-            total_evals = FMU_refinement**4
+            total_evals = FMU_refinement**4 + FMU_refinement**4 * len(comparison_paths)
 
             for hwa in hwa_sweep:
                 for heave in heave_sweep:
@@ -154,7 +154,7 @@ class Kinematics(Simulation):
         plots = []
         plots.append(title_fig)
 
-        total_evals = sum([x["x-axis"]["Number Steps"] for x in self.plot_config.values()])
+        total_evals = sum([x["x-axis"]["Number Steps"] for x in self.plot_config.values()]) * (1 + len(comparison_paths))
         eval_num = 0
 
         if self.FMU_config["Evaluate"]:
