@@ -1,11 +1,15 @@
-OS := $(shell uname 2>/dev/null || echo Unknown)
+OS := $(shell uname 2>/dev/null || echo Windows)
 
-ifeq ($(OS), Darwin)  # macOS
+ifeq ($(OS), Darwin)
     PYTHON := python3
-else ifeq ($(OS), Linux)  # Linux
+    SHELL := /bin/bash
+else ifeq ($(OS), Linux)
     PYTHON := python3
-else  # Assume Windows (uname not available or unknown)
+    SHELL := /bin/bash
+else
+    # Windows or unknown OS
     PYTHON := python
+    SHELL := cmd
 endif
 
 PIP      := $(PYTHON) -m pip
@@ -31,13 +35,14 @@ remove_dep:
 clean:
 	$(PYTHON) -c "import shutil; shutil.rmtree('./unit_tests/python_test_results', ignore_errors=True)"
 	$(PYTHON) -c "import os; os.makedirs('./unit_tests/python_test_results', exist_ok=True)"
+	
+	docker rm sim_env
 
 report:
 	$(PYTHON) -c "import webbrowser, os; webbrowser.open_new_tab(os.path.abspath('unit_tests/python_test_results/test_results.html'))"
 	$(PYTHON) -c "import webbrowser, os; webbrowser.open_new_tab(os.path.abspath('unit_tests/python_test_results/coverage_html/index.html'))"
 
 test:
-	$(MAKE) clean
 	docker build -t simulation-toolkit .
 
 	docker run --name sim_env simulation-toolkit \
@@ -54,9 +59,6 @@ test:
 	rm -r ./unit_tests/python_test_results
 	docker cp sim_env:/home/vmod/unit_tests/python_test_results ./unit_tests/
 	docker rm sim_env
-
-	$(MAKE) remove_dep
-	$(MAKE) report
 
 sim:
 	docker build -t simulation-toolkit .
