@@ -227,20 +227,20 @@ There are two methods for running workflows locally. You can run through docker 
 
     - MacOS or Linux
     ```shell
-    python3 -m kin Nightwatch.yml
+    python3 -m kernel kin Nightwatch.yml
 
-    python3 -m kin Nightwatch.yml Scratchpad.yml
+    python3 -m kernel kin Nightwatch.yml Scratchpad.yml
 
-    python3 -m qss Nightwatch.yml
+    python3 -m kernel qss Nightwatch.yml
     ```
 
     - Windows:
     ```shell
-    python -m kin Nightwatch.yml
+    python -m kernel kin Nightwatch.yml
 
-    python -m kin Nightwatch.yml Scratchpad.yml
+    python -m kernel kin Nightwatch.yml Scratchpad.yml
 
-    python -m qss Nightwatch.yml
+    python -m kernel qss Nightwatch.yml
     ```
     
 5. Locate the workflow outputs under ./src/simulations/{your simulation name}/{your simulation name}_outputs
