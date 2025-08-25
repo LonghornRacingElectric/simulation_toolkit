@@ -1,7 +1,6 @@
 # Computation
 pyvista
 imageio
-PyQt5
 scipy
 pandas
 pyyaml
