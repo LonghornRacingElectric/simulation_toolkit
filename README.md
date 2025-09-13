@@ -77,6 +77,40 @@ If this runs without error, skip past this section. If you receive an error, ins
     sudo pacman -Su make
     ```
 
+### Dependencies (git):
+
+Git is required to clone repositories from Github. It's also required for code development and version control.
+
+##### Windows
+1. If you already installed Git Bash, this is covered
+
+##### MacOS
+1. Make sure you've installed Homebrew from the previous step (make)
+
+2. Install Git from the command line using:
+    ```shell
+    brew install git
+    ```
+
+##### Linux (Debian-based distros)
+1. Run the following command in terminal
+    ```shell
+    sudo apt-get install git
+    ```
+
+##### Linux (Arch)
+1. Run the following command in terminal
+    ```shell
+    sudo pacman -Su git
+    ```
+
+Once you've installed Git, it still needs to be configured. First, set your name and email (associated with commits). This can be achieved with the following command:
+
+```shell
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
 ### Dependencies (docker):
 
 Docker isn't required to run workflows locally, but it is highly recommended. Docker containers give a unified runtime environment, making debugging easier with fewer runtime issues.
