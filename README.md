@@ -117,10 +117,10 @@ Go to the [OpenModelica Website](https://openmodelica.org/). Under "Download", p
 
 ##### Arch
 1. Run the following commands in terminal
-'''shell
-yay -S openmodelica
-yay -S openmodelica-omlibraries
-'''
+    ```shell
+    yay -S openmodelica
+    yay -S openmodelica-omlibraries
+    ```
 
 ### Dependencies (docker):
 
