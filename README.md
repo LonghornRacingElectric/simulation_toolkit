@@ -121,7 +121,10 @@ Go to the [OpenModelica Website](https://openmodelica.org/). Under "Download", p
     yay -S openmodelica
     yay -S openmodelica-omlibraries
     ```
-
+Make sure the second checkbox is checked
+    <center>
+        <img src="./src/_4_ico/Modelica_Setting.png" width="75%">
+    </center>
 ### Dependencies (docker):
 
 Docker isn't required to run workflows locally, but it is highly recommended. Docker containers give a unified runtime environment, making debugging easier with fewer runtime issues.
