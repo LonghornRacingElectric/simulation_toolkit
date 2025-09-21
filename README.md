@@ -115,6 +115,13 @@ git config --global user.email "you@example.com"
 
 Go to the [OpenModelica Website](https://openmodelica.org/). Under "Download", pick your specified operating system. Installation varies across machines, but reach out to code owners if you run into any issues. Note that this process is easiest on Windows and probably most difficult on MacOS (need to install via a Docker container).
 
+##### Arch
+1. Run the following commands in terminal
+'''shell
+yay -S openmodelica
+yay -S openmodelica-omlibraries
+'''
+
 ### Dependencies (docker):
 
 Docker isn't required to run workflows locally, but it is highly recommended. Docker containers give a unified runtime environment, making debugging easier with fewer runtime issues.
