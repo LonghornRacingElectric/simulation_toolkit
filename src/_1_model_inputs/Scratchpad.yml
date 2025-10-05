@@ -139,7 +139,7 @@ FL QuarterCar:
 
   lower_wishbone:
     fore_inboard:
-      Type: Tuple[float, float float]
+      Type: Tuple[float, float, float]
       Unit: in
       Value: [0.087376, 0.35, 0.090000]
     aft_inboard:
@@ -153,7 +153,7 @@ FL QuarterCar:
     
   upper_wishbone:
     fore_inboard:
-      Type: Tuple[float, float float]
+      Type: Tuple[float, float, float]
       Unit: in
       Value: [0.086868, 0.10, 0.200000]
     aft_inboard:
@@ -287,7 +287,7 @@ RL QuarterCar:
 
   lower_wishbone:
     fore_inboard:
-      Type: Tuple[float, float float]
+      Type: Tuple[float, float, float]
       Unit: in
       Value: [-1.298905, 0.282999, 0.090000]
     aft_inboard:
@@ -301,7 +301,7 @@ RL QuarterCar:
     
   upper_wishbone:
     fore_inboard:
-      Type: Tuple[float, float float]
+      Type: Tuple[float, float, float]
       Unit: in
       Value: [-1.298905, 0.282999, 0.217500]
     aft_inboard:
