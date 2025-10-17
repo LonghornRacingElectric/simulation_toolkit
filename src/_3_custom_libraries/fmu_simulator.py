@@ -35,15 +35,17 @@ class FMUSimulator:
             'parameters': parameters
         }
 
-    def simulate(self, 
+    def simulate(self,
+                 fmi_type,
                  start_time=0.0,
                  stop_time=1.0,
                  input_data=None,
                  start_values=None,
                  output_vars=None,
                  step_size=None,
-                 show_plot=False,
-                 debug_logging=False):
+                 debug_logging=False,
+                 relative_tolerance = None
+                 ):
         """
         Simulate the FMU with optional input signals and parameter settings.
         """
@@ -71,25 +73,18 @@ class FMUSimulator:
         if debug_logging:
             sim_args['debug_logging'] = True
 
-        # Run the simulation
-        result = simulate_fmu(filename=self.fmu_path,
-                              validate=True,
-                              start_time=sim_args['start_time'],
-                              stop_time=sim_args['stop_time'],
-                              start_values=sim_args['start_values'],
-                              step_size=1e-4,
-                              solver='CVode')
-
-        # Plot if requested
-        if show_plot and output_vars is not None:
-            time = result['time']
-            for var in output_vars:
-                plt.plot(time, result[var], label=var)
-            plt.xlabel("Time (s)")
-            plt.ylabel("Outputs")
-            plt.legend()
-            plt.grid(True)
-            plt.title("FMU Simulation Results")
-            plt.show()
-
+        
+        result = simulate_fmu(
+            filename=self.fmu_path,
+            start_time=start_time,
+            stop_time=stop_time,
+            input=input_data,
+            output=output_vars,
+            step_size=step_size,
+            fmi_type=fmi_type,
+            debug_logging=debug_logging,
+            start_values=start_values or {},    
+            apply_default_start_values=False,
+            relative_tolerance=relative_tolerance
+        )
         return result
