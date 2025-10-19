@@ -1,0 +1,133 @@
+nodes:
+  # FL (Front Left) QuarterCar nodes
+  - position: [0,0,0]
+  - position: [0.087376, 0.215900, 0.090000]    # FL lower wishbone fore inboard
+  - position: [-0.095250, 0.215900, 0.090000]   # FL lower wishbone aft inboard
+  - position: [0, 0.556499, 0.124998]           # FL lower wishbone outboard
+  - position: [0.086868, 0.215900, 0.200000]    # FL upper wishbone fore inboard
+  - position: [-0.095250, 0.215900, 0.200000]   # FL upper wishbone aft inboard
+  - position: [-0.006347, 0.523240, 0.287020]   # FL upper wishbone outboard
+  - position: [0.041128, 0.215900, 0.117856]    # FL tie rod inboard
+  - position: [0.056000, 0.532333, 0.164821]    # FL tie rod outboard
+  - position: [-0.04415429, 0.39924560, 0.40746267]  # FL push/pull rod inboard
+  - position: [-0.01368377, 0.49897726, 0.30564884]  # FL push/pull rod outboard
+  
+  # RL (Rear Left) QuarterCar nodes
+  - position: [-1.298905, 0.282999, 0.090000]   # RL lower wishbone fore inboard
+  - position: [-1.490977, 0.282999, 0.090000]   # RL lower wishbone aft inboard
+  - position: [-1.554983, 0.579999, 0.113030]   # RL lower wishbone outboard
+  - position: [-1.298905, 0.282999, 0.217500]   # RL upper wishbone fore inboard
+  - position: [-1.490977, 0.282999, 0.217500]   # RL upper wishbone aft inboard
+  - position: [-1.574797, 0.554998, 0.289560]   # RL upper wishbone outboard
+  - position: [-1.428059, 0.282999, 0.177800]   # RL tie rod inboard
+  - position: [-1.462710, 0.587375, 0.240741]   # RL tie rod outboard
+  - position: [-1.47864722, 0.40618605, 0.29100344]  # RL push/pull rod inboard
+  - position: [-1.54445540, 0.55586601, 0.13907432]  # RL push/pull rod outboard
+
+rods:
+  # FL (Front Left) suspension components
+  - end1: [0.087376, 0.215900, 0.090000]     # FL lower wishbone fore link
+    end2: [0, 0.556499, 0.124998]
+  - end1: [-0.095250, 0.215900, 0.090000]    # FL lower wishbone aft link
+    end2: [0, 0.556499, 0.124998]
+  - end1: [0.086868, 0.215900, 0.200000]     # FL upper wishbone fore link
+    end2: [-0.006347, 0.523240, 0.287020]
+  - end1: [-0.095250, 0.215900, 0.200000]    # FL upper wishbone aft link
+    end2: [-0.006347, 0.523240, 0.287020]
+  - end1: [0.041128, 0.215900, 0.117856]     # FL tie rod
+    end2: [0.056000, 0.532333, 0.164821]
+  - end1: [-0.04415429, 0.39924560, 0.40746267]  # FL push/pull rod
+    end2: [-0.01368377, 0.49897726, 0.30564884]
+    
+  # RL (Rear Left) suspension components
+  - end1: [-1.298905, 0.282999, 0.090000]    # RL lower wishbone fore link
+    end2: [-1.554983, 0.579999, 0.113030]
+  - end1: [-1.490977, 0.282999, 0.090000]    # RL lower wishbone aft link
+    end2: [-1.554983, 0.579999, 0.113030]
+  - end1: [-1.298905, 0.282999, 0.217500]    # RL upper wishbone fore link
+    end2: [-1.574797, 0.554998, 0.289560]
+  - end1: [-1.490977, 0.282999, 0.217500]    # RL upper wishbone aft link
+    end2: [-1.574797, 0.554998, 0.289560]
+  - end1: [-1.428059, 0.282999, 0.177800]    # RL tie rod
+    end2: [-1.462710, 0.587375, 0.240741]
+  - end1: [-1.47864722, 0.40618605, 0.29100344]  # RL push/pull rod
+    end2: [-1.54445540, 0.55586601, 0.13907432]
+
+nodes:
+  # FR (Front Right) QuarterCar nodes
+  - position: [0.087376, -0.215900, 0.090000]    # FR lower wishbone fore inboard
+  - position: [-0.095250, -0.215900, 0.090000]   # FR lower wishbone aft inboard
+  - position: [0, -0.556499, 0.124998]           # FR lower wishbone outboard
+  - position: [0.086868, -0.215900, 0.200000]    # FR upper wishbone fore inboard
+  - position: [-0.095250, -0.215900, 0.200000]   # FR upper wishbone aft inboard
+  - position: [-0.006347, -0.523240, 0.287020]   # FR upper wishbone outboard
+  - position: [0.041128, -0.215900, 0.117856]    # FR tie rod inboard
+  - position: [0.056000, -0.532333, 0.164821]    # FR tie rod outboard
+  - position: [-0.04415429, -0.39924560, 0.40746267]  # FR push/pull rod inboard
+  - position: [-0.01368377, -0.49897726, 0.30564884]  # FR push/pull rod outboard
+  
+  # RR (Rear Right) QuarterCar nodes
+  - position: [-1.298905, -0.282999, 0.090000]   # RR lower wishbone fore inboard
+  - position: [-1.490977, -0.282999, 0.090000]   # RR lower wishbone aft inboard
+  - position: [-1.554983, -0.579999, 0.113030]   # RR lower wishbone outboard
+  - position: [-1.298905, -0.282999, 0.217500]   # RR upper wishbone fore inboard
+  - position: [-1.490977, -0.282999, 0.217500]   # RR upper wishbone aft inboard
+  - position: [-1.574797, -0.554998, 0.289560]   # RR upper wishbone outboard
+  - position: [-1.428059, -0.282999, 0.177800]   # RR tie rod inboard
+  - position: [-1.462710, -0.587375, 0.240741]   # RR tie rod outboard
+  - position: [-1.47864722, -0.40618605, 0.29100344]  # RR push/pull rod inboard
+  - position: [-1.54445540, -0.55586601, 0.13907432]  # RR push/pull rod outboard
+
+rods:
+  # FR (Front Right) suspension components
+  - end1: [0.087376, -0.215900, 0.090000]     # FR lower wishbone fore link
+    end2: [0, -0.556499, 0.124998]
+  - end1: [-0.095250, -0.215900, 0.090000]    # FR lower wishbone aft link
+    end2: [0, -0.556499, 0.124998]
+  - end1: [0.086868, -0.215900, 0.200000]     # FR upper wishbone fore link
+    end2: [-0.006347, -0.523240, 0.287020]
+  - end1: [-0.095250, -0.215900, 0.200000]    # FR upper wishbone aft link
+    end2: [-0.006347, -0.523240, 0.287020]
+  - end1: [0.041128, -0.215900, 0.117856]     # FR tie rod
+    end2: [0.056000, -0.532333, 0.164821]
+  - end1: [-0.04415429, -0.39924560, 0.40746267]  # FR push/pull rod
+    end2: [-0.01368377, -0.49897726, 0.30564884]
+    
+  # RR (Rear Right) suspension components
+  - end1: [-1.298905, -0.282999, 0.090000]    # RR lower wishbone fore link
+    end2: [-1.554983, -0.579999, 0.113030]
+  - end1: [-1.490977, -0.282999, 0.090000]    # RR lower wishbone aft link
+    end2: [-1.554983, -0.579999, 0.113030]
+  - end1: [-1.298905, -0.282999, 0.217500]    # RR upper wishbone fore link
+    end2: [-1.574797, -0.554998, 0.289560]
+  - end1: [-1.490977, -0.282999, 0.217500]    # RR upper wishbone aft link
+    end2: [-1.574797, -0.554998, 0.289560]
+  - end1: [-1.428059, -0.282999, 0.177800]    # RR tie rod
+    end2: [-1.462710, -0.587375, 0.240741]
+  - end1: [-1.47864722, -0.40618605, 0.29100344]  # RR push/pull rod
+    end2: [-1.54445540, -0.55586601, 0.13907432]
+
+tires:
+  # Front Left Tire
+  - contact_patch: [0, 0.556499]
+    inner_diameter: 0.254
+    outer_diameter: 0.4064
+    width: 0.1778
+  
+  # Front Right Tire
+  - contact_patch: [0, -0.556499]
+    inner_diameter: 0.254
+    outer_diameter: 0.4064
+    width: 0.1778
+  
+  # Rear Left Tire
+  - contact_patch: [-1.5, 0.579999]
+    inner_diameter: 0.254
+    outer_diameter: 0.4064
+    width: 0.1778
+  
+  # Rear Right Tire
+  - contact_patch: [-1.5, -0.579999]
+    inner_diameter: 0.254
+    outer_diameter: 0.4064
+    width: 0.1778

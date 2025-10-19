@@ -1,0 +1,1 @@
+/usr/bin/c++ -rdynamic -Wl,--dependency-file=CMakeFiles/opengl_testing.dir/link.d CMakeFiles/opengl_testing.dir/src/main.cpp.o -o opengl_testing
