@@ -82,7 +82,7 @@ class CompEval(Simulation):
         """Get max acceleration at velocity v in direction (radians)"""
         if v < 0.1:
             return 0.0, 0.0
-        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 2000.0)  # v^3/2000
+        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 4000.0)  # v^3/4000
         if radius_squared < 0:
             return 0.0, 0.0 # no grip, prolyl spin
         radius = np.sqrt(radius_squared)
@@ -94,7 +94,7 @@ class CompEval(Simulation):
         """Get full envelope at velocity v"""
         if v < 0.1:
             return np.array([0.0]), np.array([0.0])
-        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 2000.0)
+        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 4000.0)
         if radius_squared < 0:
             return np.array([0.0]), np.array([0.0])
         radius = np.sqrt(radius_squared)
@@ -107,7 +107,7 @@ class CompEval(Simulation):
         """Max forward acceleration - don't apply X_OFFSET here, it's for the full envelope"""
         if v < 0.1:
             v = 0.1  # no zero for math
-        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 2000.0)
+        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 4000.0)
         if radius_squared < 0:
             return 0.0
         radius = np.sqrt(radius_squared)
@@ -118,7 +118,7 @@ class CompEval(Simulation):
         """Max lateral acceleration"""
         if v < 0.1:
             v = 0.1
-        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 2000.0)
+        radius_squared = 9*(self.SCALE_FACTOR * v**2 - v**3 / 4000.0)
         if radius_squared < 0:
             return 0.0
         radius = np.sqrt(radius_squared)
@@ -226,7 +226,7 @@ class CompEval(Simulation):
         ax.set_title('GGV Surface', fontsize=16, pad=20)
 
         # Add equation at bottom (in Gs)
-        fig.text(0.5, 0.02, f"GGV: (ax_g+{self.X_OFFSET})^2 + (ay_g)^2 = 9*({self.SCALE_FACTOR}*v^2 - v^3/2000)  |  accel = G * 9.81",
+        fig.text(0.5, 0.02, f"GGV: (ax_g+{self.X_OFFSET})^2 + (ay_g)^2 = 9*({self.SCALE_FACTOR}*v^2 - v^3/4000)  |  accel = G * 9.81",
                  fontsize=10, ha='center')
 
         return fig
