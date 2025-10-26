@@ -43,8 +43,20 @@ struct TireInstance {
 std::vector<TireInstance> tires;
 
 // Camera
-float camAngleX = 0.0f, camAngleY = 0.0f, camAngleZ = 0.0f, camDistance = 5.0f;
+float camAngleX = 0.0f, camAngleZ = 0.0f, camDistance = 5.0f;
 float zoom = 1.0f;
+
+// Selection state
+int selectedNodeIndex = -1;  // -1 means no node selected
+int selectedRodIndex = -1;  // -1 means no rod selected
+
+// Recenter offset - set this to recenter the entire graph
+glm::vec3 recenterOffset(-0.73f, 0.0f, 0.0f);
+
+// === Recenter Function ===
+glm::vec3 recenter(const glm::vec3& point, const glm::vec3& offset) {
+    return glm::vec3(point.x - offset.x, point.y - offset.y, point.z - offset.z);
+}
 
 // === YAML Loading Function ===
 void loadNodesAndRodsFromYAML(const std::string& filename) {
@@ -90,7 +102,9 @@ void loadNodesAndRodsFromYAML(const std::string& filename) {
             char comma;
             ss >> x >> comma >> y >> comma >> z;
             
-            spheres.push_back({ glm::vec3(x, y, z), 0.0f });
+            glm::vec3 originalPos(x, y, z);
+            glm::vec3 recenteredPos = recenter(originalPos, recenterOffset);
+            spheres.push_back({ recenteredPos, 0.0f });
         }
         
         if (inRods && line.find("end1:") != std::string::npos) {
@@ -112,7 +126,11 @@ void loadNodesAndRodsFromYAML(const std::string& filename) {
             float x2, y2, z2;
             ss2 >> x2 >> comma >> y2 >> comma >> z2;
             
-            rods.push_back({ glm::vec3(x1, y1, z1), glm::vec3(x2, y2, z2) });
+            glm::vec3 end1Original(x1, y1, z1);
+            glm::vec3 end2Original(x2, y2, z2);
+            glm::vec3 end1Recentered = recenter(end1Original, recenterOffset);
+            glm::vec3 end2Recentered = recenter(end2Original, recenterOffset);
+            rods.push_back({ end1Recentered, end2Recentered });
         }
         
         if (inTires && line.find("contact_patch:") != std::string::npos) {
@@ -140,9 +158,10 @@ void loadNodesAndRodsFromYAML(const std::string& filename) {
             // Calculate tire center position from contact patch
             // Contact patch is at ground (z=0), tire center is at outerRadius above ground
             float outerRadius = outerDiam / 2.0f;
-            glm::vec3 tireCenter(cpx, cpy, outerRadius);
+            glm::vec3 tireCenterOriginal(cpx, cpy, outerRadius);
+            glm::vec3 tireCenterRecentered = recenter(tireCenterOriginal, recenterOffset);
             
-            tires.push_back({ tireCenter, innerDiam, outerDiam, width, glm::vec4(0.1f, 0.1f, 0.1f, 1.0f), 0, 0, 0, 0 });
+            tires.push_back({ tireCenterRecentered, innerDiam, outerDiam, width, glm::vec4(0.1f, 0.1f, 0.1f, 1.0f), 0, 0, 0, 0 });
         }
     }
     
@@ -165,6 +184,13 @@ void setSpherePosition(float x_, float y_, float z_) {
 int main() {
     // === GLFW + GLAD Initialization ===
     if (!glfwInit()) return -1;
+    // === Request OpenGL 4.2 Core Profile (important for WSL compatibility) ===
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // Optional: make the window forward-compatible (fixes macOS or strict drivers)
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
     GLFWwindow* window = glfwCreateWindow(800, 600, "ImGui Rod System", NULL, NULL);
     glfwMakeContextCurrent(window);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) return -1;
@@ -212,12 +238,22 @@ int main() {
     glEnableVertexAttribArray(0);
 
     // === Plane Setup ===
-    float planeVertices[] = {
-        -2.212f, -1.0f, 0.0f,
-         0.788f, -1.0f, 0.0f,
-        -2.212f,  1.0f, 0.0f,
-         0.788f,  1.0f, 0.0f
+    // Original plane vertices
+    glm::vec3 planeCorners[] = {
+        glm::vec3(-2.212f, -1.0f, 0.0f),
+        glm::vec3( 0.788f, -1.0f, 0.0f),
+        glm::vec3(-2.212f,  1.0f, 0.0f),
+        glm::vec3( 0.788f,  1.0f, 0.0f)
     };
+    
+    // Apply recentering to plane vertices
+    float planeVertices[12];
+    for (int i = 0; i < 4; i++) {
+        glm::vec3 recentered = recenter(planeCorners[i], recenterOffset);
+        planeVertices[i * 3] = recentered.x;
+        planeVertices[i * 3 + 1] = recentered.y;
+        planeVertices[i * 3 + 2] = recentered.z;
+    }
     unsigned int planeIndices[] = { 0, 1, 2, 1, 3, 2 };
     unsigned int planeVAO, planeVBO, planeEBO;
     glGenVertexArrays(1, &planeVAO);
@@ -297,20 +333,26 @@ int main() {
     // === Main Loop ===
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+        handleKeyboardInput(window);  // Handle keyboard input for camera controls
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderImGuiControls();
 
-        float radX = glm::radians(camAngleX), radY = glm::radians(camAngleY), radZ = glm::radians(camAngleZ);
-        float camX = camDistance * cos(radX) * sin(radY);
-        float camY = camDistance * sin(radX);
-        float camZ = camDistance * cos(radX) * cos(radY);
+        // X rotation for camera position (orbit), Z rotation for camera orientation (roll)
+        float radX = glm::radians(camAngleX), radZ = glm::radians(camAngleZ);
+        
+        // Start with camera at distance along Z-axis
+        glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, camDistance);
+        
+        // Apply only X rotation to camera position (orbit around target)
+        glm::mat4 rotationX = glm::rotate(glm::mat4(1.0f), radX, glm::vec3(1.0f, 0.0f, 0.0f));
+        cameraPos = glm::vec3(rotationX * glm::vec4(cameraPos, 1.0f));
 
-        // Create the view matrix with Z rotation (roll)
-        glm::mat4 view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0), glm::vec3(0, 1, 0));
-
-        // Apply Z rotation (roll) around the camera's forward axis
+        // Create the view matrix using the X-rotated camera position
+        glm::mat4 view = glm::lookAt(cameraPos, glm::vec3(0), glm::vec3(0, 1, 0));
+        
+        // Apply Z rotation (roll) to the view matrix - this only affects camera orientation, not position
         if (abs(camAngleZ) > 0.001f) {
-            glm::vec3 forward = glm::normalize(glm::vec3(0, 0, 0) - glm::vec3(camX, camY, camZ));
+            glm::vec3 forward = glm::normalize(glm::vec3(0, 0, 0) - cameraPos);
             view = glm::rotate(view, radZ, forward);
         }
 
@@ -346,20 +388,27 @@ int main() {
 
         // === Draw Spheres ===
         glBindVertexArray(VAO);
-        for (auto& s : spheres) {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), s.position);  // Apply sphere position transformation
+        for (int i = 0; i < spheres.size(); i++) {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), spheres[i].position);
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform4fv(colorLoc, 1, glm::value_ptr(s.color));  // Set sphere color
+            
+            // Highlight selected node in blue
+            if (i == selectedNodeIndex) {
+                glUniform4f(colorLoc, 0.0f, 0.0f, 1.0f, 1.0f); // Blue
+            } else {
+                glUniform4fv(colorLoc, 1, glm::value_ptr(spheres[i].color));
+            }
             glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
         }
 
         // === Draw Rods ===
         glBindVertexArray(rodVAO);
-        for (auto& r : rods) {
+        for (int i = 0; i < rods.size(); i++) {
+            auto& r = rods[i];
             // Calculate direction, length, and midpoint for the rod
             glm::vec3 dir = r.end2 - r.end1;
-            float length = glm::length(dir);  // Length of the rod
-            glm::vec3 mid = (r.end1 + r.end2) * 0.5f;  // Midpoint of the rod
+            float length = glm::length(dir);
+            glm::vec3 mid = (r.end1 + r.end2) * 0.5f;
 
             // Normalize direction vector
             glm::vec3 dirNormalized = glm::normalize(dir);
@@ -369,15 +418,20 @@ int main() {
             float angle = acos(glm::clamp(glm::dot(glm::vec3(0, 1, 0), dirNormalized), -1.0f, 1.0f));
 
             // Apply the transformation to the rod: translation, rotation, scaling
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), mid);  // Translate to the rod's midpoint
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), mid);
             if (glm::length(axis) > 0.001f) {
-                model = glm::rotate(model, angle, glm::normalize(axis));  // Rotate to align with the direction
+                model = glm::rotate(model, angle, glm::normalize(axis));
             }
-            model = glm::scale(model, glm::vec3(1.0f, length / rodHeight, 1.0f));  // Scale the rod to the correct length (fixed)
+            model = glm::scale(model, glm::vec3(1.0f, length / rodHeight, 1.0f));
 
-            // Apply the same view transformation as for spheres, ensuring they are in the same space
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform4fv(colorLoc, 1, glm::value_ptr(r.color));  // Set rod color
+            
+            // Highlight selected rod in blue
+            if (i == selectedRodIndex) {
+                glUniform4f(colorLoc, 0.0f, 0.0f, 1.0f, 1.0f); // Blue
+            } else {
+                glUniform4fv(colorLoc, 1, glm::value_ptr(r.color));
+            }
 
             glDrawElements(GL_TRIANGLES, rodIndexCount, GL_UNSIGNED_INT, 0);
         }

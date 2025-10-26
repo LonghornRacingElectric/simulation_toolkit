@@ -1,6 +1,6 @@
 nodes:
   # FL (Front Left) QuarterCar nodes
-  - position: [0,0,0]
+  - position: [-0.73,0,0]
   - position: [0.087376, 0.215900, 0.090000]    # FL lower wishbone fore inboard
   - position: [-0.095250, 0.215900, 0.090000]   # FL lower wishbone aft inboard
   - position: [0, 0.556499, 0.124998]           # FL lower wishbone outboard
