@@ -1,6 +1,7 @@
 from src.simulations.visual.visual import VisualModel
 from src.simulations.kin.kin import Kinematics
 from src.simulations.qss.qss import QSS
+from src.simulations.comp_eval.comp_eval import CompEval
 
 import shutil
 import time
@@ -11,7 +12,7 @@ import os
 start_time = time.time()
 
 # Initialization
-avail_sims = ["kin", "visual", "qss"]
+avail_sims = ["kin", "visual", "qss", "comp_eval"]
 input_dir = "./src/_1_model_inputs/"
 
 try:
@@ -51,6 +52,10 @@ elif sim_selected == "qss":
     shutil.rmtree("./src/simulations/qss/qss_outputs/ymd_animation")
     os.mkdir("./src/simulations/qss/qss_outputs/ymd_animation")
     visual = QSS(model_path=model_path)
+elif sim_selected == "comp_eval":
+    print("Running simulation: comp evaluation")
+    comp_eval = CompEval(model_path=model_path)
+
 
 end_time = time.time()
 

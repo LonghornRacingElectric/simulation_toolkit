@@ -1,0 +1,24 @@
+=== GGV DIAGNOSTICS ===
+V_MAX = 31.1 m/s
+X_OFFSET = 0.5
+SCALE_FACTOR = 0.01
+
+GGV values:
+  v=0.1 m/s: ax_max=5.1986 m/s^2, ay_max=0.2936 m/s^2
+  v=10 m/s: ax_max=25.7152 m/s^2, ay_max=20.8102 m/s^2
+  v=20 m/s: ax_max=4.9050 m/s^2, ay_max=0.0000 m/s^2
+
+ACCELERATION EVENT:
+  Time: 4.440 s
+  First 10 velocities: [0.01       0.06198563 0.11397127 0.16636587 0.22029161 0.27578899
+ 0.3328993  0.39166465 0.45212792 0.51433278]
+  Last 5 velocities: [20.00726205 20.00726205 20.00726205 20.00726205 20.00726205]
+  First 10 accelerations: [0.         5.19856333 5.19856333 5.23946037 5.39257412 5.54973785
+ 5.71103149 5.87653471 6.04632677 6.22048632]
+  Max velocity: 20.0073 m/s
+
+SKIDPAD EVENT:
+  Time: 7.292 s
+  Optimal velocity: 13.1403 m/s
+  Lateral accel: 22.6449 m/s^2
+  Lateral G: 2.3083 G

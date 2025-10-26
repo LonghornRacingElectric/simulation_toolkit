@@ -158,3 +158,8 @@ cython_debug/
 
 # MacOS
 .DS_Store
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
