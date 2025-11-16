@@ -1,6 +1,6 @@
-#include "../kin_cpp/third_party/googletest/googletest/include/gtest/gtest.h"
+#include "../kin_cpp/third_party/googletest/googletest/include/gtest.h"
 #include <blaze/Math.h>
-#include "../kin_cpp/primary_elements/node.h"
+#include <kin_cpp/primary_elements/node.h>
 #include "../kin_cpp/assets/misc_linalg.h"
 #include "test_node.h"
 #include <stdexcept>
@@ -50,7 +50,7 @@ void testNode::testNodeRotateBase () {
     resetTestPosition();
 }
 
-void testNode::testNodeRotateEdge () {
+void testnode::testNodeRotateEdge () {
     StaticVector<double, 3UL> rotation = {M_PI/2, M_PI/2, M_PI/2};
     test_node.flatten_rotate(rotation);
     StaticVector<double, 3UL> expected_position = {-1.0, 1.0, -1.0};
