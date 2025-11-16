@@ -1,0 +1,31 @@
+main.cpp: Vehicle model
+Commands:
+1.  g++ -o main src/main.cpp src/glad.c \
+    imgui/imgui.cpp \
+    imgui/imgui_demo.cpp \
+    imgui/imgui_draw.cpp \
+    imgui/imgui_tables.cpp \
+    imgui/imgui_widgets.cpp \
+    imgui/imgui_impl_glfw.cpp \
+    imgui/imgui_impl_opengl3.cpp \
+    -lglfw -ldl -lGL -I./imgui -I./src 
+
+2.  ./main
+
+3.  (optional) if segmentation fault, before ./main:
+    export MESA_LOADER_DRIVER_OVERRIDE=zink
+
+
+temp.cpp: Cube Model (just for demo)
+Commands:
+1.  g++ -o temp src/temp.cpp src/glad.c \
+    imgui/imgui.cpp \
+    imgui/imgui_demo.cpp \
+    imgui/imgui_draw.cpp \
+    imgui/imgui_tables.cpp \
+    imgui/imgui_widgets.cpp \
+    imgui/imgui_impl_glfw.cpp \
+    imgui/imgui_impl_opengl3.cpp \
+    -lglfw -ldl -lGL -I./imgui -I./src
+
+2.  ./temp

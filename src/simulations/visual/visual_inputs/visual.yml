@@ -1,0 +1,27 @@
+############################
+### Visual Configuration ###
+############################
+
+Axes:
+  Show: False
+Stabars:
+  Show: True
+Ground:
+  Show: True
+Links:
+  Show: True
+  Radius: 0.0127
+Nodes:
+  Show: True
+  Radius: 0.015875
+Tires:
+  Show: True
+Vehicle CG:
+  Show: True
+  Radius: 0.03
+N Lines:
+  Show: True
+  Radius: 0.0127
+Sliders:
+  Spacing: 0.05
+  Vertical Position: 0.925

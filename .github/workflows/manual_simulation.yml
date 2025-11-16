@@ -1,0 +1,52 @@
+name: Run Simulation
+
+on:
+  workflow_dispatch:
+    inputs:
+      sim:
+        description: 'Type of simulation to run'
+        required: true
+        default: 'kin'
+        type: choice
+        options:
+          - kin
+          - qss
+      model_path:
+        description: 'Name of definition yaml'
+        required: true
+        default: 'Nightwatch.yml'
+        type: choice
+        options:
+          - Nightwatch.yml
+          - Scratchpad.yml
+      comparison_path:
+        description: 'Name of comparison yaml'
+        required: true
+        default: 'Scratchpad.yml'
+        type: choice
+        options:
+          - Nightwatch.yml
+          - Scratchpad.yml
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run simulation workflow
+        run: make sim SIM="${{ github.event.inputs.sim }}" MODEL_PATH="${{ github.event.inputs.model_path }}" COMPARISON_PATH="${{ github.event.inputs.comparison_path }}"
+      
+      - name: Upload simulation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-results
+          path: ./src/simulations/${{ github.event.inputs.sim }}/${{ github.event.inputs.sim }}_outputs/
+      
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-report
+          path: ./src/simulations/${{ github.event.inputs.sim }}/${{ github.event.inputs.sim }}_outputs/${{ github.event.inputs.sim }}_report.pdf

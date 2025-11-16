@@ -1,0 +1,32 @@
+# Configuration file for square structure at z=0
+# 4 corner points connected by 4 rods forming a square
+
+spheres:
+  - position: [1.0, 1.0, 0.0]    # Top-right corner
+    color: [1.0, 0.0, 0.0, 1.0]  # Red
+  
+  - position: [-1.0, 1.0, 0.0]   # Top-left corner  
+    color: [0.0, 1.0, 0.0, 1.0]  # Green
+  
+  - position: [-1.0, -1.0, 0.0]  # Bottom-left corner
+    color: [0.0, 0.0, 1.0, 1.0]  # Blue
+  
+  - position: [1.0, -1.0, 0.0]   # Bottom-right corner
+    color: [1.0, 1.0, 0.0, 1.0]  # Yellow
+
+rods:
+  - end1: [1.0, 1.0, 0.0]        # Top edge: top-right to top-left
+    end2: [-1.0, 1.0, 0.0]
+    color: [0.8, 0.8, 0.8, 1.0]  # Light gray
+  
+  - end1: [-1.0, 1.0, 0.0]       # Left edge: top-left to bottom-left
+    end2: [-1.0, -1.0, 0.0]
+    color: [0.8, 0.8, 0.8, 1.0]  # Light gray
+  
+  - end1: [-1.0, -1.0, 0.0]      # Bottom edge: bottom-left to bottom-right
+    end2: [1.0, -1.0, 0.0]
+    color: [0.8, 0.8, 0.8, 1.0]  # Light gray
+  
+  - end1: [1.0, -1.0, 0.0]       # Right edge: bottom-right to top-right
+    end2: [1.0, 1.0, 0.0]
+    color: [0.8, 0.8, 0.8, 1.0]  # Light gray

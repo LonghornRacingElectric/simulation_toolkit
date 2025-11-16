@@ -1,0 +1,3 @@
+/home/rhorvath2002/Desktop/opengl/CMakeFiles/opengl_testing.dir
+/home/rhorvath2002/Desktop/opengl/CMakeFiles/edit_cache.dir
+/home/rhorvath2002/Desktop/opengl/CMakeFiles/rebuild_cache.dir
