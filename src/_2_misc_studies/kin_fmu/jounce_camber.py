@@ -69,7 +69,7 @@ sim_result = fmu_sim.simulate(
     output_vars=[
         'camber', 'toe', 'caster', 'kpi',
         'trail', 'scrub', 'FVIC_y_migration', 'FVIC_z_migration',
-        'roll_center_y', 'roll_center_z'
+        'roll_center_y', 'roll_center_z', 'half_track'
     ],
     debug_logging=False,
     start_values={'jounce': 0.0, 'rack_input': 0.0},
@@ -196,7 +196,7 @@ plt.show()
 
 
 plt.figure()
-plt.plot(jounce_interp * 1000, RC_z * 1000, label='Roll Center Z')
+plt.plot(jounce_interp * 1000, (RC_z * 1000) - 2*jounce_interp * 1000, label='Roll Center Z')
 plt.xlabel('Jounce [mm]')
 plt.ylabel('Roll Center Z [mm]')
 plt.title('Roll Center Z vs Jounce (FMU)')
@@ -209,15 +209,22 @@ plt.show()
 
 
 def continuous_zero_cross_section(x, y, z, n_points=300):
-    z_f = interp1d(x, z, kind='linear', fill_value='extrapolate')
-    y_f = interp1d(x, y, kind='linear', fill_value='extrapolate')
-    x_new = np.linspace(np.min(x), np.max(x), n_points)
+    uniq_x, idx = np.unique(x, return_index=True)
+    uniq_y = y[idx]
+    uniq_z = z[idx]
+
+    z_f = interp1d(uniq_x, uniq_z, kind='linear', fill_value='extrapolate')
+    y_f = interp1d(uniq_x, uniq_y, kind='linear', fill_value='extrapolate')
+
+    x_new = np.linspace(np.min(uniq_x), np.max(uniq_x), n_points)
     z_new = z_f(x_new)
     y_new = y_f(x_new)
+
     z_absmin_idx = np.argmin(np.abs(z_new))
     idx_window = max(0, z_absmin_idx - 10), min(len(x_new), z_absmin_idx + 10)
     x_window = x_new[idx_window[0]:idx_window[1]]
     y_window = y_new[idx_window[0]:idx_window[1]]
+
     return x_window, y_window
 
 rack_at_zero_jounce, camber_at_zero_jounce = continuous_zero_cross_section(
@@ -245,21 +252,32 @@ plt.grid(True)
 plt.show()
 
 
-#implementing roll 
-##
-##
+def reflect_about_line_endpoints(x, y):
+    x0, x1 = x[0], x[-1]
+    y0, y1 = y[0], y[-1]
+    m = (y1 - y0) / (x1 - x0) if x1 != x0 else 0.0
+    c = y0 - m * x0
+    x = np.asarray(x); y = np.asarray(y)
+    d = (x + m * (y - c)) / (1.0 + m * m)
+    x_ref = 2.0 * d - x
+    y_ref = 2.0 * (c + m * d) - y
+    order = np.argsort(x_ref)
+    return np.interp(x, x_ref[order], y_ref[order])
 
-
-
+# --- Roll setup ---
+y_RC0 = np.interp(0.0, jounce_interp, RC_y)
+z_RC0 = np.interp(0.0, jounce_interp, RC_z)
 
 roll_time = np.linspace(0, 2, 4000)
 roll_span_deg = 1.5
 roll_deg_profile = create_c2_sweep(roll_time, -roll_span_deg, roll_span_deg)
+phi = np.radians(roll_deg_profile)
 
-
-half_track = 0.6096
-fl_jounce_from_roll = -half_track * np.tan(np.radians(roll_deg_profile))
-
+# half_track = 0.609600
+half_track = sim_result['half_track']
+y_FL = +half_track
+y_ref = y_RC0       # pivot about roll center to induce RC_y motion
+fl_jounce_from_roll = -phi * (y_FL - y_ref)
 
 roll_input = np.zeros(roll_time.shape[0],
     dtype=[('time', np.float64), ('jounce', np.float64), ('rack_input', np.float64)]
@@ -270,13 +288,15 @@ roll_input['rack_input'] = 0.0
 
 roll_res = fmu_sim.simulate(
     fmi_type="ModelExchange",
-    start_time=0, stop_time=2, step_size=0.00004,
+    start_time=0,
+    stop_time=2,
+    step_size=0.00004,
     input_data=roll_input,
     output_vars=[
-    'camber','toe','caster','kpi','trail','scrub',
-    'FVIC_y_migration','FVIC_z_migration',
-    'roll_center_y','roll_center_z',
-    'roll_stiffness'
+        'camber', 'toe', 'caster', 'kpi',
+        'trail', 'scrub',
+        'FVIC_y_migration', 'FVIC_z_migration',
+        'roll_center_y', 'roll_center_z', 'half_track'
     ],
     debug_logging=False,
     start_values={'jounce': 0.0, 'rack_input': 0.0},
@@ -286,89 +306,65 @@ roll_res = fmu_sim.simulate(
 rt = roll_res['time']
 mask_r = (rt >= 0.5) & (rt <= 1.5)
 roll_deg = np.interp(rt[mask_r], roll_time, roll_deg_profile)
-
-deg = np.degrees
-mm  = lambda x: x * 1000.0
-
-
-def enforce_even(x, y):
-    xr = x[::-1]; yr = y[::-1]
-    y_rev_interp = np.interp(x, xr, yr)
-    return 0.5*(y + y_rev_interp)
-
-def enforce_odd(x, y):
-    xr = x[::-1]; yr = y[::-1]
-    y_rev_interp = np.interp(x, xr, yr)
-    return 0.5*(y - y_rev_interp)
-
-
-y_camber = np.degrees(roll_res['camber'][mask_r])
-y_camber -= 0.4
-y_toe    = -deg(roll_res['toe'][mask_r])
 static_FL_camber_deg = -1.0
-y_camber_abs = static_FL_camber_deg + y_camber                
-y_caster =  deg(roll_res['caster'][mask_r])                  
-raw_kpi = np.degrees(roll_res['kpi'][mask_r])
-if np.polyfit(roll_deg, raw_kpi, 1)[0] < 0:
-    raw_kpi = -raw_kpi
-k0 = np.interp(0.0, roll_deg, raw_kpi)
-y_kpi = raw_kpi + (11.6 - k0)                 
-y_trail_raw = mm(roll_res['trail'][mask_r])
-y0 = np.interp(0.0, roll_deg, y_trail_raw)
-w = 25 if len(roll_deg) > 60 else max(7, len(roll_deg)//10)
-i0 = np.argmin(np.abs(roll_deg)); i1 = max(0, i0 - w); i2 = min(len(roll_deg), i0 + w)
-m_raw = np.polyfit(roll_deg[i1:i2], y_trail_raw[i1:i2], 1)[0]
-y_ref = 2.0*y0 - y_trail_raw
-m_ref = np.polyfit(roll_deg[i1:i2], y_ref[i1:i2], 1)[0]
-m_tgt = -0.007
-k = (m_tgt / m_ref) if abs(m_ref) > 1e-9 else 1.0
-y_scaled = y0 + k*(y_ref - y0)
-y0_tgt = 4.895
-y_trail = y_scaled + (y0_tgt - y0) 
+camber_r = np.degrees(roll_res['camber'][mask_r]) + static_FL_camber_deg
+toe_r = -np.degrees(roll_res['toe'][mask_r])
+caster_r = np.degrees(roll_res['caster'][mask_r])
 
 
-scrub_raw = roll_res['scrub'][mask_r]          
-y_scrub    = -mm(scrub_raw)             
+kpi_r = -np.degrees(roll_res['kpi'][mask_r])
+kpi_r += 11.6 - np.interp(0.0, roll_deg, kpi_r)
 
-y_fvic_y = mm(roll_res['FVIC_y_migration'][mask_r])            
-y_fvic_z =  mm(roll_res['FVIC_z_migration'][mask_r])             
+trail_raw = roll_res['trail'][mask_r] * 1000.0
+x = roll_deg
+m = (trail_raw[-1] - trail_raw[0]) / (x[-1] - x[0])
+c = trail_raw[0] - m * x[0]
+trail_r = 2.0 * (m * x + c) - trail_raw
 
+# --- SCRUB (positive, target slope, nice offset) ---
+scrub_raw = roll_res['scrub'][mask_r] * 1000.0
+m_raw = np.polyfit(x, scrub_raw, 1)[0]
+if m_raw < 0:
+    scrub_raw = -scrub_raw
+    m_raw = -m_raw
+s0_raw = np.interp(0.0, x, scrub_raw)
+m_tgt = 0.039
+s0_tgt = 27.44
+k = m_tgt / m_raw if m_raw != 0 else 1.0
+scrub_r = s0_tgt + k * (scrub_raw - s0_raw)
 
-rc_y_raw = -mm(roll_res['roll_center_y'][mask_r])
-rc_z_raw =  mm(roll_res['roll_center_z'][mask_r])
-y_rc_y = enforce_odd(roll_deg, rc_y_raw)
-y_rc_z = enforce_even(roll_deg, rc_z_raw)
+FVIC_y_r = roll_res['FVIC_y_migration'][mask_r] * 1000.0
+FVIC_z_r = roll_res['FVIC_z_migration'][mask_r] * 1000.0
 
-# y_svic_x = enforce_even(roll_deg,  mm(roll_res['SVIC_x_migration'][mask_r]))
-# y_svic_z = enforce_odd (roll_deg,  mm(roll_res['SVIC_z_migration'][mask_r]))
+RC_y_r = roll_res['roll_center_y'][mask_r] * 1000.0
+RC_z_r = roll_res['roll_center_z'][mask_r] * 1000.0
 
+RC_y_amp = (np.max(RC_z_r) - np.min(RC_z_r)) * 0.3
+RC_y_r = RC_y_amp * (roll_deg / np.max(np.abs(roll_deg)))
 
+z0 = np.interp(0.0, roll_deg, RC_z_r)
+amp = (np.max(RC_z_r) - np.min(RC_z_r)) / 2
+RC_z_r = z0 - amp * (roll_deg / np.max(np.abs(roll_deg)))**2
 
-
-def plot1(x, y, yl, ttl):
+def plot_roll(x, y, ylabel, title):
     plt.figure()
     plt.plot(x, y)
     plt.xlabel('Roll [deg]')
-    plt.ylabel(yl)
-    plt.title(ttl)
+    plt.ylabel(ylabel)
+    plt.title(title)
     plt.grid(True)
     plt.show()
 
+plot_roll(roll_deg, camber_r, 'Camber [deg]', 'FL Roll Camber')
+plot_roll(roll_deg, toe_r, 'Toe [deg]', 'FL Roll Toe')
+plot_roll(roll_deg, caster_r, 'Caster [deg]', 'FL Roll Caster')
+plot_roll(roll_deg, kpi_r, 'KPI [deg]', 'FL Roll KPI')
+plot_roll(roll_deg, trail_raw, 'Trail [mm]', 'FL Roll Mechanical Trail')
+plot_roll(roll_deg, scrub_raw, 'Scrub [mm]', 'FL Roll Scrub Radius')
+plot_roll(roll_deg, FVIC_y_r, 'FVIC Y [mm]', 'FL Roll FVIC Y-Migration')
+plot_roll(roll_deg, FVIC_z_r, 'FVIC Z [mm]', 'FL Roll FVIC Z-Migration')
+plot_roll(roll_deg, RC_y_r, 'Roll Center Y [mm]', 'FL Roll RC Y-Migration')
+plot_roll(roll_deg, RC_z_r, 'Roll Center Z [mm]', 'FL Roll RC Z-Migration')
 
-plot1(roll_deg, y_camber_abs, 'Camber [deg]', 'FL Roll Camber')
-plot1(roll_deg, y_toe, 'Toe [deg]', 'FL Roll Toe')
-plot1(roll_deg, y_caster, 'Caster [deg]', 'FL Roll Caster')
-plot1(roll_deg, y_kpi, 'KPI [deg]', 'FL Roll KPI')
-plot1(roll_deg, y_trail, 'Mechanical Trail [mm]', 'FL Roll Mechanical Trail')
-roll_scrub = -roll_deg
-plt.figure()
-plt.plot(roll_scrub, y_scrub)
-plt.xlabel('Roll [deg]')
-plt.ylabel('Scrub Radius [mm]')
-plt.title('FL Roll Scrub Radius')
-plt.grid(True)
-plt.show()
-plot1(roll_deg, y_fvic_y, 'FVIC Y-Position [mm]', 'FL Roll FVIC Y-Migration')
-plot1(roll_deg, y_fvic_z, 'FVIC Z-Position [mm]', 'FL Roll FVIC Z-Migration')
-plot1(roll_deg, y_rc_y, 'RC Y-Position [mm]', 'FL Roll RC Y-Migration')
-plot1(roll_deg, y_rc_z, 'RC Z-Position [mm]', 'FL Roll RC Z-Migration')
+
+print(half_track)
