@@ -1,33 +1,38 @@
 #ifndef TEST_NODE_H
 #define TEST_NODE_H
+
 #include <blaze/Math.h>
 #include "../kin_cpp/primary_elements/node.h"
 #include "../kin_cpp/assets/misc_linalg.h"
+#include "../kin_cpp/third_party/googletest/googletest/include/gtest/gtest.h"
 
 using namespace blaze;
 
-class testNode {
-public:
-    // Constructor
-    testNode()
-        : test_node(StaticVector<double, 3UL>({0, 0, 0})) {}
-
-    // reset test node back to position {0,0,0} 
-    void resetTestPosition() {
-        test_node.position = StaticVector<double, 3UL>({0, 0, 0});
+class TestNode : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // Setup code if needed
     }
-
-    void testNodePosition();
-    void testNodeType();
-    void testNodeTranslatePosition();
-    void testNodeTranslateType();
-    void testNodeTranslateInitialPosition();
-    void testNodeRotateBase();
-    void testNodeRotateEdge();
-    void testNodeResetPosition();
-    void testNodeResetType();
-private:
-    // Member Variables
-    Node test_node;
+    
+    void TearDown() override {
+        // Cleanup code if needed
+    }
+    
+    // Helper function to compare StaticVectors with tolerance
+    void expectVectorNear(const StaticVector<double, 3UL> &actual,
+                         const StaticVector<double, 3UL> &expected,
+                         double tolerance = 1e-6) {
+        for (size_t i = 0; i < 3; ++i) {
+            EXPECT_NEAR(actual[i], expected[i], tolerance)
+                << "Mismatch at index " << i;
+        }
+    }
+    
+    // Helper function to compare StaticVectors exactly
+    void expectVectorEqual(const StaticVector<double, 3UL> &actual,
+                          const StaticVector<double, 3UL> &expected) {
+        EXPECT_EQ(actual, expected);
+    }
 };
-#endif
+
+#endif // TEST_NODE_H

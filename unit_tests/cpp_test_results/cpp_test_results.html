@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">C++ Test Results</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  background-color: #f6f6f6;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.col-result {
+  width: 110px;
+}
+
+.col-testId {
+  width: 60%;
+}
+
+.col-duration {
+  width: 80px;
+}
+
+.summary {
+  margin: 20px 0;
+}
+.summary__data {
+  display: inline-block;
+  vertical-align: top;
+  width: 100%;
+}
+.summary__spacer {
+  display: inline-block;
+  vertical-align: top;
+  width: 49%;
+}
+.summary__reload {
+  display: inline-block;
+  vertical-align: top;
+}
+.summary__reload__button {
+  padding: 10px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 3px;
+  color: #856404;
+}
+.summary__reload__button.hidden {
+  display: none;
+}
+.controls {
+  margin: 20px 0;
+}
+.filters {
+  margin: 10px 0;
+}
+.filters input[type="checkbox"] {
+  margin-right: 5px;
+}
+.run-count {
+  font-weight: bold;
+}
+.filter {
+  font-style: italic;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable:hover {
+  background-color: #e6e6e6;
+}
+.sortable::after {
+  content: ' ↕';
+  color: #ccc;
+  font-size: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+  }
+  h1, h2, p {
+    color: #d4d4d4;
+  }
+  #results-table th {
+    background-color: #2d2d2d;
+    color: #d4d4d4;
+  }
+  #results-table td {
+    border-color: #3d3d3d;
+  }
+}
+    </style>
+  </head>
+  <body>
+    <h1 id="title">C++ Test Results</h1>
+    <p>Report generated on <span id="report-date">16-Nov-2025 at 18:18:35</span> by <a href="https://github.com/google/googletest">Google Test</a></p>
+
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count" id="run-count">49 tests took 00:00:00.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" />
+            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" />
+            <span class="passed">49 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" />
+            <span class="skipped">0 Skipped</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table id="results-table">
+      <thead>
+        <tr>
+          <th class="sortable col-result" data-column-type="result">Result</th>
+          <th class="sortable col-testId" data-column-type="testId">Test</th>
+          <th class="sortable col-duration" data-column-type="duration">Duration</th>
+        </tr>
+      </thead>
+      <tbody id="results-table-body">
+        <!-- Test results will be inserted here by JavaScript -->
+      </tbody>
+    </table>
+
+    <script>
+      // Test data from actual test run - embedded directly in HTML
+      const testData = {
+        tests: [
+          {
+                    "testId": "TestBeam.test_link_centered_coords",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_init_center_value",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_init_direction_value",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_init_length_value",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_xz_intersection",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_xz_intersection_edge_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_xz_intersection_edge_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_yz_intersection_base",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_yz_intersection_edge_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBeam.test_link_yz_intersection_edge_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKingpin.test_kingpin_angled_beam",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKingpin.test_kingpin_beam_inboard_node",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKingpin.test_kingpin_get_beam_usable",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKingpin.test_kingpin_init_length",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKingpin.test_kingpin_length_vertical",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_addition",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_child",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_child_reset",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_child_rotate_angles",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_child_rotate_vector",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_child_translate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_division",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_getitem",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_init_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_multiplication",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_reset_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_ND_angles",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_base_angles",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_base_vector",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_edge_angles",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_edge_vector",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_repeated_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_repeated_three",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_rotate_repeated_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_setitem",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_subtraction",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_translate_initial_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestNode.test_node_translate_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushrod.test_pushrod_get_beam",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushrod.test_pushrod_init_angle",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushrod.test_pushrod_init_length",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushrod.test_pushrod_length_calculation",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushrod.test_pushrod_length_updates",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestWishbone.test_child_rotate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestWishbone.test_direction_vec",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestWishbone.test_plane_xy",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestWishbone.test_rotate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestWishbone.test_wishbone_base_angle",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestWishbone.test_wishbone_base_direction",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          }
+]
+      };
+
+      // Initialize
+      let sortColumn = sessionStorage.getItem('sortColumn') || 'testId';
+      let sortAscending = JSON.parse(sessionStorage.getItem('sortAscending')) || true;
+      let visibleFilters = {
+        passed: true,
+        failed: true,
+        skipped: true
+      };
+
+      // Set report date
+      document.getElementById('report-date').textContent = '16-Nov-2025 at 18:18:35';
+
+      // Filter tests
+      function filterTests() {
+        const checkboxes = document.querySelectorAll('input[name="filter_checkbox"]');
+        checkboxes.forEach(checkbox => {
+          const resultType = checkbox.dataset.testResult;
+          visibleFilters[resultType] = checkbox.checked;
+        });
+        renderTests();
+      }
+
+      // Sort tests
+      function sortTests(column) {
+        if (sortColumn === column) {
+          sortAscending = !sortAscending;
+        } else {
+          sortColumn = column;
+          sortAscending = true;
+        }
+        sessionStorage.setItem('sortColumn', sortColumn);
+        sessionStorage.setItem('sortAscending', sortAscending);
+        renderTests();
+      }
+
+      // Render tests
+      function renderTests() {
+        const tbody = document.getElementById('results-table-body');
+        tbody.innerHTML = '';
+
+        // Filter and sort tests
+        let filteredTests = testData.tests.filter(test => {
+          const resultLower = test.result.toLowerCase();
+          if (resultLower === 'passed') return visibleFilters.passed;
+          if (resultLower === 'failed') return visibleFilters.failed;
+          if (resultLower === 'skipped') return visibleFilters.skipped;
+          return true;
+        });
+
+        // Sort tests
+        filteredTests.sort((a, b) => {
+          let aVal, bVal;
+          if (sortColumn === 'testId') {
+            aVal = a.testId;
+            bVal = b.testId;
+          } else if (sortColumn === 'duration') {
+            aVal = parseFloat(a.duration);
+            bVal = parseFloat(b.duration);
+          } else {
+            aVal = a.result;
+            bVal = b.result;
+          }
+          
+          if (aVal < bVal) return sortAscending ? -1 : 1;
+          if (aVal > bVal) return sortAscending ? 1 : -1;
+          return 0;
+        });
+
+        // Render test rows
+        filteredTests.forEach(test => {
+          const row = tbody.insertRow();
+          
+          const resultCell = row.insertCell(0);
+          resultCell.className = 'col-result ' + test.result.toLowerCase();
+          resultCell.textContent = test.result;
+          
+          const testIdCell = row.insertCell(1);
+          testIdCell.className = 'col-testId';
+          testIdCell.textContent = test.testId;
+          
+          const durationCell = row.insertCell(2);
+          durationCell.className = 'col-duration';
+          durationCell.textContent = test.duration;
+        });
+
+        // Update summary
+        const passedCount = testData.tests.filter(t => t.result.toLowerCase() === 'passed').length;
+        const failedCount = testData.tests.filter(t => t.result.toLowerCase() === 'failed').length;
+        const skippedCount = testData.tests.filter(t => t.result.toLowerCase() === 'skipped').length;
+        document.querySelector('.passed').textContent = passedCount + ' Passed,';
+        document.querySelector('.failed').textContent = failedCount + ' Failed,';
+        document.querySelector('.skipped').textContent = skippedCount + ' Skipped';
+      }
+
+      // Add event listeners
+      document.querySelectorAll('input[name="filter_checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', filterTests);
+      });
+
+      document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', () => {
+          sortTests(header.dataset.columnType);
+        });
+      });
+
+      // Initial render
+      renderTests();
+    </script>
+  </footer>
+</html>
