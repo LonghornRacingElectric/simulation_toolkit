@@ -23,21 +23,31 @@ jounce_interp = jounce_interp[mask]
 kin.run_simulation_roll()
 
 
-mask = (kin.rt >= 0.5) & (kin.rt <= 1.5)
+# mask = (kin.rt >= 0.5) & (kin.rt <= 1.5)
 
-static_FL_camber_deg = 0
-camber_roll = kin.get_output_roll('camber_deg') + static_FL_camber_deg
-camber_roll = camber_roll[mask]
+# static_FL_camber_deg = -1
+# camber_roll = kin.get_output_roll('camber_deg') + static_FL_camber_deg
+# camber_roll = camber_roll[mask]
+
+# toe_roll = kin.get_output_roll('toe_deg')
+# toe_roll = toe_roll[mask]
+
+# roll_deg = kin.roll_deg_fmu
+# roll_deg = roll_deg[mask] # masked roll_interp
+# kpi_roll = kin.get_output_roll('kpi_deg')[mask] + roll_deg
 
 roll_deg = kin.roll_deg_fmu
 roll_deg = roll_deg[mask] # masked roll_interp
+trail_roll = kin.get_output_roll('trail_mm')[mask]
 
-gamma_fmu_value = np.interp(7.55698496e-01, roll_deg, camber_roll)
 
-print(gamma_fmu_value)
+
+
+
 
 plt.figure()
-plt.plot(roll_deg, camber_roll)
+plt.grid()
+plt.plot(roll_deg, trail_roll)
 plt.show()
 
 
@@ -47,3 +57,14 @@ plt.show()
 # mask_r = (rt >= 0.5) & (rt <= 1.5)
 # roll_deg = np.interp(rt[mask_r], roll_time, roll_deg_profile)
 
+
+"""
+Notes:
+For Roll:
+Camber => does not match
+Toe => Matches
+Caster => Matches
+KPI => raw value + roll_deg = Matches
+Mech Trail => need to figure out how to fix
+
+"""

@@ -90,7 +90,7 @@ class Kinematics_FMU:
         half_track = 0.6096
         y_FL = +half_track
         y_ref = y_RC0
-        fl_jounce_from_roll = -phi * (y_FL - y_ref) 
+        fl_jounce_from_roll = -np.tan(phi) * (y_FL - y_ref) 
         
         roll_input = np.zeros(time.shape[0],
         dtype=[('time', np.float64), ('jounce', np.float64), ('rack_input', np.float64)]
@@ -128,7 +128,7 @@ class Kinematics_FMU:
             'kpi_deg': np.degrees(roll_res['kpi']),
             'trail_mm': roll_res['trail'] * 1000.0,
             'scrub_mm': roll_res['scrub'] * 1000.0,
-            'FVIC_y_mm': roll_res['FVIC_y_mm'] * 1000.0,
+            'FVIC_y_mm': roll_res['FVIC_y_migration'] * 1000.0,
             'FVIC_z_mm': roll_res['FVIC_z_migration'] * 1000.0,
             'RC_y_mm': roll_res['roll_center_y'] * 1000.0,
             'RC_z_mm': roll_res['roll_center_z'] * 1000.0,

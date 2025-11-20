@@ -264,7 +264,7 @@ class TestKin(TestCase):
     def test_roll_gamma(self):
         roll_vals = [float(x) for x in np.array([-1.49228803, -7.58740401e-01, 1.97993360e-02, 7.55698496e-01, 1.49936868])]
         tolerance = 0.1
-        static_FL_camber_deg = 0
+        static_FL_camber_deg = -2
         gamma_fmu = self.kin.get_output_roll('camber_deg') + static_FL_camber_deg
         roll_interp = self.kin.roll_deg
         mask = (self.kin.rt >= 0.5) & (self.kin.rt <= 1.5)
@@ -328,8 +328,8 @@ class TestKin(TestCase):
     def test_roll_kpi(self):
         roll_vals = [float(x) for x in np.array([-1.49228803, -7.58740401e-01, 1.97993360e-02, 7.55698496e-01, 1.49936868])]
         tolerance = 0.1
-        kpi_fmu = self.kin.get_output_roll('kpi_deg')
         roll_interp = self.kin.roll_deg
+        kpi_fmu = self.kin.get_output_roll('kpi_deg') + roll_interp
         mask = (self.kin.rt >= 0.5) & (self.kin.rt <= 1.5)
         kpi_fmu = kpi_fmu[mask]
         roll_interp = roll_interp[mask]

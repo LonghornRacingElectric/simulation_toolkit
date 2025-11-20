@@ -196,7 +196,7 @@ plt.show()
 
 
 plt.figure()
-plt.plot(jounce_interp * 1000, (RC_z * 1000) - 2*jounce_interp * 1000, label='Roll Center Z')
+plt.plot(jounce_interp * 1000, (RC_z * 1000) - jounce_interp * 1000, label='Roll Center Z')
 plt.xlabel('Jounce [mm]')
 plt.ylabel('Roll Center Z [mm]')
 plt.title('Roll Center Z vs Jounce (FMU)')
@@ -275,9 +275,12 @@ phi = np.radians(roll_deg_profile)
 
 # half_track = 0.609600
 half_track = sim_result['half_track']
+half_track = half_track[mask]
+half_track = np.interp(roll_time, time_res, half_track)
 y_FL = +half_track
 y_ref = y_RC0       # pivot about roll center to induce RC_y motion
 fl_jounce_from_roll = -phi * (y_FL - y_ref)
+
 
 roll_input = np.zeros(roll_time.shape[0],
     dtype=[('time', np.float64), ('jounce', np.float64), ('rack_input', np.float64)]
