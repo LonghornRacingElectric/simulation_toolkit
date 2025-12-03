@@ -2,6 +2,7 @@ from src.simulations.visual.visual import VisualModel
 from src.simulations.kin.kin import Kinematics
 from src.simulations.qss.qss import QSS
 from src.simulations.comp_eval.comp_eval import CompEval
+from src.simulations.transient_comp_eval.transient_comp_eval import TransientCompEval
 
 import shutil
 import time
@@ -12,7 +13,7 @@ import os
 start_time = time.time()
 
 # Initialization
-avail_sims = ["kin", "visual", "qss", "comp_eval"]
+avail_sims = ["kin", "visual", "qss", "comp_eval", "transient_comp_eval"]
 input_dir = "./src/_1_model_inputs/"
 
 try:
@@ -55,6 +56,10 @@ elif sim_selected == "qss":
 elif sim_selected == "comp_eval":
     print("Running simulation: comp evaluation")
     comp_eval = CompEval(model_path=model_path)
+elif sim_selected == "transient_comp_eval":
+    print("Running simulation: transient comp evaluation")
+    transient_comp_eval = TransientCompEval(model_path=model_path)
+
 
 
 end_time = time.time()
