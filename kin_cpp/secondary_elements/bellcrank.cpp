@@ -1,39 +1,33 @@
 #include "bellcrank.h"
-#include <iostream>
 #include "../primary_elements/node.h"
-#include "../primary_elements/beam.h"
-using namespace std;
+#include <optional>
 
-Bellcrank::Bellcrank (Beam *out, Beam *in, Beam *connecting, Node *node, double *BCdirection, double *BCangle) {
-    bellcrank_pivot = node;
-    inboard = in;
-    outboard = out;
-    connecting_beam = connecting;
-    direction = BCdirection;
-    angle = BCangle;
-    elements[0] = all_elements[0] = (Node *) outboard;
-    elements[1] = all_elements[1] = (Node *) inboard;
-    elements[2] = all_elements[2] = (Node *) connecting;
-    elements[3] = all_elements[3] = node;
-
+Bellcrank::Bellcrank(const std::vector<Node*>& nodes, Node* pivot, const StaticVector<double, 3UL>& pivot_direction)
+    : nodes(nodes), pivot(pivot), pivot_direction(pivot_direction), angle(0.0) {
 }
 
-Beam *Bellcrank:: getInboardBeam() {
-    return inboard;
+void Bellcrank::rotate(double rotation_angle) {
+    // Rotate each node about the pivot with the pivot direction
+    for (Node* node : nodes) {
+        node->reset();
+        node->rotate(*pivot, false, std::make_optional(pivot_direction), std::make_optional(rotation_angle));
+    }
+    
+    angle = rotation_angle;
 }
 
-Beam *Bellcrank:: getOutboardBeam() {
-    return outboard;
+const std::vector<Node*>& Bellcrank::getNodes() const {
+    return nodes;
 }
 
-Beam *Bellcrank:: getConnectingBeam() {
-    return connecting_beam;
+Node* Bellcrank::getPivot() const {
+    return pivot;
 }
 
-double *Bellcrank:: getBellcrankDirection() {
-    return direction;
+const StaticVector<double, 3UL>& Bellcrank::getPivotDirection() const {
+    return pivot_direction;
 }
 
-double *Bellcrank:: getBellcrankAngle() {
+double Bellcrank::getAngle() const {
     return angle;
 }

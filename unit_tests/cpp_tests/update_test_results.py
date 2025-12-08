@@ -67,11 +67,35 @@ MISC_LINALG_SRC = "assets/misc_linalg.cpp"
 WISHBONE_SRC = "secondary_elements/wishbone.cpp"
 PUSHROD_SRC = "secondary_elements/pushrod.cpp"
 KINGPIN_SRC = "secondary_elements/kingpin.cpp"
+BELLCRANK_SRC = "secondary_elements/bellcrank.cpp"
+DAMPER_SRC = "secondary_elements/damper.cpp"
+SPRING_SRC = "secondary_elements/spring.cpp"
+TIE_SRC = "secondary_elements/tie.cpp"
+CG_SRC = "secondary_elements/cg.cpp"
+KIN_PC_SRC = "secondary_elements/kin_pc.cpp"
+KIN_RC_SRC = "secondary_elements/kin_rc.cpp"
+TIRE_SRC = "tertiary_elements/tire.cpp"
+PUSH_PULL_ROD_SRC = "tertiary_elements/push_pull_rod.cpp"
+DOUBLE_WISHBONE_SRC = "tertiary_elements/double_wishbone.cpp"
+STABAR_SRC = "tertiary_elements/stabar.cpp"
+AXLE_SRC = "quaternary_elements/axle.cpp"
 TEST_NODE_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_node.cpp"
 TEST_BEAM_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_beam.cpp"
 TEST_WISHBONE_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_wishbone.cpp"
 TEST_PUSHROD_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_pushrod.cpp"
 TEST_KINGPIN_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_kingpin.cpp"
+TEST_BELLCRANK_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_bellcrank.cpp"
+TEST_DAMPER_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_damper.cpp"
+TEST_SPRING_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_spring.cpp"
+TEST_TIE_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_tie.cpp"
+TEST_CG_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_cg.cpp"
+TEST_KIN_PC_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_kin_pc.cpp"
+TEST_KIN_RC_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_kin_rc.cpp"
+TEST_TIRE_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_tire.cpp"
+TEST_DOUBLE_WISHBONE_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_double_wishbone.cpp"
+TEST_PUSH_PULL_ROD_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_push_pull_rod.cpp"
+TEST_STABAR_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_stabar.cpp"
+TEST_AXLE_SRC = PROJECT_ROOT / "unit_tests" / "cpp_tests" / "test_axle.cpp"
 
 TEST_EXEC = BUILD_DIR / "test_runner"
 XML_OUTPUT = BUILD_DIR / "test_results.xml"
@@ -88,7 +112,19 @@ def build_tests():
         (MISC_LINALG_SRC, "misc_linalg.o"),
         (WISHBONE_SRC, "wishbone.o"),
         (PUSHROD_SRC, "pushrod.o"),
-        (KINGPIN_SRC, "kingpin.o")
+        (KINGPIN_SRC, "kingpin.o"),
+        (BELLCRANK_SRC, "bellcrank.o"),
+        (DAMPER_SRC, "damper.o"),
+        (SPRING_SRC, "spring.o"),
+        (TIE_SRC, "tie.o"),
+        (CG_SRC, "cg.o"),
+        (KIN_PC_SRC, "kin_pc.o"),
+        (KIN_RC_SRC, "kin_rc.o"),
+        (TIRE_SRC, "tire.o"),
+        (PUSH_PULL_ROD_SRC, "push_pull_rod.o"),
+        (DOUBLE_WISHBONE_SRC, "double_wishbone.o"),
+        (STABAR_SRC, "stabar.o"),
+        (AXLE_SRC, "axle.o")
     ]
     
     # Compile all kin_cpp sources from kin_cpp directory
@@ -108,7 +144,19 @@ def build_tests():
         (TEST_BEAM_SRC, "test_beam.o"),
         (TEST_WISHBONE_SRC, "test_wishbone.o"),
         (TEST_PUSHROD_SRC, "test_pushrod.o"),
-        (TEST_KINGPIN_SRC, "test_kingpin.o")
+        (TEST_KINGPIN_SRC, "test_kingpin.o"),
+        (TEST_BELLCRANK_SRC, "test_bellcrank.o"),
+        (TEST_DAMPER_SRC, "test_damper.o"),
+        (TEST_SPRING_SRC, "test_spring.o"),
+        (TEST_TIE_SRC, "test_tie.o"),
+        (TEST_CG_SRC, "test_cg.o"),
+        (TEST_KIN_PC_SRC, "test_kin_pc.o"),
+        (TEST_KIN_RC_SRC, "test_kin_rc.o"),
+        (TEST_TIRE_SRC, "test_tire.o"),
+        (TEST_DOUBLE_WISHBONE_SRC, "test_double_wishbone.o"),
+        (TEST_PUSH_PULL_ROD_SRC, "test_push_pull_rod.o"),
+        (TEST_STABAR_SRC, "test_stabar.o"),
+        (TEST_AXLE_SRC, "test_axle.o")
     ]
     
     for src, obj_name in test_sources:

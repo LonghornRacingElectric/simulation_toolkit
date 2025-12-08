@@ -19,6 +19,13 @@ public:
     StaticVector<double, 3UL> center() const;
     double height() const;
     double induced_steer() const;
+    
+    // Getters for tire properties
+    double getRadius() const;
+    double getWidth() const;
+    double getGamma() const;
+    double getStaticToe() const;
+    Node* getContactPatch() const;
 
 private:
     Node *cp;
@@ -29,6 +36,7 @@ private:
     double width;
     double _induced_steer;
     StaticVector<double, 3UL> initial_center;
+    StaticVector<double, 3UL> initial_center_relative_to_cp;
     StaticVector<double, 3UL> cp_to_kingpin;
     double initial_kpi;
     double initial_caster;

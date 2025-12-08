@@ -66,11 +66,6 @@ private:
     double cp_to_tie;
     StaticVector<double, 3UL> cp_to_kingpin;
 
-    double heave_jounce;
-    double roll_jounce;
-    double pitch_jounce;
-    double total_jounce;
-
     /* Pointer to motion ratio function */
     double (*motion_ratio_function) (double);
 
@@ -89,7 +84,7 @@ public:
     StaticVector<double, 2UL>_jounce_resid_func (StaticVector<double, 2UL> &x, double jounce);
     double _jounce_induced_steer_resid_func (StaticVector<double, 1UL> &x);
     void jounce (double jounce, double heave_jounce, double roll_jounce, double pitch_jounce);
-    double _steer_resid_func (StaticVector<double, 3UL> &x);
+    double _steer_resid_func (StaticVector<double, 1UL> &x);
     void steer (double steer);
     double motion_ratio () const;
     double wheelrate () const;

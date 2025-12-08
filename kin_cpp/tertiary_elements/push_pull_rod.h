@@ -34,6 +34,14 @@ public:
     void _set_initial_position ();
     void translate (StaticVector<double, 3UL> &translation);
     void flatten_rotate(StaticVector<double, 3UL>& angle);
+    
+    // Getters
+    Beam* getRod() const;
+    Damper* getDamper() const;
+    double getBellcrankAngle() const;
+    double getInitialRodLength() const;
+    double getInitialSpringDamperLength() const;
+    bool hasBellcrank() const;
 };
 
 #endif

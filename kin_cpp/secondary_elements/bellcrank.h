@@ -1,34 +1,42 @@
 #ifndef BELLCRANK_H
 #define BELLCRANK_H
 
-#include <iostream>
 #include "../primary_elements/node.h"
-#include "../primary_elements/beam.h"
+#include <vector>
+#include <blaze/Math.h>
+
+using namespace blaze;
 
 class Bellcrank {
 public:
-    Bellcrank(Beam *inboard_beam, Beam *outboard_beam, Beam *connecting_beam, Node *node, double *bellcrank_direction, double *bellcrank_angle);
+    /**
+     * Bellcrank constructor
+     * 
+     * @param nodes All distinct pickup Nodes on bellcrank
+     *              - First entry should connect to push/pull rod
+     *              - Final entry should connect to inboard rod/shock
+     * @param pivot Bellcrank pivot Node
+     * @param pivot_direction Unit vector representing Bellcrank pivot axis
+     */
+    Bellcrank(const std::vector<Node*>& nodes, Node* pivot, const StaticVector<double, 3UL>& pivot_direction);
 
-    // Functions for getting inboard, outboard, and connecting beams
-    Beam *getInboardBeam();
-    Beam *getOutboardBeam();
-    Beam *getConnectingBeam();
+    /**
+     * Rotates bellcrank
+     * 
+     * @param angle Angle of rotation in radians
+     */
+    void rotate(double angle);
 
-    double *getBellcrankDirection();
-    double *getBellcrankAngle();
+    // Getters
+    const std::vector<Node*>& getNodes() const;
+    Node* getPivot() const;
+    const StaticVector<double, 3UL>& getPivotDirection() const;
+    double getAngle() const;
 
 private:
-    Node *bellcrank_pivot;
-    Node *elements[4];
-    Node *all_elements[4];
-    double *bellcrank_angle;
-    double *bellcrank_direction;
-
-    Beam *inboard;
-    Beam *outboard;
-    Beam *connecting_beam;
-    double *direction;
-    double *angle;
-
+    std::vector<Node*> nodes;  // All distinct pickup Nodes on bellcrank
+    Node* pivot;                // Bellcrank pivot Node
+    StaticVector<double, 3UL> pivot_direction;  // Unit vector for pivot axis
+    double angle;               // Current rotation angle
 };
 #endif //BELLCRANK_H

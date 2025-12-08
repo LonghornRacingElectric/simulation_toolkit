@@ -163,14 +163,14 @@ span.xpassed,
   </head>
   <body>
     <h1 id="title">C++ Test Results</h1>
-    <p>Report generated on <span id="report-date">16-Nov-2025 at 18:18:35</span> by <a href="https://github.com/google/googletest">Google Test</a></p>
+    <p>Report generated on <span id="report-date">07-Dec-2025 at 17:51:54</span> by <a href="https://github.com/google/googletest">Google Test</a></p>
 
     <div class="summary">
       <div class="summary__data">
         <h2>Summary</h2>
         <div class="additional-summary prefix">
         </div>
-        <p class="run-count" id="run-count">49 tests took 00:00:00.</p>
+        <p class="run-count" id="run-count">159 tests took 00:00:00.</p>
         <p class="filter">(Un)check the boxes to filter the results.</p>
         <div class="summary__reload">
           <div class="summary__reload__button hidden" onclick="location.reload()">
@@ -181,9 +181,9 @@ span.xpassed,
         <div class="controls">
           <div class="filters">
             <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" />
-            <span class="failed">0 Failed,</span>
+            <span class="failed">6 Failed,</span>
             <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" />
-            <span class="passed">49 Passed,</span>
+            <span class="passed">153 Passed,</span>
             <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" />
             <span class="skipped">0 Skipped</span>
           </div>
@@ -208,6 +208,66 @@ span.xpassed,
       // Test data from actual test run - embedded directly in HTML
       const testData = {
         tests: [
+          {
+                    "testId": "TestAxle.test_axle_heave",
+                    "result": "Failed",
+                    "duration": "87.0 ms",
+                    "details": "/home/keertan/simulation_toolkit/unit_tests/cpp_tests/test_axle.h:25\\nThe difference between actual and expected is 0.00015262528536777453, which exceeds tolerance, where\\nactual evaluates to 0.099847374714632231,\\nexpected evaluates to 0.10000000000000001, and\\ntolerance evaluates to 0.0001."
+          },
+          {
+                    "testId": "TestAxle.test_axle_init",
+                    "result": "Passed",
+                    "duration": "83.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestAxle.test_axle_pitch",
+                    "result": "Passed",
+                    "duration": "86.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestAxle.test_axle_reset_roll",
+                    "result": "Passed",
+                    "duration": "93.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestAxle.test_axle_roll_positive",
+                    "result": "Failed",
+                    "duration": "94.0 ms",
+                    "details": "/home/keertan/simulation_toolkit/unit_tests/cpp_tests/test_axle.cpp:241\\nExpected: (right_z_after) < (right_z_before), actual: -0.27661149456110801 vs -0.5"
+          },
+          {
+                    "testId": "TestAxle.test_axle_roll_stiffness",
+                    "result": "Passed",
+                    "duration": "83.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestAxle.test_axle_roll_zero",
+                    "result": "Passed",
+                    "duration": "86.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestAxle.test_axle_steer",
+                    "result": "Passed",
+                    "duration": "85.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestAxle.test_axle_track_width",
+                    "result": "Passed",
+                    "duration": "84.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestAxle.test_axle_translate",
+                    "result": "Passed",
+                    "duration": "85.0 ms",
+                    "details": ""
+          },
           {
                     "testId": "TestBeam.test_link_centered_coords",
                     "result": "Passed",
@@ -264,6 +324,318 @@ span.xpassed,
           },
           {
                     "testId": "TestBeam.test_link_yz_intersection_edge_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBellcrank.test_bellcrank_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBellcrank.test_bellcrank_rotate_child",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBellcrank.test_bellcrank_rotate_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBellcrank.test_bellcrank_rotate_repeated",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestBellcrank.test_bellcrank_rotate_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_calculated_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_different_positions",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_get_cg_node",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_get_node",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_get_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_multiple_instances",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_node_pointer_access",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_node_translation",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_position_matches_node",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestCG.test_cg_position_updates",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDamper.test_damper_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDamper.test_force_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDamper.test_force_reference",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDamper.test_force_three",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDamper.test_force_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDamper.test_velocity_reference",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_caster",
+                    "result": "Passed",
+                    "duration": "44.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_contact_patch",
+                    "result": "Passed",
+                    "duration": "44.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_fvic_position",
+                    "result": "Passed",
+                    "duration": "43.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_inclination_angle",
+                    "result": "Passed",
+                    "duration": "44.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_init",
+                    "result": "Passed",
+                    "duration": "44.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_jounce_zero",
+                    "result": "Passed",
+                    "duration": "43.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_kpi",
+                    "result": "Passed",
+                    "duration": "43.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_lateral_arm",
+                    "result": "Passed",
+                    "duration": "44.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_longitudinal_arm",
+                    "result": "Passed",
+                    "duration": "42.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_motion_ratio",
+                    "result": "Passed",
+                    "duration": "44.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_svic_position",
+                    "result": "Passed",
+                    "duration": "43.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_toe",
+                    "result": "Passed",
+                    "duration": "44.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_translate",
+                    "result": "Passed",
+                    "duration": "43.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestDoubleWishbone.test_double_wishbone_wheelrate",
+                    "result": "Passed",
+                    "duration": "43.0 ms",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_cg_axis_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_different_configurations",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_get_cg_axis_kin_pc",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_get_true_kin_pc",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_translate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_true_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinPC.test_kin_pc_update",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_cg_axis_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_different_configurations",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_get_cg_axis_kin_rc",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_get_true_kin_rc",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_translate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_true_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestKinRC.test_kin_rc_update",
                     "result": "Passed",
                     "duration": "0 \u03bcs",
                     "details": ""
@@ -437,6 +809,66 @@ span.xpassed,
                     "details": ""
           },
           {
+                    "testId": "TestPushPullRod.test_push_pull_rod_bellcrank_angle",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_flatten_rotate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_init_no_bellcrank",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_init_with_bellcrank",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_no_bellcrank_rod_length_preserved",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_rod_length",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_rotate_bellcrank",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_rotate_rod",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_spring_damper_length",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestPushPullRod.test_push_pull_rod_translate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
                     "testId": "TestPushrod.test_pushrod_get_beam",
                     "result": "Passed",
                     "duration": "0 \u03bcs",
@@ -462,6 +894,234 @@ span.xpassed,
           },
           {
                     "testId": "TestPushrod.test_pushrod_length_updates",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestSpring.test_spring_compression_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestSpring.test_spring_compression_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestSpring.test_spring_force_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestSpring.test_spring_force_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestSpring.test_spring_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestStabar.test_stabar_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestStabar.test_stabar_residual_eqn",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestStabar.test_stabar_residual_eqn_length",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestStabar.test_stabar_torque_one",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestStabar.test_stabar_torque_two",
+                    "result": "Failed",
+                    "duration": "0 \u03bcs",
+                    "details": "/home/keertan/simulation_toolkit/unit_tests/cpp_tests/test_stabar.h:26\\nThe difference between actual and expected is 0.0056048975824249947, which exceeds tolerance, where\\nactual evaluates to 1.0528024487790226,\\nexpected evaluates to 1.0471975511965976, and\\ntolerance evaluates to 1.0000000000000001e-05."
+          },
+          {
+                    "testId": "TestStabar.test_stabar_update_one",
+                    "result": "Failed",
+                    "duration": "9.0 ms",
+                    "details": "/home/keertan/simulation_toolkit/unit_tests/cpp_tests/test_stabar.h:26\\nThe difference between actual and expected is 0.0056048976068049372, which exceeds tolerance, where\\nactual evaluates to 0.52920367320510375,\\nexpected evaluates to 0.52359877559829882, and\\ntolerance evaluates to 1.0000000000000001e-05."
+          },
+          {
+                    "testId": "TestStabar.test_stabar_update_rotation_one",
+                    "result": "Failed",
+                    "duration": "0 \u03bcs",
+                    "details": "/home/keertan/simulation_toolkit/unit_tests/cpp_tests/test_stabar.h:26\\nThe difference between actual and expected is 0.0056048975824249947, which exceeds tolerance, where\\nactual evaluates to 1.0528024487790226,\\nexpected evaluates to 1.0471975511965976, and\\ntolerance evaluates to 1.0000000000000001e-05."
+          },
+          {
+                    "testId": "TestStabar.test_stabar_update_three",
+                    "result": "Failed",
+                    "duration": "0 \u03bcs",
+                    "details": "/home/keertan/simulation_toolkit/unit_tests/cpp_tests/test_stabar.h:26\\nThe difference between actual and expected is 0.0056048976068049372, which exceeds tolerance, where\\nactual evaluates to 0.52920367320510375,\\nexpected evaluates to 0.52359877559829882, and\\ntolerance evaluates to 1.0000000000000001e-05."
+          },
+          {
+                    "testId": "TestStabar.test_stabar_update_two",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_angled_kingpin",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_get_beam",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_init_angle",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_init_length",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_initial_length_preserved",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_length_after_rotation",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_length_calculation",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_rotate",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_rotate_multiple",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_rotate_negative",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_rotate_return_to_zero",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_set_initial_position",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_steering_pickup_to_kingpin_vertical",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTie.test_tie_update",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_angled_kingpin",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_center_no_camber",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_center_with_camber",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_direction",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_height",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_induced_steer_initial",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_init",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_set_induced_steer",
+                    "result": "Passed",
+                    "duration": "0 \u03bcs",
+                    "details": ""
+          },
+          {
+                    "testId": "TestTire.test_tire_translate",
                     "result": "Passed",
                     "duration": "0 \u03bcs",
                     "details": ""
@@ -515,7 +1175,7 @@ span.xpassed,
       };
 
       // Set report date
-      document.getElementById('report-date').textContent = '16-Nov-2025 at 18:18:35';
+      document.getElementById('report-date').textContent = '07-Dec-2025 at 17:51:54';
 
       // Filter tests
       function filterTests() {
