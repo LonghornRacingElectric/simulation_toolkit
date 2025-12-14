@@ -1,6 +1,6 @@
 name: VMOD Issue
 description: Vehicle modeling, simulation, or analysis task
-title: "VMOD-ISSUE: short descriptive title"
+title: "VMOD-<#>: short descriptive title"
 labels: ["VMOD"]
 
 body:
@@ -44,16 +44,6 @@ body:
         - Linear suspension stiffness
 
   - type: textarea
-    id: approach
-    attributes:
-      label: Proposed Approach
-      description: How do you plan to solve this? Equations, tools, references, etc.
-      placeholder: |
-        - Use energy-based formulation
-        - Implement in Python
-        - Validate against reference dataset
-
-  - type: textarea
     id: validation
     attributes:
       label: Validation / Acceptance Criteria
@@ -72,16 +62,6 @@ body:
         Blocked by:
         - #123
         - #124
-
-  - type: textarea
-    id: references
-    attributes:
-      label: References
-      description: Papers, notes, textbooks, prior work, or links
-      placeholder: |
-        - Milliken & Milliken
-        - Pacejka MF 5.2
-        - Internal note: docs/load_transfer.md
 
   - type: textarea
     id: notes
