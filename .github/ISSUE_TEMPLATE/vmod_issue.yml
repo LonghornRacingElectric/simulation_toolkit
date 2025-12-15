@@ -1,6 +1,6 @@
 name: VMOD Issue
 description: Vehicle modeling, simulation, or analysis task
-title: "VMOD-<#>: short descriptive title"
+title: "VMOD-<#>: Short Descriptive Title"
 labels: ["VMOD"]
 
 body:
