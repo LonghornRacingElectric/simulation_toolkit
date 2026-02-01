@@ -17,14 +17,10 @@ class TransientCompEval(Simulation):
 
         # mass properties
         self.mass = self.sus_data.total_mass
-        self.front_unsprung_mass = self.sus_data.Fr_unsprung_mass
-        self.rear_unsprung_mass = self.sus_data.Rr_unsprung_mass
 
         # inertia tensor components
         I_tensor = np.array(self.sus_data.inertia_tensor)
         self.I_z = I_tensor[2][2]  # yaw inertia
-        self.I_y = I_tensor[1][1]  # pitch inertia
-        self.I_x = I_tensor[0][0]  # roll inertia
 
         # tire contact patches
         front_cp = self.sus_data.FL_tire.contact_patch
